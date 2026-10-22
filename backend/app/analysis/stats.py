@@ -1,7 +1,8 @@
 import hashlib
 from dataclasses import dataclass
+from datetime import datetime, timezone
 
-from ..parsing.uddf import ParsedDive
+from ..parsing.model import ParsedDive
 
 
 @dataclass(frozen=True)
@@ -47,9 +48,14 @@ def summarize(dive: ParsedDive) -> DiveStats:
     )
 
 
-def fingerprint(dive: ParsedDive) -> str:
-    """Stable identity for a dive, independent of which file or tool it came from."""
-    h = hashlib.sha256(dive.started_at.isoformat().encode())
-    for s in dive.samples:
-        h.update(f"|{s.t_s:.0f}:{s.depth_m:.1f}".encode())
-    return h.hexdigest()
+def fingerprint(started_at: datetime) -> str:
+    """Stable identity for a dive, independent of which file or tool it came from.
+
+    Only the start time (wall clock, to the second) goes in: tools resample
+    and round the profile differently (Subsurface shifts samples by 1 s,
+    rounds depth to 1 cm and fills gaps), so hashing samples would make the
+    same dive from FIT and UDDF look different. A diver can't start two
+    dives in the same second.
+    """
+    utc = started_at.astimezone(timezone.utc) if started_at.tzinfo else started_at
+    return hashlib.sha256(utc.strftime("%Y-%m-%dT%H:%M:%S").encode()).hexdigest()

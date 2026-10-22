@@ -80,6 +80,9 @@ class SampleOut(BaseModel):
     t_s: float
     depth_m: float
     temp_k: float | None
+    heart_rate: int | None
+    tank_pressure_bar: float | None
+    ndl_s: int | None
 
 
 class ProfilePoint(BaseModel):
@@ -90,6 +93,9 @@ class ProfilePoint(BaseModel):
 
 class DiveDetail(DiveSummary):
     computer_serial: str | None
+    water_type: str | None
+    latitude: float | None
+    longitude: float | None
     scores: list[SkillScoreDetail]
     samples: list[SampleOut]
     # 1 s grid with smoothed ascent rate, for the charts

@@ -4,7 +4,8 @@ import pytest
 
 from app.config import settings
 
-SYNTHETIC = Path(__file__).parent / "fixtures" / "uddf" / "synthetic"
+FIXTURES = Path(__file__).parent / "fixtures"
+SYNTHETIC = FIXTURES / "uddf" / "synthetic"
 
 # One 12 m/min ascent from 20 m to 10 m (see shared/ascent-golden.json)
 FAST_ASCENT = b"""<uddf><profiledata><repetitiongroup><dive id="fast">
@@ -119,14 +120,34 @@ def test_settings_reject_invalid_values(client, change):
 @pytest.mark.parametrize(
     "name, content, message",
     [
-        ("dive.fit", b"\x0e\x10", ".uddf or .xml"),
+        ("dive.tcx", b"<tcx/>", "must be a .fit file"),
         ("bad.uddf", b"<uddf><oops", "Could not parse UDDF"),
+        ("bad.fit", b"\x0e\x10", "Could not parse FIT: Not a FIT file"),
     ],
 )
 def test_upload_rejects_bad_files(client, name, content, message):
     res = _upload(client, name, content)
     assert res.status_code == 400
     assert message in res.json()["detail"]
+
+
+def test_fit_upload_stores_extra_channels_and_dedupes_with_uddf(client):
+    fit = (FIXTURES / "fit" / "real" / "2026-08-09-12-02-28.fit").read_bytes()
+    res = client.post("/uploads", files={"file": ("dive.fit", fit, "application/octet-stream")})
+    assert res.status_code == 200 and res.json()["added"] == 1
+
+    [dive] = client.get("/dives").json()
+    assert dive["computer_model"] == "Garmin Descent G2"
+    detail = client.get(f"/dives/{dive['id']}").json()
+    assert detail["water_type"] == "fresh"
+    assert detail["latitude"] is not None
+    assert detail["samples"][0]["heart_rate"] == 81
+    assert [s["skill"] for s in detail["scores"]] == ["ascent", "stop", "buoyancy"]
+
+    # The same dive exported from Subsurface is recognised as already stored
+    uddf = (FIXTURES / "uddf" / "real" / "test_dive.uddf").read_bytes()
+    res = _upload(client, "test_dive.uddf", uddf)
+    assert (res.json()["added"], res.json()["skipped"]) == (0, 1)
 
 
 def test_upload_rejects_oversized_file(client, monkeypatch):

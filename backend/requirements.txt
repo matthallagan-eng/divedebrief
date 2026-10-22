@@ -8,6 +8,7 @@ pydantic-settings==2.6.0
 python-multipart==0.0.12
 python-dotenv==1.0.1
 lxml==5.3.0
+garmin-fit-sdk==21.218.0
 pyjwt==2.10.1
 bcrypt==4.2.1
 email-validator==2.2.0

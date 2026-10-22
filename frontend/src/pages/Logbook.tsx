@@ -106,7 +106,7 @@ function EmptyReef() {
       </div>
       <h1 className="mt-6 text-xl font-semibold text-foam">The reef is quiet</h1>
       <p className="mt-2 text-sm text-mist">
-        No dives logged yet. Export your dives from Subsurface as UDDF and drop the file in.
+        No dives logged yet. Upload a .fit file from your Garmin, or a UDDF export from Subsurface.
       </p>
       <Link
         to="/upload"

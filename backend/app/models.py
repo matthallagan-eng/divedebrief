@@ -51,7 +51,7 @@ class Dive(Base):
     upload_id: Mapped[int] = mapped_column(
         ForeignKey("uploads.id", ondelete="CASCADE"), index=True
     )
-    # sha256 of start time + sample series; used to skip re-uploaded dives
+    # sha256 of the start time; used to skip re-uploaded dives, from any format
     fingerprint: Mapped[str] = mapped_column(String(64))
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     duration_s: Mapped[float] = mapped_column(Float)
@@ -60,6 +60,10 @@ class Dive(Base):
     min_temp_k: Mapped[float | None] = mapped_column(Float, nullable=True)
     computer_model: Mapped[str | None] = mapped_column(String(255), nullable=True)
     computer_serial: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    water_type: Mapped[str | None] = mapped_column(String(8), nullable=True)  # salt | fresh
+    # GPS start point, or the exit point when the watch had no fix at the start
+    latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     upload: Mapped["Upload"] = relationship(back_populates="dives")
     samples: Mapped[list["Sample"]] = relationship(
@@ -82,6 +86,9 @@ class Sample(Base):
     t_s: Mapped[float] = mapped_column(Float, primary_key=True)
     depth_m: Mapped[float] = mapped_column(Float)
     temp_k: Mapped[float | None] = mapped_column(Float, nullable=True)
+    heart_rate: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    tank_pressure_bar: Mapped[float | None] = mapped_column(Float, nullable=True)
+    ndl_s: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     dive: Mapped["Dive"] = relationship(back_populates="samples")
 

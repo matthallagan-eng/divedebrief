@@ -8,37 +8,17 @@ Dive computers record local wall-clock time without a timezone. Naive
 datetimes are tagged as UTC so they round-trip unchanged; the frontend
 formats them in UTC to show the original wall-clock time.
 """
-from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
 from lxml import etree
 
+from .model import ParsedDive, ParsedSample, ParseError, ParseResult
 
-class UDDFParseError(ValueError):
+__all__ = ["ParsedDive", "ParsedSample", "ParseResult", "UDDFParseError", "parse_uddf"]
+
+
+class UDDFParseError(ParseError):
     pass
-
-
-@dataclass(frozen=True)
-class ParsedSample:
-    t_s: float
-    depth_m: float
-    temp_k: float | None
-
-
-@dataclass
-class ParsedDive:
-    started_at: datetime
-    samples: list[ParsedSample]
-    uddf_id: str | None = None
-    computer_model: str | None = None
-    computer_serial: str | None = None
-
-
-@dataclass
-class ParseResult:
-    dives: list[ParsedDive]
-    # Non-fatal problems, e.g. a dive skipped because it had no samples
-    warnings: list[str] = field(default_factory=list)
 
 
 # No entity resolution or network access: uploaded XML is untrusted

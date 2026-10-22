@@ -9,35 +9,40 @@ from ..config import settings
 from ..database import get_db
 from ..deps import get_current_user
 from ..models import Dive, Sample, Upload, User
-from ..parsing.uddf import UDDFParseError, parse_uddf
+from ..parsing.fit import parse_fit
+from ..parsing.model import ParseError
+from ..parsing.uddf import parse_uddf
 from ..schemas import UploadOut, UploadResult
 from ..scoring.store import ensure_scores
 
 router = APIRouter(prefix="/uploads", tags=["uploads"])
 
-ALLOWED_SUFFIXES = (".uddf", ".xml")
+# Suffix -> (format name, parser)
+PARSERS = {".uddf": ("UDDF", parse_uddf), ".xml": ("UDDF", parse_uddf), ".fit": ("FIT", parse_fit)}
 
 
 @router.post("", response_model=UploadResult)
-async def upload_uddf(
+async def upload_dives(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
     filename = file.filename or "upload.uddf"
-    if not filename.lower().endswith(ALLOWED_SUFFIXES):
-        raise HTTPException(400, "File must be a .uddf or .xml UDDF export")
+    suffix = next((s for s in PARSERS if filename.lower().endswith(s)), None)
+    if suffix is None:
+        raise HTTPException(400, "File must be a .fit file or a .uddf or .xml UDDF export")
+    kind, parse = PARSERS[suffix]
 
     contents = await file.read(settings.max_upload_bytes + 1)
     if len(contents) > settings.max_upload_bytes:
         raise HTTPException(400, f"File too large (max {settings.max_upload_bytes // 2**20} MB)")
 
     try:
-        parsed = parse_uddf(contents)
-    except UDDFParseError as e:
-        raise HTTPException(400, f"Could not parse UDDF: {e}")
+        parsed = parse(contents)
+    except ParseError as e:
+        raise HTTPException(400, f"Could not parse {kind}: {e}")
 
-    prints = {id(d): fingerprint(d) for d in parsed.dives}
+    prints = {id(d): fingerprint(d.started_at) for d in parsed.dives}
     existing = set(
         db.scalars(
             select(Dive.fingerprint).where(
@@ -83,6 +88,9 @@ async def upload_uddf(
             min_temp_k=stats.min_temp_k,
             computer_model=d.computer_model,
             computer_serial=d.computer_serial,
+            water_type=d.water_type,
+            latitude=d.latitude,
+            longitude=d.longitude,
         )
         db.add(dive)
         stored.append(dive)
@@ -90,7 +98,15 @@ async def upload_uddf(
         db.execute(
             insert(Sample),
             [
-                {"dive_id": dive.id, "t_s": s.t_s, "depth_m": s.depth_m, "temp_k": s.temp_k}
+                {
+                    "dive_id": dive.id,
+                    "t_s": s.t_s,
+                    "depth_m": s.depth_m,
+                    "temp_k": s.temp_k,
+                    "heart_rate": s.heart_rate,
+                    "tank_pressure_bar": s.tank_pressure_bar,
+                    "ndl_s": s.ndl_s,
+                }
                 for s in d.samples
             ],
         )

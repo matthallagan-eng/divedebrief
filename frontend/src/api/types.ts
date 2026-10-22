@@ -69,10 +69,16 @@ export interface Sample {
   t_s: number;
   depth_m: number;
   temp_k: number | null;
+  heart_rate: number | null;
+  tank_pressure_bar: number | null;
+  ndl_s: number | null;
 }
 
 export interface DiveDetail extends DiveSummary {
   computer_serial: string | null;
+  water_type: "salt" | "fresh" | null;
+  latitude: number | null;
+  longitude: number | null;
   scores: SkillScoreDetail[];
   samples: Sample[];
   profile: ProfilePoint[];

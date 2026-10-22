@@ -1,9 +1,9 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
 from app.analysis.stats import fingerprint, summarize
-from app.parsing.uddf import ParsedDive, ParsedSample
+from app.parsing.model import ParsedDive, ParsedSample
 
 START = datetime(2026, 3, 14, 9, 30, tzinfo=timezone.utc)
 
@@ -32,17 +32,15 @@ def test_summarize_single_sample():
     assert stats.min_temp_k is None
 
 
-def test_fingerprint_ignores_metadata_and_float_noise():
-    a = _dive([(0, 0, 300.0), (60, 10.01, 299.0)], computer_model="Descent Mk2i")
-    b = _dive([(0, 0, None), (60, 10.04, None)], uddf_id="other")
-    assert fingerprint(a) == fingerprint(b)
+def test_fingerprint_depends_only_on_start_time():
+    # The same dive from FIT and from Subsurface's UDDF has different samples
+    assert fingerprint(START) == fingerprint(START.replace(microsecond=400_000))
+    assert fingerprint(START) != fingerprint(START.replace(second=1))
 
 
-def test_fingerprint_changes_with_start_time_or_profile():
-    base = _dive([(0, 0, None), (60, 10, None)])
-    later = _dive([(0, 0, None), (60, 10, None)], started_at=START.replace(hour=11))
-    deeper = _dive([(0, 0, None), (60, 12, None)])
-    assert len({fingerprint(base), fingerprint(later), fingerprint(deeper)}) == 3
+def test_fingerprint_compares_instants():
+    plus_two = timezone(timedelta(hours=2))
+    assert fingerprint(START) == fingerprint(START.astimezone(plus_two))
 
 
 def test_summarize_excludes_surface_time():
