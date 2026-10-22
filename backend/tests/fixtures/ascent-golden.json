@@ -1,0 +1,223 @@
+{
+  "description": "Golden cases for smoothed ascent-rate segment detection in backend/app/analysis/ascent.py. Expected values are derived by hand from the algorithm, not generated from the implementation. Omitted window_s / min_duration_s mean the defaults (10 s / 3 s). Compare times and rates with an absolute tolerance of 1e-6.",
+  "cases": [
+    {
+      "name": "empty profile",
+      "times": [],
+      "depths": [],
+      "limit_m_per_min": 9,
+      "expected": []
+    },
+    {
+      "name": "single sample",
+      "times": [
+        0
+      ],
+      "depths": [
+        12
+      ],
+      "limit_m_per_min": 9,
+      "expected": []
+    },
+    {
+      "name": "steady 6 m/min ascent stays under limit",
+      "times": [
+        0,
+        120
+      ],
+      "depths": [
+        12,
+        0
+      ],
+      "limit_m_per_min": 9,
+      "expected": []
+    },
+    {
+      "name": "fast descent is never a violation",
+      "times": [
+        0,
+        30
+      ],
+      "depths": [
+        0,
+        30
+      ],
+      "limit_m_per_min": 9,
+      "expected": []
+    },
+    {
+      "name": "steady 12 m/min ascent flags the whole dive, including clamped ends",
+      "times": [
+        0,
+        10,
+        20,
+        30,
+        40,
+        50,
+        60,
+        70,
+        80,
+        90,
+        100
+      ],
+      "depths": [
+        20,
+        18,
+        16,
+        14,
+        12,
+        10,
+        8,
+        6,
+        4,
+        2,
+        0
+      ],
+      "limit_m_per_min": 9,
+      "expected": [
+        {
+          "start_s": 0,
+          "end_s": 100,
+          "peak_rate_m_per_min": 12
+        }
+      ]
+    },
+    {
+      "name": "1 m jump over 2 s is smoothed below the limit",
+      "times": [
+        0,
+        60,
+        62,
+        120
+      ],
+      "depths": [
+        10,
+        10,
+        9,
+        9
+      ],
+      "limit_m_per_min": 9,
+      "expected": []
+    },
+    {
+      "name": "12 m/min ascent between flat sections; window edges trim the run",
+      "times": [
+        0,
+        60,
+        110,
+        200
+      ],
+      "depths": [
+        20,
+        20,
+        10,
+        10
+      ],
+      "limit_m_per_min": 9,
+      "expected": [
+        {
+          "start_s": 63,
+          "end_s": 107,
+          "peak_rate_m_per_min": 12
+        }
+      ]
+    },
+    {
+      "name": "two separate fast ascents give two segments",
+      "times": [
+        0,
+        60,
+        110,
+        150,
+        200,
+        240
+      ],
+      "depths": [
+        30,
+        30,
+        20,
+        20,
+        10,
+        10
+      ],
+      "limit_m_per_min": 9,
+      "expected": [
+        {
+          "start_s": 63,
+          "end_s": 107,
+          "peak_rate_m_per_min": 12
+        },
+        {
+          "start_s": 153,
+          "end_s": 197,
+          "peak_rate_m_per_min": 12
+        }
+      ]
+    },
+    {
+      "name": "2 s run is dropped by the default 3 s minimum",
+      "times": [
+        0,
+        50,
+        58,
+        120
+      ],
+      "depths": [
+        15,
+        15,
+        13.4,
+        13.4
+      ],
+      "limit_m_per_min": 9,
+      "expected": []
+    },
+    {
+      "name": "same 2 s run is kept with a 2 s minimum",
+      "times": [
+        0,
+        50,
+        58,
+        120
+      ],
+      "depths": [
+        15,
+        15,
+        13.4,
+        13.4
+      ],
+      "limit_m_per_min": 9,
+      "min_duration_s": 2,
+      "expected": [
+        {
+          "start_s": 53,
+          "end_s": 55,
+          "peak_rate_m_per_min": 9.6
+        }
+      ]
+    },
+    {
+      "name": "narrower window reacts faster at the edges",
+      "times": [
+        0,
+        60,
+        110,
+        200
+      ],
+      "depths": [
+        20,
+        20,
+        10,
+        10
+      ],
+      "limit_m_per_min": 8,
+      "window_s": 4,
+      "expected": [
+        {
+          "start_s": 61,
+          "end_s": 109,
+          "peak_rate_m_per_min": 12
+        }
+      ]
+    }
+  ]
+}

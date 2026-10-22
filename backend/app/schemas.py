@@ -2,6 +2,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
+from .scoring import ScoringSettings
+
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -40,9 +42,26 @@ class UploadOut(BaseModel):
     dives_skipped: int
 
 
-class DiveSummary(BaseModel):
+class RegionOut(BaseModel):
+    start_s: float
+    end_s: float
+    label: str
+    severity: str
+
+
+class SkillScoreOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+    skill: str
+    score: int | None  # None = N/A, explained by reason
+    reason: str
+
+
+class SkillScoreDetail(SkillScoreOut):
+    regions: list[RegionOut]
+
+
+class DiveSummary(BaseModel):
     id: int
     upload_id: int
     started_at: datetime
@@ -51,7 +70,8 @@ class DiveSummary(BaseModel):
     avg_depth_m: float
     min_temp_k: float | None
     computer_model: str | None
-    ascent_violations: int
+    overall_score: int | None
+    scores: list[SkillScoreOut]
 
 
 class SampleOut(BaseModel):
@@ -62,6 +82,21 @@ class SampleOut(BaseModel):
     temp_k: float | None
 
 
+class ProfilePoint(BaseModel):
+    t_s: float
+    depth_m: float
+    rate_m_per_min: float
+
+
 class DiveDetail(DiveSummary):
     computer_serial: str | None
+    scores: list[SkillScoreDetail]
     samples: list[SampleOut]
+    # 1 s grid with smoothed ascent rate, for the charts
+    profile: list[ProfilePoint]
+
+
+class SettingsOut(BaseModel):
+    values: ScoringSettings
+    defaults: ScoringSettings
+    version: int

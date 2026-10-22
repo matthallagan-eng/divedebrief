@@ -35,7 +35,10 @@ async function handle<T>(res: Response): Promise<T> {
   if (!res.ok) {
     if (res.status === 401 && getToken()) onUnauthorized();
     const detail = await res.json().catch(() => ({}));
-    const message = Array.isArray(detail.detail) ? detail.detail[0]?.msg : detail.detail;
+    // FastAPI validation errors are a list; show the first, minus pydantic's prefix
+    const message = Array.isArray(detail.detail)
+      ? String(detail.detail[0]?.msg ?? "").replace(/^Value error, /, "")
+      : detail.detail;
     throw new Error(message || `Request failed (${res.status})`);
   }
   return res.status === 204 ? (undefined as T) : res.json();
@@ -67,6 +70,15 @@ export const api = {
     form.append("file", file);
     const res = await fetch(`${BASE}/uploads`, { method: "POST", headers: authHeaders(), body: form });
     return handle<UploadResult>(res);
+  },
+
+  async put<T>(path: string, body: unknown): Promise<T> {
+    const res = await fetch(`${BASE}${path}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify(body),
+    });
+    return handle<T>(res);
   },
 
   async del<T>(path: string): Promise<T> {

@@ -5,6 +5,8 @@ import AuthPage from "./pages/AuthPage";
 import Logbook from "./pages/Logbook";
 import DiveDetail from "./pages/DiveDetail";
 import Upload from "./pages/Upload";
+import Settings from "./pages/Settings";
+import HowScoresWork from "./pages/HowScoresWork";
 
 function Protected() {
   const { token } = useAuth();
@@ -34,6 +36,8 @@ export default function App() {
             <Route path="/" element={<Logbook />} />
             <Route path="/dives/:id" element={<DiveDetail />} />
             <Route path="/upload" element={<Upload />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/scores" element={<HowScoresWork />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

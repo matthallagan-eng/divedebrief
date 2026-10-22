@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
 from .routers import auth, dives, uploads
+from .routers import settings as settings_router
 
 app = FastAPI(
     title="DiveDebrief API",
@@ -27,3 +28,4 @@ def health():
 app.include_router(auth.router)
 app.include_router(uploads.router)
 app.include_router(dives.router)
+app.include_router(settings_router.router)

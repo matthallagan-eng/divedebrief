@@ -53,6 +53,13 @@ recomputed when a diver changes a setting or the algorithm changes.
 - Scored on time held vs. target, number of exits from the band, and depth
   drift within the stop.
 - Reason example: "Held 2:10 of 3:00, drifted between 3.2 m and 6.1 m."
+- Added while tuning on the real dives (milestone 2):
+  - Time only counts as held while you're roughly still: under 3 m/min
+    averaged over 30 s. That way, swimming steadily up through the band
+    isn't a stop, but bobbing around the stop depth still is.
+  - Time inside the tolerance counts as held. Drifting past the band edge for
+    5 s or more costs points as a band exit.
+  - Dips under 5 s are treated as sensor noise.
 
 ### 1c. Buoyancy stability
 

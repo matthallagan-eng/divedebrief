@@ -7,6 +7,7 @@ import Ocean from "./Ocean";
 const nav = [
   { to: "/", label: "Logbook" },
   { to: "/upload", label: "Log dives" },
+  { to: "/settings", label: "Settings" },
 ];
 
 export default function Layout({ children }: { children: ReactNode }) {
@@ -22,14 +23,14 @@ export default function Layout({ children }: { children: ReactNode }) {
     <div className="min-h-screen">
       <Ocean />
       <header className="relative bg-surface-raised/70 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-3 px-4 py-4 sm:px-6">
           <NavLink to="/" className="flex items-center gap-2 text-foam">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-lagoon/15 text-aqua">
               <Waves size={18} />
             </span>
             <span className="text-sm font-semibold tracking-tight">DiveDebrief</span>
           </NavLink>
-          <nav className="flex items-center gap-5">
+          <nav className="flex w-full items-center justify-between gap-4 whitespace-nowrap sm:w-auto sm:justify-end sm:gap-5">
             {nav.map((item) => (
               <NavLink
                 key={item.to}

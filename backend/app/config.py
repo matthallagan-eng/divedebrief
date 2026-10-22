@@ -9,8 +9,6 @@ class Settings(BaseSettings):
     secret_key: str
     access_token_expire_minutes: int = 60 * 24 * 7
     max_upload_bytes: int = 10 * 1024 * 1024
-    # Default ascent-rate limit used for the stored violation count (m/min)
-    default_ascent_limit_m_per_min: float = 9.0
 
     class Config:
         env_file = ".env"

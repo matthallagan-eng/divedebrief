@@ -43,10 +43,13 @@ uploaded before accounts existed (V1 data).
 
 ```sh
 cd backend && .venv/Scripts/python -m pytest   # API tests need the db container running
-cd frontend && npm test
+cd frontend && npm run lint && npm run build
 ```
 
-Ascent-rate detection is implemented twice, in `backend/app/analysis/ascent.py`
-(for the stored violation count) and `frontend/src/lib/ascent.ts` (for the
-adjustable limit on the dive page). Both run against the hand-derived cases in
-`shared/ascent-golden.json`, so change the two implementations together.
+## Scoring
+
+Skill scores are computed on the backend (`backend/app/scoring/`), stored
+per dive, and recomputed when a diver changes their settings or
+`ALGORITHM_VERSION` is bumped. Each skill module's docstring states its
+rules, and `tests/test_scoring.py` checks hand-derived scores for synthetic
+profiles. Bump `ALGORITHM_VERSION` whenever a change could alter a score.

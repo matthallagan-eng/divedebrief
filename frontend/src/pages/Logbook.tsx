@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowDownToLine, Fish, Timer, TriangleAlert, Waves } from "lucide-react";
+import { ArrowDownToLine, Award, Fish, Timer, Waves } from "lucide-react";
 import { api } from "../api/client";
-import type { DiveSummary } from "../api/types";
-import { AscentBadge } from "../components/AscentBadge";
+import type { DiveSummary, Skill } from "../api/types";
 import { StatCard } from "../components/StatCard";
-import { DEFAULT_LIMIT_M_PER_MIN } from "../lib/ascent";
+import { formatScore } from "../lib/skills";
 import { formatDate, formatDepth, formatDuration, formatHours, formatTemp, formatTime } from "../lib/format";
 
 export default function Logbook() {
@@ -23,7 +22,12 @@ export default function Logbook() {
 
   const deepest = dives.reduce((a, b) => (b.max_depth_m > a.max_depth_m ? b : a));
   const totalTime = dives.reduce((sum, d) => sum + d.duration_s, 0);
-  const fastDives = dives.filter((d) => d.ascent_violations > 0).length;
+  const scored = dives.filter((d) => d.overall_score !== null).slice(0, 10);
+  const recentAvg = scored.length
+    ? Math.round(scored.reduce((sum, d) => sum + d.overall_score!, 0) / scored.length)
+    : null;
+  const skillScore = (d: DiveSummary, skill: Skill) =>
+    formatScore(d.scores.find((s) => s.skill === skill)?.score ?? null);
 
   return (
     <div className="space-y-8">
@@ -42,15 +46,15 @@ export default function Logbook() {
           sub={formatDate(deepest.started_at)}
         />
         <StatCard
-          icon={<TriangleAlert size={14} />}
-          label="Dives with fast ascents"
-          value={String(fastDives)}
-          sub={`over ${DEFAULT_LIMIT_M_PER_MIN} m/min`}
+          icon={<Award size={14} />}
+          label="Average score"
+          value={formatScore(recentAvg)}
+          sub={scored.length ? `last ${scored.length} scored dive${scored.length === 1 ? "" : "s"}` : undefined}
         />
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-surface-border bg-surface-raised/80">
-        <table className="w-full min-w-[640px] text-left text-sm">
+        <table className="w-full min-w-[720px] text-left text-sm">
           <thead className="border-b border-surface-border text-xs text-murk">
             <tr>
               <th className="px-4 py-3 font-medium">Date</th>
@@ -58,7 +62,9 @@ export default function Logbook() {
               <th className="px-4 py-3 text-right font-medium">Max depth</th>
               <th className="px-4 py-3 text-right font-medium">Avg depth</th>
               <th className="px-4 py-3 text-right font-medium">Water</th>
-              <th className="px-4 py-3 font-medium">Fast ascents</th>
+              <th className="px-4 py-3 text-right font-medium">Ascent</th>
+              <th className="px-4 py-3 text-right font-medium">Stop</th>
+              <th className="px-4 py-3 text-right font-medium">Overall</th>
             </tr>
           </thead>
           <tbody className="tabular-nums">
@@ -78,7 +84,9 @@ export default function Logbook() {
                 <td className="px-4 py-3 text-right text-foam">{formatDepth(d.max_depth_m)}</td>
                 <td className="px-4 py-3 text-right text-mist">{formatDepth(d.avg_depth_m)}</td>
                 <td className="px-4 py-3 text-right text-mist">{formatTemp(d.min_temp_k)}</td>
-                <td className="px-4 py-3"><AscentBadge count={d.ascent_violations} /></td>
+                <td className="px-4 py-3 text-right text-mist">{skillScore(d, "ascent")}</td>
+                <td className="px-4 py-3 text-right text-mist">{skillScore(d, "stop")}</td>
+                <td className="px-4 py-3 text-right font-medium text-foam">{formatScore(d.overall_score)}</td>
               </tr>
             ))}
           </tbody>

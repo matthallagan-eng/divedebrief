@@ -1,7 +1,7 @@
 """Smoothed ascent-rate analysis.
 
-Mirrored in frontend/src/lib/ascent.ts; both are checked against
-shared/ascent-golden.json, so change them together.
+Checked against tests/fixtures/ascent-golden.json, whose expected values are
+derived by hand; re-derive them when the algorithm changes.
 
 1. Linearly interpolate the profile onto a 1 s grid.
 2. Rate at second i = (depth[i - h] - depth[i + h]) / (t[i + h] - t[i - h]),
@@ -12,7 +12,7 @@ shared/ascent-golden.json, so change them together.
 from dataclasses import dataclass
 from typing import Sequence
 
-DEFAULT_WINDOW_S = 14
+DEFAULT_WINDOW_S = 10
 DEFAULT_MIN_DURATION_S = 3
 
 
