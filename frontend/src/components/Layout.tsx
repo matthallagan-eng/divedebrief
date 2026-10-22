@@ -1,6 +1,7 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import type { ReactNode } from "react";
 import { Waves } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 import Ocean from "./Ocean";
 
 const nav = [
@@ -9,6 +10,14 @@ const nav = [
 ];
 
 export default function Layout({ children }: { children: ReactNode }) {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    logout();
+    navigate("/login");
+  }
+
   return (
     <div className="min-h-screen">
       <Ocean />
@@ -20,7 +29,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             </span>
             <span className="text-sm font-semibold tracking-tight">DiveDebrief</span>
           </NavLink>
-          <nav className="flex gap-5">
+          <nav className="flex items-center gap-5">
             {nav.map((item) => (
               <NavLink
                 key={item.to}
@@ -35,6 +44,13 @@ export default function Layout({ children }: { children: ReactNode }) {
                 {item.label}
               </NavLink>
             ))}
+            <button
+              onClick={handleLogout}
+              title={user?.email}
+              className="rounded-lg border border-surface-border px-3 py-1.5 text-sm text-murk transition-colors hover:border-lagoon/60 hover:text-mist"
+            >
+              Sign out
+            </button>
           </nav>
         </div>
         {/* Wave edge where the header meets the water */}

@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import String, DateTime, Float, ForeignKey, Integer
+from sqlalchemy import String, DateTime, Float, ForeignKey, Integer, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .database import Base
@@ -10,10 +10,23 @@ def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    hashed_password: Mapped[str] = mapped_column(String(255))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+
 class Upload(Base):
     __tablename__ = "uploads"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    # Nullable only for V1 rows, which the first account to register claims
+    user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
     filename: Mapped[str] = mapped_column(String(255))
     sha256: Mapped[str] = mapped_column(String(64), index=True)
     uploaded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
@@ -27,13 +40,18 @@ class Upload(Base):
 
 class Dive(Base):
     __tablename__ = "dives"
+    __table_args__ = (UniqueConstraint("user_id", "fingerprint"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    # Duplicates upload.user_id so dedupe can be unique per diver
+    user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
     upload_id: Mapped[int] = mapped_column(
         ForeignKey("uploads.id", ondelete="CASCADE"), index=True
     )
     # sha256 of start time + sample series; used to skip re-uploaded dives
-    fingerprint: Mapped[str] = mapped_column(String(64), unique=True)
+    fingerprint: Mapped[str] = mapped_column(String(64))
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     duration_s: Mapped[float] = mapped_column(Float)
     max_depth_m: Mapped[float] = mapped_column(Float)

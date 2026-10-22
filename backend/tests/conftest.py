@@ -1,5 +1,8 @@
 import os
 
+# Settings require a strong SECRET_KEY; set one before any app module loads
+os.environ.setdefault("SECRET_KEY", "test-secret-key-that-is-long-enough-0123456789")
+
 import pytest
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
@@ -45,7 +48,7 @@ def engine():
 
 
 @pytest.fixture
-def client(engine):
+def anon_client(engine):
     from fastapi.testclient import TestClient
 
     from app.database import get_db
@@ -66,4 +69,18 @@ def client(engine):
     app.dependency_overrides.clear()
 
     with engine.begin() as conn:
-        conn.execute(text("TRUNCATE uploads, dives, samples RESTART IDENTITY CASCADE"))
+        conn.execute(text("TRUNCATE users, uploads, dives, samples RESTART IDENTITY CASCADE"))
+
+
+def sign_up(client, email="diver@example.com", password="correct-horse"):
+    """Register and log in; returns the Authorization header."""
+    assert client.post("/auth/register", json={"email": email, "password": password}).status_code == 201
+    res = client.post("/auth/login", data={"username": email, "password": password})
+    return {"Authorization": f"Bearer {res.json()['access_token']}"}
+
+
+@pytest.fixture
+def client(anon_client):
+    """A client signed in as a fresh diver."""
+    anon_client.headers.update(sign_up(anon_client))
+    return anon_client

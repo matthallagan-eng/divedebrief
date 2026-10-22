@@ -20,7 +20,7 @@ Backend:
 docker compose up -d db
 cd backend
 python -m venv .venv && .venv/Scripts/pip install -r requirements.txt
-cp .env.example .env
+cp .env.example .env   # then set SECRET_KEY (the command is in the file)
 .venv/Scripts/alembic upgrade head
 .venv/Scripts/uvicorn app.main:app --reload
 ```
@@ -32,6 +32,12 @@ cd frontend
 npm install
 npm run dev
 ```
+
+## Accounts
+
+Each diver signs up with an email and password and only sees their own
+uploads and dives. The first account created also takes over any dives
+uploaded before accounts existed (V1 data).
 
 ## Tests
 
