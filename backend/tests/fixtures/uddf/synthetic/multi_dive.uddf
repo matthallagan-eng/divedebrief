@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Three dives across two repetition groups, no namespace, two dive computers
+     (so no computer is attributed), plus an event-only waypoint, a duplicate
+     timestamp and out-of-order waypoints. -->
+<uddf version="3.2.0">
+  <diver>
+    <owner id="owner">
+      <equipment>
+        <divecomputer id="dc1"><model>Computer A</model></divecomputer>
+        <divecomputer id="dc2"><model>Computer B</model></divecomputer>
+      </equipment>
+    </owner>
+  </diver>
+  <profiledata>
+    <repetitiongroup id="rg1">
+      <dive id="a">
+        <informationbeforedive><datetime>2026-03-15T08:00:00+01:00</datetime></informationbeforedive>
+        <samples>
+          <waypoint><divetime>0</divetime><depth>0</depth></waypoint>
+          <waypoint><divetime>30</divetime><depth>6</depth></waypoint>
+          <waypoint><divetime>30</divetime><depth>7</depth></waypoint>
+          <waypoint><divetime>45</divetime><switchmix ref="air"/></waypoint>
+          <waypoint><divetime>90</divetime><depth>0</depth></waypoint>
+          <waypoint><divetime>60</divetime><depth>8</depth></waypoint>
+        </samples>
+      </dive>
+      <dive id="b">
+        <informationbeforedive><datetime>2026-03-15T11:00:00+01:00</datetime></informationbeforedive>
+        <samples>
+          <waypoint><divetime>0</divetime><depth>0</depth></waypoint>
+          <waypoint><divetime>60</divetime><depth>12</depth></waypoint>
+          <waypoint><divetime>120</divetime><depth>0</depth></waypoint>
+        </samples>
+      </dive>
+    </repetitiongroup>
+    <repetitiongroup id="rg2">
+      <dive id="c">
+        <informationbeforedive><datetime>2026-03-16T09:00:00Z</datetime></informationbeforedive>
+        <samples>
+          <waypoint><divetime>0</divetime><depth>0</depth></waypoint>
+          <waypoint><divetime>60</divetime><depth>20</depth></waypoint>
+          <waypoint><divetime>180</divetime><depth>0</depth></waypoint>
+        </samples>
+      </dive>
+    </repetitiongroup>
+  </profiledata>
+</uddf>

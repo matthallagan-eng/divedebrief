@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- No temperature on any waypoint, and no dive computer listed. -->
+<uddf xmlns="http://www.streit.cc/uddf/3.2/" version="3.2.0">
+  <profiledata>
+    <repetitiongroup id="rg1">
+      <dive id="d1">
+        <informationbeforedive><datetime>2026-04-01T14:00:00</datetime></informationbeforedive>
+        <samples>
+          <waypoint><divetime>0</divetime><depth>0</depth></waypoint>
+          <waypoint><divetime>60</divetime><depth>9.5</depth></waypoint>
+          <waypoint><divetime>300</divetime><depth>0</depth></waypoint>
+        </samples>
+      </dive>
+    </repetitiongroup>
+  </profiledata>
+</uddf>

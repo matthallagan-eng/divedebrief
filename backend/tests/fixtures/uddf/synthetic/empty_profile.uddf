@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One dive with no samples (skipped with a warning) next to a good dive. -->
+<uddf version="3.2.0">
+  <profiledata>
+    <repetitiongroup id="rg1">
+      <dive id="empty">
+        <informationbeforedive><datetime>2026-04-02T10:00:00</datetime></informationbeforedive>
+        <samples/>
+      </dive>
+      <dive id="good">
+        <informationbeforedive><datetime>2026-04-02T12:00:00</datetime></informationbeforedive>
+        <samples>
+          <waypoint><divetime>0</divetime><depth>0</depth></waypoint>
+          <waypoint><divetime>60</divetime><depth>5</depth></waypoint>
+          <waypoint><divetime>120</divetime><depth>0</depth></waypoint>
+        </samples>
+      </dive>
+    </repetitiongroup>
+  </profiledata>
+</uddf>
