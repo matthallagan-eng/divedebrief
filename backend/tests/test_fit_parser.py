@@ -78,3 +78,23 @@ def test_rejects_damaged_file():
     data[500] ^= 0xFF
     with pytest.raises(FITParseError, match="damaged"):
         parse_fit(bytes(data))
+
+
+def test_transmitter_pressures_become_a_sampled_tank():
+    from app.models import Dive, DiveTank
+    from app.parsing.model import ParsedDive, ParsedSample
+    from app.routers.uploads import _sampled_tank
+
+    start = datetime(2026, 8, 1, tzinfo=timezone.utc)
+    samples = [ParsedSample(t, 10, None, tank_pressure_bar=p) for t, p in ((0, None), (1, 205), (2, 120), (3, 55))]
+    dive = Dive(tank=DiveTank(volume_l=11.1, start_bar=200, end_bar=60, source="manual"))
+    _sampled_tank(dive, ParsedDive(start, samples))
+    # The tank size the diver entered is kept
+    assert (dive.tank.volume_l, dive.tank.start_bar, dive.tank.end_bar, dive.tank.source) == (
+        11.1, 205, 55, "sampled",
+    )
+
+    # No transmitter: a manual tank is left alone
+    dive = Dive(tank=DiveTank(volume_l=11.1, start_bar=200, end_bar=60, source="manual"))
+    _sampled_tank(dive, ParsedDive(start, [ParsedSample(0, 10, None)]))
+    assert dive.tank.source == "manual"

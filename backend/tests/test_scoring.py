@@ -1,12 +1,15 @@
 """Scores for synthetic profiles, derived by hand from the rules in
-app/scoring/ascent_control.py, safety_stop.py and buoyancy.py.
+app/scoring/ascent_control.py, safety_stop.py, buoyancy.py and air.py.
 
 Keyframe times are offset by fractions of a second where needed, so no grid
 second lands exactly on a threshold and float rounding can't decide a case.
 """
+from datetime import datetime, timezone
+
 import pytest
 
-from app.scoring import ScoringSettings, overall_score, score_dive
+from app.scoring import AirInput, ScoringSettings, overall_score, score_air, score_dive
+from app.scoring.air import sac_l_min
 
 DEFAULTS = ScoringSettings()
 
@@ -161,6 +164,69 @@ def test_short_bottom_phase_is_not_scored():
     assert buoyancy.score is None
     assert buoyancy.reason == "No settled bottom phase of 3 minutes or more to judge."
     assert buoyancy.regions == []
+
+
+# --- air efficiency ----------------------------------------------------------
+# A 10 L tank, 50 min at a 10 m average in salt water (2 ATA):
+# SAC = used bar x 10 / (50 x 2) = used bar / 10.
+
+def _air(day, used, water=None, volume=10.0):
+    started = datetime(2026, 8, day, 10, 0, tzinfo=timezone.utc)
+    return AirInput(started, 3000, 10.0, water, volume, 200.0, 200.0 - used)
+
+
+# SACs 15, 16, 17, 18, 20 L/min: median 17
+BASELINE = [_air(d, used) for d, used in zip(range(1, 6), (150, 160, 170, 180, 200))]
+
+
+def test_sac_in_salt_and_fresh_water():
+    assert sac_l_min(_air(10, 150), DEFAULTS) == pytest.approx(15.0)
+    # Fresh water: 10 / 10.3 + 1 = 1.9709 ATA
+    assert sac_l_min(_air(10, 150, "fresh"), DEFAULTS) == pytest.approx(1500 / 50 / (10 / 10.3 + 1))
+    fresh_default = DEFAULTS.model_copy(update={"default_water_type": "fresh"})
+    assert sac_l_min(_air(10, 150), fresh_default) == sac_l_min(_air(10, 150, "fresh"), DEFAULTS)
+
+
+def test_better_than_baseline():
+    # 15.3 vs 17: 10% better -> 75 + 1.5 x 10 = 90
+    air = score_air(_air(10, 153), BASELINE, DEFAULTS)
+    assert air.score == 90
+    assert air.reason == "15.3 L/min, 10% better than your last 5 dives."
+
+
+def test_worse_than_baseline():
+    # 20.4 vs 17: 20% worse -> 75 - 30 = 45
+    air = score_air(_air(10, 204), BASELINE, DEFAULTS)
+    assert air.score == 45
+    assert air.reason == "20.4 L/min, 20% worse than your last 5 dives."
+
+
+def test_baseline_uses_only_the_last_5_earlier_dives():
+    # Two very heavy-breathing older dives and one later dive are left out
+    recent = [_air(day, used) for day, used in zip(range(3, 8), (150, 160, 170, 180, 200))]
+    history = [_air(1, 300), _air(2, 300), *recent, _air(20, 100)]
+    air = score_air(_air(10, 170), history, DEFAULTS)
+    assert air.score == 75
+    assert air.reason == "17.0 L/min, in line with your last 5 dives."
+
+
+def test_baseline_still_building():
+    air = score_air(_air(10, 153), BASELINE[:3], DEFAULTS)
+    assert air.score is None
+    assert air.reason == "15.3 L/min. Building your baseline (3 of 5)."
+
+
+@pytest.mark.parametrize(
+    "air_input, reason",
+    [
+        (None, "No tank data. Add your tank and pressures to score air use."),
+        (_air(10, 150, volume=None), "Add your tank size to work out air use."),
+        (_air(10, 0), "The tank pressures show no air used."),
+    ],
+)
+def test_air_not_scored(air_input, reason):
+    air = score_air(air_input, BASELINE, DEFAULTS)
+    assert (air.score, air.reason) == (None, reason)
 
 
 # --- overall ------------------------------------------------------------------

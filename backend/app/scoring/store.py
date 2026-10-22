@@ -5,10 +5,15 @@ from itertools import groupby
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ..models import Dive, DiveScore, Sample, UserSettings
-from . import ALGORITHM_VERSION, ScoringSettings, score_dive
+from ..models import Dive, DiveScore, DiveTank, Sample, UserSettings
+from . import ALGORITHM_VERSION, AirInput, ScoringSettings, score_air, score_dive
 
-SKILLS = ("ascent", "stop", "buoyancy")
+# Skills computed from a dive's own samples
+SAMPLE_SKILLS = ("ascent", "stop", "buoyancy")
+# Air efficiency is compared with the diver's earlier dives, so a tank edit
+# changes later dives' scores too. It needs no samples and is cheap, so it is
+# re-checked on every read instead of being invalidated.
+SKILLS = SAMPLE_SKILLS + ("air",)
 
 
 def load_settings(db: Session, user_id: int) -> tuple[ScoringSettings, int]:
@@ -32,9 +37,10 @@ def save_settings(db: Session, user_id: int, cfg: ScoringSettings) -> int:
 
 
 def _is_fresh(dive: Dive, settings_version: int) -> bool:
-    return {s.skill for s in dive.scores} == set(SKILLS) and all(
+    scores = [s for s in dive.scores if s.skill in SAMPLE_SKILLS]
+    return {s.skill for s in scores} == set(SAMPLE_SKILLS) and all(
         s.algorithm_version == ALGORITHM_VERSION and s.settings_version == settings_version
-        for s in dive.scores
+        for s in scores
     )
 
 
@@ -43,8 +49,16 @@ def ensure_scores(db: Session, user_id: int, dives: list[Dive]) -> ScoringSettin
     Returns the settings used, for computing the overall score."""
     cfg, version = load_settings(db, user_id)
     stale = [d for d in dives if not _is_fresh(d, version)]
+    changed = _refresh_samples(db, stale, version, cfg)
+    changed |= _refresh_air(db, user_id, dives, version, cfg)
+    if changed:
+        db.commit()
+    return cfg
+
+
+def _refresh_samples(db: Session, stale: list[Dive], version: int, cfg: ScoringSettings) -> bool:
     if not stale:
-        return cfg
+        return False
 
     rows = db.execute(
         select(Sample.dive_id, Sample.t_s, Sample.depth_m)
@@ -66,6 +80,38 @@ def ensure_scores(db: Session, user_id: int, dives: list[Dive]) -> ScoringSettin
                 settings_version=version,
             )
             for r in results
-        ]
-    db.commit()
-    return cfg
+        ] + [s for s in dive.scores if s.skill not in SAMPLE_SKILLS]
+    return True
+
+
+def _refresh_air(
+    db: Session, user_id: int, dives: list[Dive], version: int, cfg: ScoringSettings
+) -> bool:
+    rows = db.execute(
+        select(
+            Dive.id, Dive.started_at, Dive.duration_s, Dive.avg_depth_m, Dive.water_type,
+            DiveTank.volume_l, DiveTank.start_bar, DiveTank.end_bar,
+        )
+        .join(DiveTank, DiveTank.dive_id == Dive.id)
+        .where(Dive.user_id == user_id)
+    ).all()
+    inputs = {r.id: AirInput(*r[1:]) for r in rows}
+    history = list(inputs.values())
+
+    changed = False
+    for dive in dives:
+        result = score_air(inputs.get(dive.id), history, cfg)
+        row = next((s for s in dive.scores if s.skill == "air"), None)
+        if row is None:
+            row = DiveScore(skill="air", regions=[])
+            dive.scores.append(row)
+        elif (row.score, row.reason, row.algorithm_version, row.settings_version) == (
+            result.score, result.reason, ALGORITHM_VERSION, version,
+        ):
+            continue
+        row.score = result.score
+        row.reason = result.reason
+        row.algorithm_version = ALGORITHM_VERSION
+        row.settings_version = version
+        changed = True
+    return changed

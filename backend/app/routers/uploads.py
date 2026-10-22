@@ -8,7 +8,7 @@ from ..analysis.stats import fingerprint, summarize
 from ..config import settings
 from ..database import get_db
 from ..deps import get_current_user
-from ..models import Dive, Sample, Upload, User
+from ..models import Dive, DiveTank, Sample, Upload, User
 from ..parsing.fit import parse_fit
 from ..parsing.model import ParsedDive, ParseError
 from ..parsing.uddf import parse_uddf
@@ -35,6 +35,16 @@ def _fill(dive: Dive, d: ParsedDive, source: str) -> None:
     dive.latitude = d.latitude
     dive.longitude = d.longitude
     dive.source = source
+
+
+def _sampled_tank(dive: Dive, d: ParsedDive) -> None:
+    """Tank pressures from the dive computer's transmitter, if it has one.
+    A tank size the diver already entered is kept."""
+    pressures = [s.tank_pressure_bar for s in d.samples if s.tank_pressure_bar is not None]
+    if len(pressures) < 2 or pressures[-1] >= pressures[0]:
+        return
+    volume = dive.tank.volume_l if dive.tank else None
+    dive.tank = DiveTank(volume_l=volume, start_bar=pressures[0], end_bar=pressures[-1], source="sampled")
 
 
 def _store_samples(db: Session, dive_id: int, d: ParsedDive) -> None:
@@ -101,6 +111,7 @@ async def upload_dives(
             _fill(stored_dive, d, source)
             db.execute(delete(Sample).where(Sample.dive_id == stored_dive.id))
             _store_samples(db, stored_dive.id, d)
+            _sampled_tank(stored_dive, d)
             stored_dive.scores = []  # recomputed below from the new samples
             upgraded.append(stored_dive)
 
@@ -134,6 +145,7 @@ async def upload_dives(
         stored.append(dive)
         db.flush()
         _store_samples(db, dive.id, d)
+        _sampled_tank(dive, d)
 
     db.commit()
     ensure_scores(db, user.id, stored + upgraded)

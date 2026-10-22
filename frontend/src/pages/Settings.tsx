@@ -4,7 +4,8 @@ import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import type { ScoringSettings, SettingsResponse } from "../api/types";
 
-type Key = keyof ScoringSettings;
+// Numeric settings; the water type has its own select below
+type Key = Exclude<keyof ScoringSettings, "default_water_type">;
 
 interface Field {
   key: Key;
@@ -60,6 +61,7 @@ const GROUPS: { title: string; fields: Field[] }[] = [
         help: "0 leaves a skill out of the overall score." },
       { key: "weight_stop", label: "Safety stop", unit: "×", min: 0, max: 10, step: 0.5 },
       { key: "weight_buoyancy", label: "Buoyancy", unit: "×", min: 0, max: 10, step: 0.5 },
+      { key: "weight_air", label: "Air efficiency", unit: "×", min: 0, max: 10, step: 0.5 },
     ],
   },
 ];
@@ -142,6 +144,27 @@ export default function Settings() {
           </div>
         </section>
       ))}
+
+      <section className="rounded-xl border border-surface-border bg-surface-raised/80">
+        <h2 className="border-b border-surface-border px-5 py-3 text-sm font-medium text-foam">Air efficiency</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
+          <div className="min-w-0 flex-1">
+            <label htmlFor="default_water_type" className="text-sm text-foam">Default water type</label>
+            <p className="text-xs text-murk">
+              Used for dives whose file doesn't say. Garmin FIT files record it from the watch's setting.
+            </p>
+          </div>
+          <select
+            id="default_water_type"
+            value={values.default_water_type}
+            onChange={(e) => setValues({ ...values, default_water_type: e.target.value as "salt" | "fresh" })}
+            className="rounded-lg border border-surface-border bg-surface px-3 py-1.5 text-sm text-foam outline-none focus:border-lagoon"
+          >
+            <option value="salt">Salt</option>
+            <option value="fresh">Fresh</option>
+          </select>
+        </div>
+      </section>
 
       <div className="flex flex-wrap items-center gap-4">
         <button

@@ -54,7 +54,7 @@ export default function Logbook() {
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-surface-border bg-surface-raised/80">
-        <table className="w-full min-w-[800px] text-left text-sm">
+        <table className="w-full min-w-[880px] text-left text-sm">
           <thead className="border-b border-surface-border text-xs text-murk">
             <tr>
               <th className="px-4 py-3 font-medium">Date</th>
@@ -65,6 +65,7 @@ export default function Logbook() {
               <th className="px-4 py-3 text-right font-medium">Ascent</th>
               <th className="px-4 py-3 text-right font-medium">Stop</th>
               <th className="px-4 py-3 text-right font-medium">Buoyancy</th>
+              <th className="px-4 py-3 text-right font-medium">Air</th>
               <th className="px-4 py-3 text-right font-medium">Overall</th>
             </tr>
           </thead>
@@ -88,6 +89,7 @@ export default function Logbook() {
                 <td className="px-4 py-3 text-right text-mist">{skillScore(d, "ascent")}</td>
                 <td className="px-4 py-3 text-right text-mist">{skillScore(d, "stop")}</td>
                 <td className="px-4 py-3 text-right text-mist">{skillScore(d, "buoyancy")}</td>
+                <td className="px-4 py-3 text-right text-mist">{skillScore(d, "air")}</td>
                 <td className="px-4 py-3 text-right font-medium text-foam">{formatScore(d.overall_score)}</td>
               </tr>
             ))}

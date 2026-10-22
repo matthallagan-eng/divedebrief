@@ -4,8 +4,10 @@ from sqlalchemy.orm import Session, selectinload
 
 from ..database import get_db
 from ..deps import get_current_user
-from ..models import Dive, User
-from ..schemas import DiveDetail, DiveSummary, ProfilePoint, SampleOut, SkillScoreDetail
+from ..models import Dive, DiveTank, User
+from ..schemas import (
+    DiveDetail, DiveSummary, ProfilePoint, SampleOut, SkillScoreDetail, TankIn, TankOut,
+)
 from ..scoring import Profile, ScoringSettings, overall_score
 from ..scoring.store import SKILLS, ensure_scores
 
@@ -45,7 +47,7 @@ def get_dive(dive_id: int, db: Session = Depends(get_db), user: User = Depends(g
     dive = db.scalar(
         select(Dive)
         .where(Dive.id == dive_id, Dive.user_id == user.id)
-        .options(selectinload(Dive.samples), selectinload(Dive.scores))
+        .options(selectinload(Dive.samples), selectinload(Dive.scores), selectinload(Dive.tank))
     )
     if dive is None:
         raise HTTPException(404, "Dive not found")
@@ -59,6 +61,7 @@ def get_dive(dive_id: int, db: Session = Depends(get_db), user: User = Depends(g
         **fields,
         computer_serial=dive.computer_serial,
         source=dive.source,
+        tank=dive.tank and TankOut.model_validate(dive.tank),
         water_type=dive.water_type,
         latitude=dive.latitude,
         longitude=dive.longitude,
@@ -71,8 +74,41 @@ def get_dive(dive_id: int, db: Session = Depends(get_db), user: User = Depends(g
 
 @router.delete("/{dive_id}", status_code=204)
 def delete_dive(dive_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    db.delete(_own_dive(db, dive_id, user))
+    db.commit()
+
+
+@router.put("/{dive_id}/tank", response_model=TankOut)
+def put_tank(
+    dive_id: int, body: TankIn, db: Session = Depends(get_db), user: User = Depends(get_current_user)
+):
+    """Set the tank size, and the pressures unless the dive computer recorded them."""
+    dive = _own_dive(db, dive_id, user)
+    tank = dive.tank
+    if body.start_bar is None:
+        if tank is None:
+            raise HTTPException(422, "Start and end pressure are needed for this dive")
+        tank.volume_l = body.volume_l
+    else:
+        if tank is None:
+            tank = dive.tank = DiveTank(source="manual")
+        if (tank.start_bar, tank.end_bar) != (body.start_bar, body.end_bar):
+            tank.source = "manual"
+        tank.volume_l, tank.start_bar, tank.end_bar = body.volume_l, body.start_bar, body.end_bar
+    db.commit()
+    return tank
+
+
+@router.delete("/{dive_id}/tank", status_code=204)
+def delete_tank(dive_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    dive = _own_dive(db, dive_id, user)
+    if dive.tank is not None:
+        db.delete(dive.tank)
+        db.commit()
+
+
+def _own_dive(db: Session, dive_id: int, user: User) -> Dive:
     dive = db.scalar(select(Dive).where(Dive.id == dive_id, Dive.user_id == user.id))
     if dive is None:
         raise HTTPException(404, "Dive not found")
-    db.delete(dive)
-    db.commit()
+    return dive

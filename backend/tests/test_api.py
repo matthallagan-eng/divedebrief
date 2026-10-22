@@ -71,7 +71,7 @@ def test_scores_are_stored_and_returned(client):
     _upload(client, "fast.uddf", FAST_ASCENT)
     [dive] = client.get("/dives").json()
     assert [(s["skill"], s["score"]) for s in dive["scores"]] == [
-        ("ascent", 18), ("stop", 0), ("buoyancy", 100),
+        ("ascent", 18), ("stop", 0), ("buoyancy", 100), ("air", None),
     ]
     assert dive["overall_score"] == 39
     assert dive["scores"][0]["reason"] == (
@@ -143,7 +143,7 @@ def test_fit_upload_stores_extra_channels_and_dedupes_with_uddf(client):
     assert detail["water_type"] == "fresh"
     assert detail["latitude"] is not None
     assert detail["samples"][0]["heart_rate"] == 81
-    assert [s["skill"] for s in detail["scores"]] == ["ascent", "stop", "buoyancy"]
+    assert [s["skill"] for s in detail["scores"]] == ["ascent", "stop", "buoyancy", "air"]
 
     # The same dive exported from Subsurface is recognised as already stored
     uddf = (FIXTURES / "uddf" / "real" / "test_dive.uddf").read_bytes()
@@ -173,12 +173,63 @@ def test_fit_upload_fills_in_a_dive_stored_from_uddf(client):
     assert (new["samples"][0]["t_s"], new["samples"][0]["heart_rate"]) == (0, 81)
     # Rescored from the FIT samples (ascent 82 vs 81 from UDDF)
     assert [(s["skill"], s["score"]) for s in new["scores"]] == [
-        ("ascent", 82), ("stop", 71), ("buoyancy", 90),
+        ("ascent", 82), ("stop", 71), ("buoyancy", 90), ("air", None),
     ]
 
     # A second FIT upload of the same dive has nothing to add
     res = client.post("/uploads", files={"file": ("dive.fit", fit, "application/octet-stream")})
     assert (res.json()["updated"], res.json()["skipped"]) == (0, 1)
+
+
+def _square_dive(day: int) -> bytes:
+    """50 min at 10 m with instant descent and ascent: duration 3000 s, avg 10 m."""
+    return f"""<uddf><profiledata><repetitiongroup><dive id="d{day}">
+  <informationbeforedive><datetime>2026-07-{day:02d}T10:00:00</datetime></informationbeforedive>
+  <samples>
+    <waypoint><divetime>0</divetime><depth>10</depth></waypoint>
+    <waypoint><divetime>3000</divetime><depth>10</depth></waypoint>
+  </samples>
+</dive></repetitiongroup></profiledata></uddf>""".encode()
+
+
+def _air(dive):
+    return next((s["score"], s["reason"]) for s in dive["scores"] if s["skill"] == "air")
+
+
+def test_tank_entry_and_air_baseline(client):
+    for day in range(1, 7):
+        _upload(client, f"day{day}.uddf", _square_dive(day))
+    dives = sorted(client.get("/dives").json(), key=lambda d: d["started_at"])
+    assert _air(dives[0]) == (None, "No tank data. Add your tank and pressures to score air use.")
+
+    # Pressures are required when the dive computer recorded none
+    first = dives[0]["id"]
+    assert client.put(f"/dives/{first}/tank", json={"volume_l": 10}).status_code == 422
+    bad = {"volume_l": 10, "start_bar": 200, "end_bar": 210}
+    assert client.put(f"/dives/{first}/tank", json=bad).status_code == 422
+
+    # 10 L, 50 min at 2 ATA: SAC = bar used / 10. Five dives at 17 L/min.
+    for d in dives[:5]:
+        res = client.put(f"/dives/{d['id']}/tank", json={"volume_l": 10, "start_bar": 200, "end_bar": 30})
+        assert res.json() == {"volume_l": 10, "start_bar": 200, "end_bar": 30, "source": "manual"}
+    last = dives[5]["id"]
+    client.put(f"/dives/{last}/tank", json={"volume_l": 10, "start_bar": 200, "end_bar": 47})
+
+    detail = client.get(f"/dives/{dives[4]['id']}").json()
+    assert detail["tank"]["source"] == "manual"
+    assert _air(detail) == (None, "17.0 L/min. Building your baseline (4 of 5).")
+    # 15.3 vs 17: 10% better -> 90
+    assert _air(client.get(f"/dives/{last}").json()) == (90, "15.3 L/min, 10% better than your last 5 dives.")
+
+    # Editing earlier tanks moves the later dive's baseline: with three of the
+    # five at 15.3 L/min the median is 15.3, so the last dive is now on par
+    for d in dives[:3]:
+        client.put(f"/dives/{d['id']}/tank", json={"volume_l": 10, "start_bar": 200, "end_bar": 47})
+    after = {d["id"]: d for d in client.get("/dives").json()}
+    assert _air(after[last]) == (75, "15.3 L/min, in line with your last 5 dives.")
+
+    assert client.delete(f"/dives/{last}/tank").status_code == 204
+    assert client.get(f"/dives/{last}").json()["tank"] is None
 
 
 def test_upload_rejects_oversized_file(client, monkeypatch):

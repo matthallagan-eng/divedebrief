@@ -78,6 +78,9 @@ class Dive(Base):
     scores: Mapped[list["DiveScore"]] = relationship(
         back_populates="dive", cascade="all, delete-orphan", passive_deletes=True
     )
+    tank: Mapped["DiveTank | None"] = relationship(
+        back_populates="dive", cascade="all, delete-orphan", passive_deletes=True
+    )
 
 
 class Sample(Base):
@@ -123,3 +126,21 @@ class DiveScore(Base):
     computed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
     dive: Mapped["Dive"] = relationship(back_populates="scores")
+
+
+class DiveTank(Base):
+    """The dive's tank, for air efficiency. Single gas, so one per dive."""
+
+    __tablename__ = "dive_tanks"
+
+    dive_id: Mapped[int] = mapped_column(
+        ForeignKey("dives.id", ondelete="CASCADE"), primary_key=True
+    )
+    # Water volume in litres; the diver enters it even when pressures are sampled
+    volume_l: Mapped[float | None] = mapped_column(Float, nullable=True)
+    start_bar: Mapped[float] = mapped_column(Float)
+    end_bar: Mapped[float] = mapped_column(Float)
+    # sampled: pressures from the dive computer's transmitter; manual: entered
+    source: Mapped[str] = mapped_column(String(8))
+
+    dive: Mapped["Dive"] = relationship(back_populates="tank")
