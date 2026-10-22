@@ -62,10 +62,55 @@ def test_multi_dive_upload_lists_newest_first(client):
     assert starts == sorted(starts, reverse=True)
 
 
-def test_ascent_violations_are_counted(client):
+def test_scores_are_stored_and_returned(client):
+    # Hand-derived (10 s window): ascending seconds 58-112, of which 58-62 and
+    # 108-112 are within 9 m/min -> 10/55 = 18. No time in the stop band -> 0.
     _upload(client, "fast.uddf", FAST_ASCENT)
     [dive] = client.get("/dives").json()
-    assert dive["ascent_violations"] == 1
+    assert [(s["skill"], s["score"]) for s in dive["scores"]] == [("ascent", 18), ("stop", 0)]
+    assert dive["overall_score"] == 9
+    assert dive["scores"][0]["reason"] == (
+        "1 segment over 9 m/min, fastest 12 m/min between 19 m and 11 m."
+    )
+
+    detail = client.get(f"/dives/{dive['id']}").json()
+    [region] = detail["scores"][0]["regions"]
+    assert (region["start_s"], region["end_s"], region["severity"]) == (63, 107, "warning")
+    assert len(detail["profile"]) == 201
+    assert detail["profile"][85]["rate_m_per_min"] == pytest.approx(12)
+
+
+def test_settings_default_then_update_rescores(client):
+    res = client.get("/settings").json()
+    assert res["version"] == 0
+    assert res["values"] == res["defaults"]
+    assert res["values"]["ascent_target_m_per_min"] == 9
+
+    _upload(client, "fast.uddf", FAST_ASCENT)
+    new = {**res["values"], "ascent_target_m_per_min": 13}
+    put = client.put("/settings", json=new)
+    assert put.status_code == 200 and put.json()["version"] == 1
+
+    [dive] = client.get("/dives").json()
+    ascent = dive["scores"][0]
+    assert ascent["score"] == 100
+    assert ascent["reason"] == "All ascent within 13 m/min; fastest 12.0 m/min."
+    assert dive["overall_score"] == 50
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"ascent_violation_m_per_min": 8},  # not above the 9 m/min target
+        {"stop_band_max_m": 3},  # not deeper than the 3 m band min
+        {"ascent_window_s": 1},
+        {"unknown_setting": 1},
+    ],
+)
+def test_settings_reject_invalid_values(client, change):
+    defaults = client.get("/settings").json()["defaults"]
+    assert client.put("/settings", json={**defaults, **change}).status_code == 422
+    assert client.get("/settings").json()["version"] == 0
 
 
 @pytest.mark.parametrize(
@@ -101,3 +146,16 @@ def test_delete_dive(client):
     assert client.delete(f"/dives/{dive['id']}").status_code == 204
     assert client.get(f"/dives/{dive['id']}").status_code == 404
     assert client.delete(f"/dives/{dive['id']}").status_code == 404
+
+
+def test_stale_scores_are_recomputed(client, engine):
+    from sqlalchemy import text
+
+    _upload(client, "fast.uddf", FAST_ASCENT)
+    with engine.begin() as conn:
+        # As if scored by an older algorithm that produced different numbers
+        conn.execute(text("UPDATE dive_scores SET algorithm_version = 0, score = 77"))
+    [dive] = client.get("/dives").json()
+    assert dive["scores"][0]["score"] == 18
+    with engine.begin() as conn:
+        assert conn.scalar(text("SELECT min(algorithm_version) FROM dive_scores")) == 1

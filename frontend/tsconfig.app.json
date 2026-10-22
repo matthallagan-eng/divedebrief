@@ -22,7 +22,5 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"],
-  /* Tests read ../shared, which isn't in the Docker build context */
-  "exclude": ["src/**/*.test.ts"]
+  "include": ["src"]
 }

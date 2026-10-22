@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy import insert, select
 from sqlalchemy.orm import Session
 
-from ..analysis.ascent import violation_segments
 from ..analysis.stats import fingerprint, summarize
 from ..config import settings
 from ..database import get_db
@@ -12,6 +11,7 @@ from ..deps import get_current_user
 from ..models import Dive, Sample, Upload, User
 from ..parsing.uddf import UDDFParseError, parse_uddf
 from ..schemas import UploadOut, UploadResult
+from ..scoring.store import ensure_scores
 
 router = APIRouter(prefix="/uploads", tags=["uploads"])
 
@@ -69,13 +69,9 @@ async def upload_uddf(
     )
     db.add(upload)
 
+    stored: list[Dive] = []
     for d in new_dives:
         stats = summarize(d)
-        segments = violation_segments(
-            [s.t_s for s in d.samples],
-            [s.depth_m for s in d.samples],
-            settings.default_ascent_limit_m_per_min,
-        )
         dive = Dive(
             upload=upload,
             user_id=user.id,
@@ -87,9 +83,9 @@ async def upload_uddf(
             min_temp_k=stats.min_temp_k,
             computer_model=d.computer_model,
             computer_serial=d.computer_serial,
-            ascent_violations=len(segments),
         )
         db.add(dive)
+        stored.append(dive)
         db.flush()
         db.execute(
             insert(Sample),
@@ -100,6 +96,7 @@ async def upload_uddf(
         )
 
     db.commit()
+    ensure_scores(db, user.id, stored)
     return UploadResult(
         upload_id=upload.id,
         filename=filename,

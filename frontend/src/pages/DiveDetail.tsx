@@ -1,52 +1,30 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowDownToLine, ChevronLeft, Gauge, Thermometer, Timer, Trash2 } from "lucide-react";
 import { api } from "../api/client";
-import type { DiveDetail as Dive } from "../api/types";
-import { AscentBadge } from "../components/AscentBadge";
+import type { DiveDetail as Dive, Region, ScoringSettings, SettingsResponse, Skill } from "../api/types";
 import { DiveCharts } from "../components/DiveCharts";
+import { Scorecard } from "../components/Scorecard";
 import { StatCard } from "../components/StatCard";
-import { DEFAULT_LIMIT_M_PER_MIN, violationSegments } from "../lib/ascent";
 import { formatDate, formatDepth, formatDuration, formatTemp, formatTime } from "../lib/format";
-
-const LIMIT_KEY = "divedebrief.ascentLimit";
-
-function loadLimit(): number {
-  try {
-    const v = Number(localStorage.getItem(LIMIT_KEY));
-    return v >= 3 && v <= 18 ? v : DEFAULT_LIMIT_M_PER_MIN;
-  } catch {
-    return DEFAULT_LIMIT_M_PER_MIN;
-  }
-}
+import { SKILL_NAMES } from "../lib/skills";
 
 export default function DiveDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [dive, setDive] = useState<Dive | null>(null);
+  const [settings, setSettings] = useState<ScoringSettings | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [limit, setLimit] = useState(loadLimit);
+  const [selected, setSelected] = useState<Skill | null>("ascent");
 
   useEffect(() => {
-    api.get<Dive>(`/dives/${id}`).then(setDive).catch((e: Error) => setError(e.message));
+    Promise.all([api.get<Dive>(`/dives/${id}`), api.get<SettingsResponse>("/settings")])
+      .then(([d, s]) => {
+        setDive(d);
+        setSettings(s.values);
+      })
+      .catch((e: Error) => setError(e.message));
   }, [id]);
-
-  function changeLimit(v: number) {
-    setLimit(v);
-    try {
-      localStorage.setItem(LIMIT_KEY, String(v));
-    } catch {
-      // per-viewer convenience only
-    }
-  }
-
-  const segments = useMemo(
-    () =>
-      dive
-        ? violationSegments(dive.samples.map((s) => s.t_s), dive.samples.map((s) => s.depth_m), limit)
-        : [],
-    [dive, limit],
-  );
 
   async function handleDelete() {
     if (!dive || !confirm("Delete this dive from your logbook?")) return;
@@ -62,7 +40,10 @@ export default function DiveDetail() {
       </div>
     );
   }
-  if (!dive) return <p className="text-sm text-murk">Descending…</p>;
+  if (!dive || !settings) return <p className="text-sm text-murk">Descending…</p>;
+
+  const regions = dive.scores.find((s) => s.skill === selected)?.regions ?? [];
+  const ascentRegions = dive.scores.find((s) => s.skill === "ascent")?.regions ?? [];
 
   return (
     <div className="space-y-8">
@@ -90,37 +71,33 @@ export default function DiveDetail() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+      <Scorecard
+        scores={dive.scores}
+        overall={dive.overall_score}
+        selected={selected}
+        onSelect={setSelected}
+      />
+
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard icon={<ArrowDownToLine size={14} />} label="Max depth" value={formatDepth(dive.max_depth_m)} />
         <StatCard icon={<Gauge size={14} />} label="Average depth" value={formatDepth(dive.avg_depth_m)} />
         <StatCard icon={<Timer size={14} />} label="Duration" value={formatDuration(dive.duration_s)} />
         <StatCard icon={<Thermometer size={14} />} label="Coldest water" value={formatTemp(dive.min_temp_k)} />
-        <StatCard label="Fast ascents" value={String(segments.length)} sub={<AscentBadge count={segments.length} />} />
       </div>
 
-      <div className="flex flex-wrap items-center gap-4 rounded-xl border border-surface-border bg-surface-raised/60 px-5 py-3">
-        <label htmlFor="limit" className="text-sm text-mist">Ascent limit</label>
-        <input
-          id="limit"
-          type="range"
-          min={3}
-          max={18}
-          step={0.5}
-          value={limit}
-          onChange={(e) => changeLimit(Number(e.target.value))}
-          className="w-48"
-        />
-        <span className="font-mono text-sm text-foam">{limit} m/min</span>
-        {limit !== DEFAULT_LIMIT_M_PER_MIN && (
-          <button onClick={() => changeLimit(DEFAULT_LIMIT_M_PER_MIN)} className="text-sm text-aqua hover:text-foam">
-            Reset to {DEFAULT_LIMIT_M_PER_MIN}
-          </button>
-        )}
-      </div>
+      <DiveCharts
+        profile={dive.profile}
+        skill={selected}
+        regions={regions}
+        target={settings.ascent_target_m_per_min}
+        violation={settings.ascent_violation_m_per_min}
+      />
 
-      <DiveCharts samples={dive.samples} segments={segments} limit={limit} />
-
-      <ViolationTable segments={segments} limit={limit} />
+      <RegionTable
+        title={`${SKILL_NAMES.ascent}: stretches over ${settings.ascent_target_m_per_min} m/min`}
+        empty="None. Every ascent stayed within your target."
+        regions={ascentRegions}
+      />
 
       <details className="rounded-xl border border-surface-border bg-surface-raised/80">
         <summary className="cursor-pointer px-5 py-3 text-sm text-mist hover:text-foam">
@@ -160,14 +137,12 @@ function BackLink() {
   );
 }
 
-function ViolationTable({ segments, limit }: { segments: ReturnType<typeof violationSegments>; limit: number }) {
+function RegionTable({ title, empty, regions }: { title: string; empty: string; regions: Region[] }) {
   return (
     <section className="rounded-xl border border-surface-border bg-surface-raised/80">
-      <h2 className="border-b border-surface-border px-5 py-3 text-sm font-medium text-foam">
-        Ascents faster than {limit} m/min
-      </h2>
-      {segments.length === 0 ? (
-        <p className="px-5 py-4 text-sm text-mist">None. A slow, controlled ascent all the way up.</p>
+      <h2 className="border-b border-surface-border px-5 py-3 text-sm font-medium text-foam">{title}</h2>
+      {regions.length === 0 ? (
+        <p className="px-5 py-4 text-sm text-mist">{empty}</p>
       ) : (
         <table className="w-full text-left text-sm tabular-nums">
           <thead className="text-xs text-murk">
@@ -175,16 +150,19 @@ function ViolationTable({ segments, limit }: { segments: ReturnType<typeof viola
               <th className="px-5 py-2 font-medium">From</th>
               <th className="px-5 py-2 font-medium">To</th>
               <th className="px-5 py-2 text-right font-medium">Lasted</th>
-              <th className="px-5 py-2 text-right font-medium">Peak rate</th>
+              <th className="px-5 py-2 font-medium">Detail</th>
             </tr>
           </thead>
           <tbody>
-            {segments.map((s) => (
-              <tr key={s.start_s} className="border-t border-surface-border/50">
-                <td className="px-5 py-2 font-mono text-mist">{formatDuration(s.start_s)}</td>
-                <td className="px-5 py-2 font-mono text-mist">{formatDuration(s.end_s)}</td>
-                <td className="px-5 py-2 text-right text-mist">{Math.round(s.end_s - s.start_s)} s</td>
-                <td className="px-5 py-2 text-right text-foam">{s.peak_rate_m_per_min.toFixed(1)} m/min</td>
+            {regions.map((r) => (
+              <tr key={r.start_s} className="border-t border-surface-border/50">
+                <td className="px-5 py-2 font-mono text-mist">{formatDuration(r.start_s)}</td>
+                <td className="px-5 py-2 font-mono text-mist">{formatDuration(r.end_s)}</td>
+                <td className="px-5 py-2 text-right text-mist">{Math.round(r.end_s - r.start_s)} s</td>
+                <td className="px-5 py-2 text-foam">
+                  {r.label}
+                  {r.severity === "violation" && <span className="ml-2 text-xs text-mist">· over violation limit</span>}
+                </td>
               </tr>
             ))}
           </tbody>

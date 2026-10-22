@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import String, DateTime, Float, ForeignKey, Integer, UniqueConstraint
+from sqlalchemy import String, DateTime, Float, ForeignKey, Integer, Text, UniqueConstraint
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .database import Base
@@ -59,7 +60,6 @@ class Dive(Base):
     min_temp_k: Mapped[float | None] = mapped_column(Float, nullable=True)
     computer_model: Mapped[str | None] = mapped_column(String(255), nullable=True)
     computer_serial: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    ascent_violations: Mapped[int] = mapped_column(Integer, default=0)
 
     upload: Mapped["Upload"] = relationship(back_populates="dives")
     samples: Mapped[list["Sample"]] = relationship(
@@ -67,6 +67,9 @@ class Dive(Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
         order_by="Sample.t_s",
+    )
+    scores: Mapped[list["DiveScore"]] = relationship(
+        back_populates="dive", cascade="all, delete-orphan", passive_deletes=True
     )
 
 
@@ -81,3 +84,32 @@ class Sample(Base):
     temp_k: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     dive: Mapped["Dive"] = relationship(back_populates="samples")
+
+
+class UserSettings(Base):
+    __tablename__ = "user_settings"
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    # app.scoring.ScoringSettings as JSON; missing keys take the defaults
+    data: Mapped[dict] = mapped_column(JSONB, default=dict)
+    # Bumped on every change so stored scores know they're stale
+    version: Mapped[int] = mapped_column(Integer, default=1)
+
+
+class DiveScore(Base):
+    __tablename__ = "dive_scores"
+
+    dive_id: Mapped[int] = mapped_column(
+        ForeignKey("dives.id", ondelete="CASCADE"), primary_key=True
+    )
+    skill: Mapped[str] = mapped_column(String(32), primary_key=True)
+    score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    reason: Mapped[str] = mapped_column(Text)
+    regions: Mapped[list] = mapped_column(JSONB, default=list)
+    algorithm_version: Mapped[int] = mapped_column(Integer)
+    settings_version: Mapped[int] = mapped_column(Integer)
+    computed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+    dive: Mapped["Dive"] = relationship(back_populates="scores")

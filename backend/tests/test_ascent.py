@@ -5,7 +5,7 @@ import pytest
 
 from app.analysis.ascent import resample_1hz, violation_segments
 
-GOLDEN = Path(__file__).parents[2] / "shared" / "ascent-golden.json"
+GOLDEN = Path(__file__).parent / "fixtures" / "ascent-golden.json"
 CASES = json.loads(GOLDEN.read_text())["cases"]
 
 
