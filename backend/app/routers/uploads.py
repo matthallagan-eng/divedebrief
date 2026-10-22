@@ -8,7 +8,8 @@ from ..analysis.ascent import violation_segments
 from ..analysis.stats import fingerprint, summarize
 from ..config import settings
 from ..database import get_db
-from ..models import Dive, Sample, Upload
+from ..deps import get_current_user
+from ..models import Dive, Sample, Upload, User
 from ..parsing.uddf import UDDFParseError, parse_uddf
 from ..schemas import UploadOut, UploadResult
 
@@ -18,7 +19,11 @@ ALLOWED_SUFFIXES = (".uddf", ".xml")
 
 
 @router.post("", response_model=UploadResult)
-async def upload_uddf(file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def upload_uddf(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     filename = file.filename or "upload.uddf"
     if not filename.lower().endswith(ALLOWED_SUFFIXES):
         raise HTTPException(400, "File must be a .uddf or .xml UDDF export")
@@ -34,7 +39,11 @@ async def upload_uddf(file: UploadFile = File(...), db: Session = Depends(get_db
 
     prints = {id(d): fingerprint(d) for d in parsed.dives}
     existing = set(
-        db.scalars(select(Dive.fingerprint).where(Dive.fingerprint.in_(prints.values())))
+        db.scalars(
+            select(Dive.fingerprint).where(
+                Dive.user_id == user.id, Dive.fingerprint.in_(prints.values())
+            )
+        )
     )
 
     new_dives = []
@@ -52,6 +61,7 @@ async def upload_uddf(file: UploadFile = File(...), db: Session = Depends(get_db
         )
 
     upload = Upload(
+        user_id=user.id,
         filename=filename,
         sha256=hashlib.sha256(contents).hexdigest(),
         dives_added=len(new_dives),
@@ -68,6 +78,7 @@ async def upload_uddf(file: UploadFile = File(...), db: Session = Depends(get_db
         )
         dive = Dive(
             upload=upload,
+            user_id=user.id,
             fingerprint=prints[id(d)],
             started_at=d.started_at,
             duration_s=stats.duration_s,
@@ -99,13 +110,17 @@ async def upload_uddf(file: UploadFile = File(...), db: Session = Depends(get_db
 
 
 @router.get("", response_model=list[UploadOut])
-def list_uploads(db: Session = Depends(get_db)):
-    return db.scalars(select(Upload).order_by(Upload.uploaded_at.desc())).all()
+def list_uploads(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    return db.scalars(
+        select(Upload).where(Upload.user_id == user.id).order_by(Upload.uploaded_at.desc())
+    ).all()
 
 
 @router.delete("/{upload_id}", status_code=204)
-def delete_upload(upload_id: int, db: Session = Depends(get_db)):
-    upload = db.get(Upload, upload_id)
+def delete_upload(
+    upload_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)
+):
+    upload = db.scalar(select(Upload).where(Upload.id == upload_id, Upload.user_id == user.id))
     if upload is None:
         raise HTTPException(404, "Upload not found")
     db.delete(upload)

@@ -21,6 +21,8 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://divedebrief:divedebrief@db:5432/divedebrief
       CORS_ORIGINS: http://localhost:3000
+      # Local only; Railway sets its own strong SECRET_KEY
+      SECRET_KEY: ${SECRET_KEY:-local-compose-only-secret-not-for-production}
     ports:
       - "8000:8000"
     depends_on:
