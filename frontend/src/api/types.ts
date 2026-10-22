@@ -1,0 +1,40 @@
+// Mirrors backend/app/schemas.py
+
+export interface UploadResult {
+  upload_id: number | null;
+  filename: string;
+  added: number;
+  skipped: number;
+  warnings: string[];
+}
+
+export interface UploadOut {
+  id: number;
+  filename: string;
+  uploaded_at: string;
+  dives_added: number;
+  dives_skipped: number;
+}
+
+export interface DiveSummary {
+  id: number;
+  upload_id: number;
+  started_at: string;
+  duration_s: number;
+  max_depth_m: number;
+  avg_depth_m: number;
+  min_temp_k: number | null;
+  computer_model: string | null;
+  ascent_violations: number;
+}
+
+export interface Sample {
+  t_s: number;
+  depth_m: number;
+  temp_k: number | null;
+}
+
+export interface DiveDetail extends DiveSummary {
+  computer_serial: string | null;
+  samples: Sample[];
+}

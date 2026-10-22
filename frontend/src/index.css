@@ -1,0 +1,81 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  /* Water column: sunlit shallows at the top, abyss at the bottom */
+  --color-shallows: #0c3a55;
+  --color-abyss: #030d15;
+  --color-surface: #061a28;
+  --color-surface-raised: #0b2233;
+  --color-surface-border: #16384d;
+
+  /* Text */
+  --color-foam: #e6f6f8;
+  --color-mist: #9cc3cc;
+  --color-murk: #6a8f9b;
+  --color-aqua: #6fd6ea;
+
+  /* Chart marks (validated against surface-raised) */
+  --color-lagoon: #1e9fbd;
+  --color-coral: #de6650;
+
+  /* Status */
+  --color-seagrass: #3fb68b;
+
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+body {
+  background-color: var(--color-abyss);
+  background-image:
+    radial-gradient(ellipse 80% 40% at 20% -5%, rgb(111 214 234 / 0.14), transparent 70%),
+    radial-gradient(ellipse 60% 30% at 85% -5%, rgb(111 214 234 / 0.08), transparent 70%),
+    linear-gradient(180deg, var(--color-shallows) 0%, var(--color-surface) 35%, var(--color-abyss) 100%);
+  background-attachment: fixed;
+  color: var(--color-foam);
+  min-height: 100vh;
+}
+
+/* Light rays drifting down from the surface */
+.caustics {
+  background-image: repeating-linear-gradient(
+    105deg,
+    transparent 0 80px,
+    rgb(111 214 234 / 0.035) 80px 120px,
+    transparent 120px 220px
+  );
+  mask-image: linear-gradient(180deg, black 0%, transparent 60%);
+  animation: sway 18s ease-in-out infinite alternate;
+}
+
+@keyframes sway {
+  from { transform: translateX(-40px) skewX(-2deg); }
+  to { transform: translateX(40px) skewX(2deg); }
+}
+
+.bubble {
+  position: absolute;
+  bottom: -40px;
+  border-radius: 9999px;
+  border: 1px solid rgb(111 214 234 / 0.35);
+  background: radial-gradient(circle at 30% 30%, rgb(230 246 248 / 0.35), rgb(111 214 234 / 0.05) 60%);
+  animation: rise linear infinite;
+}
+
+@keyframes rise {
+  0% { transform: translate(0, 0); opacity: 0; }
+  10% { opacity: 1; }
+  50% { transform: translate(14px, -50vh); }
+  90% { opacity: 0.8; }
+  100% { transform: translate(-6px, -105vh); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caustics { animation: none; }
+  .bubble { display: none; }
+}
+
+input[type="range"] {
+  accent-color: var(--color-lagoon);
+}

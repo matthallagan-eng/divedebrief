@@ -1,0 +1,109 @@
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowDownToLine, Fish, Timer, TriangleAlert, Waves } from "lucide-react";
+import { api } from "../api/client";
+import type { DiveSummary } from "../api/types";
+import { AscentBadge } from "../components/AscentBadge";
+import { StatCard } from "../components/StatCard";
+import { DEFAULT_LIMIT_M_PER_MIN } from "../lib/ascent";
+import { formatDate, formatDepth, formatDuration, formatHours, formatTemp, formatTime } from "../lib/format";
+
+export default function Logbook() {
+  const [dives, setDives] = useState<DiveSummary[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    api.get<DiveSummary[]>("/dives").then(setDives).catch((e: Error) => setError(e.message));
+  }, []);
+
+  if (error) return <p className="text-sm text-mist">Couldn't reach the API: {error}</p>;
+  if (!dives) return <p className="text-sm text-murk">Descending…</p>;
+  if (dives.length === 0) return <EmptyReef />;
+
+  const deepest = dives.reduce((a, b) => (b.max_depth_m > a.max_depth_m ? b : a));
+  const totalTime = dives.reduce((sum, d) => sum + d.duration_s, 0);
+  const fastDives = dives.filter((d) => d.ascent_violations > 0).length;
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-semibold text-foam">Logbook</h1>
+        <p className="mt-1 text-sm text-mist">Every dive you've surfaced from, newest first.</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard icon={<Fish size={14} />} label="Dives logged" value={String(dives.length)} />
+        <StatCard icon={<Timer size={14} />} label="Time underwater" value={formatHours(totalTime)} />
+        <StatCard
+          icon={<ArrowDownToLine size={14} />}
+          label="Deepest dive"
+          value={formatDepth(deepest.max_depth_m)}
+          sub={formatDate(deepest.started_at)}
+        />
+        <StatCard
+          icon={<TriangleAlert size={14} />}
+          label="Dives with fast ascents"
+          value={String(fastDives)}
+          sub={`over ${DEFAULT_LIMIT_M_PER_MIN} m/min`}
+        />
+      </div>
+
+      <div className="overflow-x-auto rounded-xl border border-surface-border bg-surface-raised/80">
+        <table className="w-full min-w-[640px] text-left text-sm">
+          <thead className="border-b border-surface-border text-xs text-murk">
+            <tr>
+              <th className="px-4 py-3 font-medium">Date</th>
+              <th className="px-4 py-3 text-right font-medium">Duration</th>
+              <th className="px-4 py-3 text-right font-medium">Max depth</th>
+              <th className="px-4 py-3 text-right font-medium">Avg depth</th>
+              <th className="px-4 py-3 text-right font-medium">Water</th>
+              <th className="px-4 py-3 font-medium">Fast ascents</th>
+            </tr>
+          </thead>
+          <tbody className="tabular-nums">
+            {dives.map((d) => (
+              <tr
+                key={d.id}
+                onClick={() => navigate(`/dives/${d.id}`)}
+                className="cursor-pointer border-b border-surface-border/60 transition-colors last:border-0 hover:bg-lagoon/5"
+              >
+                <td className="px-4 py-3">
+                  <Link to={`/dives/${d.id}`} className="text-foam hover:text-aqua">
+                    {formatDate(d.started_at)}
+                  </Link>
+                  <span className="ml-2 text-murk">{formatTime(d.started_at)}</span>
+                </td>
+                <td className="px-4 py-3 text-right text-mist">{formatDuration(d.duration_s)}</td>
+                <td className="px-4 py-3 text-right text-foam">{formatDepth(d.max_depth_m)}</td>
+                <td className="px-4 py-3 text-right text-mist">{formatDepth(d.avg_depth_m)}</td>
+                <td className="px-4 py-3 text-right text-mist">{formatTemp(d.min_temp_k)}</td>
+                <td className="px-4 py-3"><AscentBadge count={d.ascent_violations} /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function EmptyReef() {
+  return (
+    <div className="mx-auto max-w-md py-16 text-center">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-lagoon/10 text-aqua">
+        <Waves size={28} />
+      </div>
+      <h1 className="mt-6 text-xl font-semibold text-foam">The reef is quiet</h1>
+      <p className="mt-2 text-sm text-mist">
+        No dives logged yet. Export your dives from Subsurface as UDDF and drop the file in.
+      </p>
+      <Link
+        to="/upload"
+        className="mt-6 inline-flex rounded-lg bg-lagoon px-4 py-2 text-sm font-medium text-abyss transition-colors hover:bg-aqua"
+      >
+        Log your first dive
+      </Link>
+    </div>
+  );
+}

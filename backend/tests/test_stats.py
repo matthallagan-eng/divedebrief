@@ -43,3 +43,24 @@ def test_fingerprint_changes_with_start_time_or_profile():
     later = _dive([(0, 0, None), (60, 10, None)], started_at=START.replace(hour=11))
     deeper = _dive([(0, 0, None), (60, 12, None)])
     assert len({fingerprint(base), fingerprint(later), fingerprint(deeper)}) == 3
+
+
+def test_summarize_excludes_surface_time():
+    # 60 s at 10 m, 60 s bobbing at the surface, 60 s at 10 m, then 120 s
+    # floating after the dive; only the intervals touching depth count
+    stats = summarize(_dive([
+        (0, 10, None), (60, 10, None),
+        (61, 0.3, None), (120, 0.2, None),
+        (121, 10, None), (181, 10, None),
+        (182, 0.1, None), (300, 0.0, None),
+    ]))
+    # Underwater intervals: 0-60, 60-61, 120-121, 121-181, 181-182
+    assert stats.duration_s == 123
+    assert stats.avg_depth_m == pytest.approx((600 + 5.15 + 5.1 + 600 + 5.05) / 123)
+    assert stats.max_depth_m == 10
+
+
+def test_summarize_never_submerged_uses_whole_profile():
+    stats = summarize(_dive([(0, 0.2, None), (30, 0.4, None)]))
+    assert stats.duration_s == 30
+    assert stats.avg_depth_m == pytest.approx(0.3)

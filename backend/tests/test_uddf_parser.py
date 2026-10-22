@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from app.analysis.stats import summarize
 from app.parsing.uddf import UDDFParseError, parse_uddf
 
 FIXTURES = Path(__file__).parent / "fixtures" / "uddf"
@@ -118,7 +119,9 @@ def test_external_entities_are_not_resolved(tmp_path):
 # Drop Subsurface UDDF exports in fixtures/uddf/real/. Each <name>.uddf may
 # have a <name>.expected.json with values checked against your logbook:
 #   {"dives": [{"started_at": "2026-03-14T09:30:00",
-#               "max_depth_m": 18.4, "duration_s": 2700}]}
+#               "max_depth_m": 18.4, "duration_s": 2700, "avg_depth_m": 11.2}]}
+# duration_s and avg_depth_m count underwater time only, as Subsurface does;
+# avg_depth_m is optional.
 
 REAL_FILES = sorted(REAL.glob("*.uddf"))
 
@@ -149,4 +152,7 @@ def test_real_export_matches_logbook(path: Path):
     for dive, exp in zip(dives, expected):
         assert dive.started_at.replace(tzinfo=None) == datetime.fromisoformat(exp["started_at"])
         assert max(s.depth_m for s in dive.samples) == pytest.approx(exp["max_depth_m"], abs=0.2)
-        assert dive.samples[-1].t_s == pytest.approx(exp["duration_s"], abs=60)
+        stats = summarize(dive)
+        assert stats.duration_s == pytest.approx(exp["duration_s"], abs=60)
+        if "avg_depth_m" in exp:
+            assert stats.avg_depth_m == pytest.approx(exp["avg_depth_m"], abs=0.2)
