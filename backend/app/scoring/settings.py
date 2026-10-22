@@ -20,9 +20,14 @@ class ScoringSettings(BaseModel):
     stop_target_s: int = Field(180, ge=30, le=600)
     stop_min_dive_depth_m: float = Field(10.0, ge=0, le=40)
 
+    # Buoyancy stability
+    buoyancy_detrend_window_s: int = Field(60, ge=20, le=300)
+    buoyancy_excursion_m: float = Field(1.0, ge=0.3, le=3)
+
     # Overall score weights; a weight of 0 leaves the skill out
     weight_ascent: float = Field(1.0, ge=0, le=10)
     weight_stop: float = Field(1.0, ge=0, le=10)
+    weight_buoyancy: float = Field(1.0, ge=0, le=10)
 
     @model_validator(mode="after")
     def _ordered(self):

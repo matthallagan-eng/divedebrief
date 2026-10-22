@@ -40,7 +40,7 @@ export interface DiveSummary {
   scores: SkillScore[];
 }
 
-export type Skill = "ascent" | "stop";
+export type Skill = "ascent" | "stop" | "buoyancy";
 
 export interface SkillScore {
   skill: Skill;
@@ -90,8 +90,11 @@ export interface ScoringSettings {
   stop_tolerance_m: number;
   stop_target_s: number;
   stop_min_dive_depth_m: number;
+  buoyancy_detrend_window_s: number;
+  buoyancy_excursion_m: number;
   weight_ascent: number;
   weight_stop: number;
+  weight_buoyancy: number;
 }
 
 export interface SettingsResponse {

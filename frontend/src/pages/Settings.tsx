@@ -45,11 +45,21 @@ const GROUPS: { title: string; fields: Field[] }[] = [
     ],
   },
   {
+    title: "Buoyancy",
+    fields: [
+      { key: "buoyancy_excursion_m", label: "Excursion size", unit: "m", min: 0.3, max: 3, step: 0.1,
+        help: "Rising or sinking more than this off your level and back counts as an excursion." },
+      { key: "buoyancy_detrend_window_s", label: "Level window", unit: "s", min: 20, max: 300, step: 10,
+        help: "Your level is the median depth over this window, so following the reef doesn't count." },
+    ],
+  },
+  {
     title: "Overall score weights",
     fields: [
       { key: "weight_ascent", label: "Ascent control", unit: "×", min: 0, max: 10, step: 0.5,
         help: "0 leaves a skill out of the overall score." },
       { key: "weight_stop", label: "Safety stop", unit: "×", min: 0, max: 10, step: 0.5 },
+      { key: "weight_buoyancy", label: "Buoyancy", unit: "×", min: 0, max: 10, step: 0.5 },
     ],
   },
 ];

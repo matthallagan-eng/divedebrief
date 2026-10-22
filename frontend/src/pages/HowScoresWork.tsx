@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import type { ScoringSettings, SettingsResponse } from "../api/types";
 
-// Constants mirror backend/app/scoring/ascent_control.py and safety_stop.py
+// Constants mirror backend/app/scoring/ascent_control.py, safety_stop.py and buoyancy.py
 
 export default function HowScoresWork() {
   const [s, setS] = useState<ScoringSettings | null>(null);
@@ -69,11 +69,40 @@ export default function HowScoresWork() {
         </ul>
       </Section>
 
+      <Section title="Buoyancy">
+        <p>
+          Judged on the bottom phase only: from the end of your descent to the start of your final
+          ascent. Each time underwater between surface intervals gets its own bottom phase, so a
+          surface swim mid-dive doesn't count against you.
+        </p>
+        <ul>
+          <li>
+            The descent ends where you first level off: 30 s moving less than 3 m/min. The final ascent
+            starts where you last levelled off before leaving for the stop, the last time deeper than{" "}
+            <b>{+(s.stop_band_max_m + s.stop_tolerance_m).toFixed(1)} m</b>. The safety stop is scored separately.
+          </li>
+          <li>
+            Your level at each moment is the median depth over <b>{s.buoyancy_detrend_window_s} s</b>,
+            so following the reef up or down doesn't count as instability.
+          </li>
+          <li>
+            Up to 60 points for how closely you hold your level: full marks for a typical wobble of
+            0.25 m or less, none at 1 m.
+          </li>
+          <li>
+            Up to 40 points for excursions: rising or sinking more than{" "}
+            <b>{s.buoyancy_excursion_m} m</b> off your level for 5 s or more. Each one costs 10 points
+            per 10 minutes of bottom time.
+          </li>
+        </ul>
+        <p>Dives with less than 3 minutes of settled bottom time show N/A.</p>
+      </Section>
+
       <Section title="Overall">
         <p>
           The weighted average of the skills that have a score, with ascent control weighted{" "}
-          {s.weight_ascent}× and the safety stop {s.weight_stop}×. N/A skills are left out, not
-          counted as zero.
+          {s.weight_ascent}×, the safety stop {s.weight_stop}× and buoyancy {s.weight_buoyancy}×. N/A
+          skills are left out, not counted as zero.
         </p>
       </Section>
     </div>

@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from ..models import Dive, DiveScore, Sample, UserSettings
 from . import ALGORITHM_VERSION, ScoringSettings, score_dive
 
-SKILLS = ("ascent", "stop")
+SKILLS = ("ascent", "stop", "buoyancy")
 
 
 def load_settings(db: Session, user_id: int) -> tuple[ScoringSettings, int]:

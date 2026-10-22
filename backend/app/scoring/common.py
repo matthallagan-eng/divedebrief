@@ -48,6 +48,15 @@ def runs(flags: list[bool]) -> list[tuple[int, int]]:
     return out
 
 
+def bridge(flags: list[bool], max_gap: int) -> list[bool]:
+    """Fill gaps of False shorter than max_gap that have True on both sides."""
+    out = list(flags)
+    for a, b in runs([not f for f in flags]):
+        if a > 0 and b < len(flags) - 1 and b - a + 1 < max_gap:
+            out[a : b + 1] = [True] * (b - a + 1)
+    return out
+
+
 def fmt_mmss(seconds: float) -> str:
     s = round(seconds)
     return f"{s // 60}:{s % 60:02d}"
