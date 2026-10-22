@@ -5,7 +5,7 @@ import { api } from "../api/client";
 import type { UploadOut, UploadResult } from "../api/types";
 import { formatLocalDateTime } from "../lib/format";
 
-const ACCEPTED = [".uddf", ".xml"];
+const ACCEPTED = [".fit", ".uddf", ".xml"];
 
 export default function Upload() {
   const [file, setFile] = useState<File | null>(null);
@@ -25,7 +25,7 @@ export default function Upload() {
   function pick(f: File | undefined) {
     if (!f) return;
     if (!ACCEPTED.some((ext) => f.name.toLowerCase().endsWith(ext))) {
-      setError("That doesn't look like a UDDF file. Export from Subsurface as .uddf.");
+      setError("That doesn't look like a dive log. Upload a Garmin .fit file or a UDDF export.");
       return;
     }
     setError(null);
@@ -60,8 +60,9 @@ export default function Upload() {
       <div>
         <h1 className="text-2xl font-semibold text-foam">Log dives</h1>
         <p className="mt-1 text-sm text-mist">
-          Garmin Descent: import your dives into Subsurface, then File → Export → UDDF. Dives already in
-          your logbook are skipped.
+          Garmin Descent: upload the .fit file from Garmin Connect (Export Original) or straight off the
+          watch. UDDF exports from Subsurface work too. Dives already in your logbook are skipped, whichever
+          format they came from.
         </p>
       </div>
 
@@ -97,9 +98,9 @@ export default function Upload() {
           <UploadIcon size={24} />
         </div>
         <p className="mt-4 text-sm text-foam">
-          {file ? file.name : "Drop a UDDF export here, or click to choose one"}
+          {file ? file.name : "Drop a .fit file or UDDF export here, or click to choose one"}
         </p>
-        <p className="mt-1 text-xs text-murk">.uddf or .xml, up to 10 MB</p>
+        <p className="mt-1 text-xs text-murk">.fit, .uddf or .xml, up to 10 MB</p>
       </div>
 
       <div className="flex items-center gap-4">

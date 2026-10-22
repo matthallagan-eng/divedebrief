@@ -58,6 +58,9 @@ def get_dive(dive_id: int, db: Session = Depends(get_db), user: User = Depends(g
     return DiveDetail(
         **fields,
         computer_serial=dive.computer_serial,
+        water_type=dive.water_type,
+        latitude=dive.latitude,
+        longitude=dive.longitude,
         samples=[SampleOut.model_validate(s) for s in dive.samples],
         profile=[
             ProfilePoint(t_s=t, depth_m=d, rate_m_per_min=r) for t, d, r in zip(p.t, p.depth, p.rate)

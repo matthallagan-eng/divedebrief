@@ -1,8 +1,14 @@
 # DiveDebrief
 
-Upload UDDF dive logs and review depth profiles with ascent-rate violations highlighted.
+Upload dive logs and review depth profiles with skill scores for each dive.
 
-Garmin Descent users: import your dives into Subsurface, then use File → Export → UDDF.
+Accepts Garmin `.fit` files (Garmin Connect → Export Original, or straight off
+the watch) and UDDF exports (for example Subsurface → File → Export → UDDF).
+FIT files also bring heart rate, NDL, tank pressure on air-integrated models,
+water type and GPS position.
+
+A dive is identified by its start time, so the same dive uploaded as FIT and
+as UDDF is stored once.
 
 ## Run everything with Docker
 
