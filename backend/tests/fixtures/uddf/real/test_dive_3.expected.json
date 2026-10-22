@@ -1,0 +1,11 @@
+{
+  "_source": "summary values written by Subsurface into the export",
+  "dives": [
+    {
+      "started_at": "2026-08-08T15:21:24",
+      "max_depth_m": 10.463,
+      "duration_s": 2989.0,
+      "avg_depth_m": 5.521
+    }
+  ]
+}

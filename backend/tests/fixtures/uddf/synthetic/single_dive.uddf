@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One namespaced UDDF 3.2 dive with temperatures and a named dive computer. -->
+<uddf xmlns="http://www.streit.cc/uddf/3.2/" version="3.2.0">
+  <generator>
+    <name>DiveDebrief test fixture</name>
+  </generator>
+  <diver>
+    <owner id="owner">
+      <equipment>
+        <divecomputer id="dc1">
+          <name>Garmin Descent</name>
+          <model>Descent Mk2i</model>
+          <serialnumber>TEST-0001</serialnumber>
+        </divecomputer>
+      </equipment>
+    </owner>
+  </diver>
+  <profiledata>
+    <repetitiongroup id="rg1">
+      <dive id="dive1">
+        <informationbeforedive>
+          <datetime>2026-03-14T09:30:00</datetime>
+        </informationbeforedive>
+        <samples>
+          <waypoint><divetime>0</divetime><depth>0.0</depth><temperature>299.15</temperature></waypoint>
+          <waypoint><divetime>60</divetime><depth>10.0</depth><temperature>298.15</temperature></waypoint>
+          <waypoint><divetime>120</divetime><depth>18.5</depth><temperature>297.15</temperature></waypoint>
+          <waypoint><divetime>600</divetime><depth>18.0</depth><temperature>297.15</temperature></waypoint>
+          <waypoint><divetime>900</divetime><depth>5.0</depth><temperature>298.15</temperature></waypoint>
+          <waypoint><divetime>1080</divetime><depth>5.0</depth><temperature>298.15</temperature></waypoint>
+          <waypoint><divetime>1140</divetime><depth>0.0</depth><temperature>299.15</temperature></waypoint>
+        </samples>
+      </dive>
+    </repetitiongroup>
+  </profiledata>
+</uddf>
