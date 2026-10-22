@@ -1,5 +1,5 @@
 """Scores for synthetic profiles, derived by hand from the rules in
-app/scoring/ascent_control.py and app/scoring/safety_stop.py.
+app/scoring/ascent_control.py, safety_stop.py and buoyancy.py.
 
 Keyframe times are offset by fractions of a second where needed, so no grid
 second lands exactly on a threshold and float rounding can't decide a case.
@@ -12,8 +12,12 @@ DEFAULTS = ScoringSettings()
 
 
 def _score(times, depths, cfg=DEFAULTS):
-    ascent, stop = score_dive(times, depths, cfg)
+    ascent, stop, _ = score_dive(times, depths, cfg)
     return ascent, stop
+
+
+def _buoyancy(times, depths, cfg=DEFAULTS):
+    return score_dive(times, depths, cfg)[2]
 
 
 # --- ascent control -----------------------------------------------------------
@@ -97,6 +101,68 @@ def test_swimming_straight_up_is_a_skipped_stop():
     assert stop.regions == []
 
 
+# --- buoyancy ------------------------------------------------------------------
+# Descents and ascents are 10 m/min. Arriving at 10 m at 60.5 s, the 30 s
+# rate is 20 x (i - 75.5) / 60.5, within 3 m/min from 67, so the plateau
+# starts at 67 and the phase at 55, the first second within 1 m of 10 m.
+# Leaving at 660.5, the rate is (i - 645.5) / 3, so the plateau ends at 654
+# and the phase at 666, the last second within 1 m of 10 m: 612 s.
+
+def test_flat_bottom_scores_100_and_leaves_out_the_stop():
+    buoyancy = _buoyancy([0, 60.5, 660.5, 690.5, 870.5, 900.5], [0, 10, 10, 5, 5, 0])
+    assert buoyancy.score == 100
+    assert buoyancy.reason == "No excursions over 1 m in 10 min at the bottom. Typical wobble ±0.1 m."
+    [region] = buoyancy.regions
+    assert (region.start_s, region.end_s, region.severity) == (55, 666, "info")
+
+
+def test_bobs_up_cost_excursion_points():
+    # Two 1.5 m bobs up from 10 m (3 s up, 5 s held, 3 s down). The 60 s
+    # median stays at 10 m, so each is over 1 m off while shallower than
+    # 9 m: 243-249 and 453-459. Wobble is 0.23 m, under 0.25, so full 60.
+    # 60 + 40 - 10 x 2 / (612 / 600) = 80.4
+    times = [0, 60.5, 240.5, 243.5, 248.5, 251.5, 450.5, 453.5, 458.5, 461.5, 660.5, 690.5, 870.5, 900.5]
+    depths = [0, 10, 10, 8.5, 8.5, 10, 10, 8.5, 8.5, 10, 10, 5, 5, 0]
+    buoyancy = _buoyancy(times, depths)
+    assert buoyancy.score == 80
+    assert buoyancy.reason == (
+        "2 excursions over 1 m in 10 min at the bottom; steadiest stretch was minutes 8–11. "
+        "Typical wobble ±0.2 m."
+    )
+    excursions = [(r.start_s, r.end_s) for r in buoyancy.regions if r.severity == "warning"]
+    assert excursions == [(243, 249), (453, 459)]
+
+
+def test_gradual_depth_change_is_not_instability():
+    # Following a reef slope from 10 m to 14 m over 10 minutes
+    buoyancy = _buoyancy([0, 60.5, 660.5, 720.5], [0, 10, 14, 0])
+    assert buoyancy.score == 100
+
+
+def test_surface_interval_splits_the_bottom_phase():
+    buoyancy = _buoyancy(
+        [0, 60.5, 420.5, 480.5, 600.5, 660.5, 1020.5, 1080.5], [0, 10, 10, 0, 0, 10, 10, 0]
+    )
+    assert buoyancy.score == 100
+    assert [(r.start_s, r.end_s) for r in buoyancy.regions] == [(55, 426), (655, 1026)]
+
+
+def test_shallow_dive_uses_its_last_plateau():
+    # Never deeper than the 6.5 m stop edge, so the phase ends at the last
+    # plateau instead.
+    buoyancy = _buoyancy([0, 30.5, 630.5, 660.5], [0, 5, 5, 0])
+    assert buoyancy.score == 100
+    [region] = buoyancy.regions
+    assert (region.start_s, region.end_s) == (25, 636)
+
+
+def test_short_bottom_phase_is_not_scored():
+    buoyancy = _buoyancy([0, 60.5, 150.5, 210.5], [0, 10, 10, 0])
+    assert buoyancy.score is None
+    assert buoyancy.reason == "No settled bottom phase of 3 minutes or more to judge."
+    assert buoyancy.regions == []
+
+
 # --- overall ------------------------------------------------------------------
 
 @pytest.mark.parametrize(
@@ -107,6 +173,8 @@ def test_swimming_straight_up_is_a_skipped_stop():
         ({"ascent": None, "stop": None}, {}, None),
         ({"ascent": 80, "stop": 40}, {"weight_ascent": 3}, 70),
         ({"ascent": 80, "stop": 40}, {"weight_stop": 0}, 80),
+        ({"ascent": 80, "stop": 40, "buoyancy": 90}, {}, 70),
+        ({"ascent": 80, "stop": 40, "buoyancy": 90}, {"weight_buoyancy": 0}, 60),
     ],
 )
 def test_overall_score(scores, weights, expected):

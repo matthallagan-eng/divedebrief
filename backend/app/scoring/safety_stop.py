@@ -26,7 +26,7 @@ Dives shallower than stop_min_dive_depth_m are N/A.
 """
 from ..analysis.ascent import ascent_rates
 from ..analysis.stats import SURFACE_THRESHOLD_M
-from .common import Profile, Region, SkillResult, fmt_mmss, runs
+from .common import Profile, Region, SkillResult, bridge, fmt_mmss, runs
 from .settings import ScoringSettings
 
 SKILL = "stop"
@@ -39,15 +39,6 @@ DRIFT_ALLOWANCE_M = 1.5
 DRIFT_PENALTY = 5  # per metre beyond the allowance
 DRIFT_PENALTY_CAP = 15
 STEADY_RANGE_M = 0.3  # less drift than this reads as "steady"
-
-
-def _bridge(flags: list[bool], max_gap: int) -> list[bool]:
-    """Fill gaps of False shorter than max_gap that have True on both sides."""
-    out = list(flags)
-    for a, b in runs([not f for f in flags]):
-        if a > 0 and b < len(flags) - 1 and b - a + 1 < max_gap:
-            out[a : b + 1] = [True] * (b - a + 1)
-    return out
 
 
 def score_stop(p: Profile, cfg: ScoringSettings) -> SkillResult:
@@ -65,7 +56,7 @@ def score_stop(p: Profile, cfg: ScoringSettings) -> SkillResult:
     last = below[-1] if below else len(p.depth) - 1
 
     window = range(deepest, last + 1)
-    in_loose = _bridge([lo - tol <= p.depth[i] <= hi + tol for i in window], MIN_EXIT_S)
+    in_loose = bridge([lo - tol <= p.depth[i] <= hi + tol for i in window], MIN_EXIT_S)
     in_band = [lo <= p.depth[i] <= hi for i in window]
     slow_rate = ascent_rates(p.t, p.depth, STATIONARY_WINDOW_S)
     still = [abs(slow_rate[i]) <= STATIONARY_RATE for i in window]

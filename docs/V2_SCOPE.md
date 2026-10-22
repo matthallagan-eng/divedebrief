@@ -75,6 +75,16 @@ recomputed when a diver changes a setting or the algorithm changes.
   unintended vertical excursions **> 1 m**.
 - Score from bands on both metrics.
 - Reason example: "4 excursions over 1 m; steadiest stretch was minutes 12–20."
+- Added while tuning on the real dives (milestone 3):
+  - Surface intervals split the dive, and each stretch underwater gets its
+    own bottom phase. Two of the real dives surface mid-dive.
+  - The final ascent starts at the last plateau before the diver leaves for
+    good, not where they cross 6 m. Otherwise the climb to the stop counts as
+    an excursion. "Leaves for good" uses the stop band plus tolerance (6.5 m),
+    because a stop that bobs to 6.4 m isn't the bottom.
+  - Excursions must last 5 s, the same noise cutoff as the safety stop.
+  - Score = up to 60 points for wobble (SD 0.25 m full, 1 m none) + up to 40
+    for excursions, −10 per excursion per 10 minutes of bottom time.
 
 ### 1d. Air efficiency (SAC)
 

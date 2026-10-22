@@ -227,6 +227,18 @@ function Legend({ skill, target }: { skill: Skill | null; target: number }) {
           Safety stop
         </li>
       )}
+      {skill === "buoyancy" && (
+        <>
+          <li className="flex items-center gap-1.5">
+            <span className="h-3 w-4 rounded-sm" style={{ background: AQUA, opacity: 0.35 }} />
+            Bottom phase
+          </li>
+          <li className="flex items-center gap-1.5">
+            <span className="h-0.5 w-4 rounded-full" style={{ background: CORAL }} />
+            Excursion
+          </li>
+        </>
+      )}
     </ul>
   );
 }

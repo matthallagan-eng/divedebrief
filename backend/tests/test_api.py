@@ -65,10 +65,13 @@ def test_multi_dive_upload_lists_newest_first(client):
 def test_scores_are_stored_and_returned(client):
     # Hand-derived (10 s window): ascending seconds 58-112, of which 58-62 and
     # 108-112 are within 9 m/min -> 10/55 = 18. No time in the stop band -> 0.
+    # Buoyancy: one steady move from 20 m to 10 m and no wobble -> 100.
     _upload(client, "fast.uddf", FAST_ASCENT)
     [dive] = client.get("/dives").json()
-    assert [(s["skill"], s["score"]) for s in dive["scores"]] == [("ascent", 18), ("stop", 0)]
-    assert dive["overall_score"] == 9
+    assert [(s["skill"], s["score"]) for s in dive["scores"]] == [
+        ("ascent", 18), ("stop", 0), ("buoyancy", 100),
+    ]
+    assert dive["overall_score"] == 39
     assert dive["scores"][0]["reason"] == (
         "1 segment over 9 m/min, fastest 12 m/min between 19 m and 11 m."
     )
@@ -95,7 +98,7 @@ def test_settings_default_then_update_rescores(client):
     ascent = dive["scores"][0]
     assert ascent["score"] == 100
     assert ascent["reason"] == "All ascent within 13 m/min; fastest 12.0 m/min."
-    assert dive["overall_score"] == 50
+    assert dive["overall_score"] == 67
 
 
 @pytest.mark.parametrize(
@@ -151,6 +154,8 @@ def test_delete_dive(client):
 def test_stale_scores_are_recomputed(client, engine):
     from sqlalchemy import text
 
+    from app.scoring import ALGORITHM_VERSION
+
     _upload(client, "fast.uddf", FAST_ASCENT)
     with engine.begin() as conn:
         # As if scored by an older algorithm that produced different numbers
@@ -158,4 +163,4 @@ def test_stale_scores_are_recomputed(client, engine):
     [dive] = client.get("/dives").json()
     assert dive["scores"][0]["score"] == 18
     with engine.begin() as conn:
-        assert conn.scalar(text("SELECT min(algorithm_version) FROM dive_scores")) == 1
+        assert conn.scalar(text("SELECT min(algorithm_version) FROM dive_scores")) == ALGORITHM_VERSION

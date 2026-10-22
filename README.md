@@ -52,4 +52,21 @@ Skill scores are computed on the backend (`backend/app/scoring/`), stored
 per dive, and recomputed when a diver changes their settings or
 `ALGORITHM_VERSION` is bumped. Each skill module's docstring states its
 rules, and `tests/test_scoring.py` checks hand-derived scores for synthetic
-profiles. Bump `ALGORITHM_VERSION` whenever a change could alter a score.
+profiles. `tests/test_real_scores.py` pins the scores of the three real dives.
+Bump `ALGORITHM_VERSION` whenever a change could alter a score.
+
+### Bottom phase (buoyancy)
+
+Buoyancy is judged only on the bottom phase, found like this:
+
+1. The dive is split at surface intervals (0.75 m or shallower). Each stretch
+   underwater of a minute or more gets its own bottom phase.
+2. A plateau is 30 s or more where the depth rate, averaged over 30 s, stays
+   under 3 m/min either way.
+3. The descent ends at the first point within 1 m of the first plateau's depth.
+4. The diver leaves for good at the last moment deeper than the safety stop
+   band plus its tolerance (6.5 m by default). The final ascent starts at the
+   last point within 1 m of the last plateau before that. Stretches that never
+   go that deep use their last plateau. This keeps the climb to the stop and
+   the stop itself out of the buoyancy score.
+5. Bottom phases under a minute are dropped; under 3 minutes in total is N/A.
