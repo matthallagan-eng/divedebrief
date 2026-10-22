@@ -118,10 +118,8 @@ export default function Upload() {
         <div className="rounded-xl border border-surface-border bg-surface-raised/80 p-5">
           <p className="flex items-center gap-2 text-sm text-foam">
             <Anchor size={16} className="text-aqua" />
-            {result.added > 0
-              ? `${result.added} dive${result.added === 1 ? "" : "s"} added to your logbook`
-              : "No new dives. Everything in this file was already logged"}
-            {result.skipped > 0 && result.added > 0 && (
+            {summarize(result)}
+            {result.skipped > 0 && result.added + result.updated > 0 && (
               <span className="text-mist">· {result.skipped} already logged</span>
             )}
           </p>
@@ -130,7 +128,7 @@ export default function Upload() {
               {result.warnings.map((w) => <li key={w}>{w}</li>)}
             </ul>
           )}
-          {result.added > 0 && (
+          {result.added + result.updated > 0 && (
             <Link to="/" className="mt-3 inline-block text-sm text-aqua hover:text-foam">
               View logbook →
             </Link>
@@ -173,4 +171,15 @@ export default function Upload() {
       )}
     </div>
   );
+}
+
+function plural(n: number) {
+  return `${n} dive${n === 1 ? "" : "s"}`;
+}
+
+function summarize(r: UploadResult) {
+  const parts = [];
+  if (r.added > 0) parts.push(`${plural(r.added)} added to your logbook`);
+  if (r.updated > 0) parts.push(`${plural(r.updated)} filled in with heart rate, GPS and water type from the watch`);
+  return parts.length ? parts.join(", ") : "No new dives. Everything in this file was already logged";
 }

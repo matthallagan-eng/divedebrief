@@ -28,6 +28,8 @@ class UploadResult(BaseModel):
     upload_id: int | None
     filename: str
     added: int
+    # Dives already stored from UDDF that a FIT upload filled in
+    updated: int = 0
     skipped: int
     warnings: list[str]
 
@@ -93,6 +95,7 @@ class ProfilePoint(BaseModel):
 
 class DiveDetail(DiveSummary):
     computer_serial: str | None
+    source: str
     water_type: str | None
     latitude: float | None
     longitude: float | None

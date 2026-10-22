@@ -1,7 +1,7 @@
 import hashlib
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
-from sqlalchemy import insert, select
+from sqlalchemy import delete, insert, select
 from sqlalchemy.orm import Session
 
 from ..analysis.stats import fingerprint, summarize
@@ -10,7 +10,7 @@ from ..database import get_db
 from ..deps import get_current_user
 from ..models import Dive, Sample, Upload, User
 from ..parsing.fit import parse_fit
-from ..parsing.model import ParseError
+from ..parsing.model import ParsedDive, ParseError
 from ..parsing.uddf import parse_uddf
 from ..schemas import UploadOut, UploadResult
 from ..scoring.store import ensure_scores
@@ -19,6 +19,40 @@ router = APIRouter(prefix="/uploads", tags=["uploads"])
 
 # Suffix -> (format name, parser)
 PARSERS = {".uddf": ("UDDF", parse_uddf), ".xml": ("UDDF", parse_uddf), ".fit": ("FIT", parse_fit)}
+
+
+def _fill(dive: Dive, d: ParsedDive, source: str) -> None:
+    """Set a dive's summary, metadata and source from a parsed dive."""
+    stats = summarize(d)
+    dive.started_at = d.started_at
+    dive.duration_s = stats.duration_s
+    dive.max_depth_m = stats.max_depth_m
+    dive.avg_depth_m = stats.avg_depth_m
+    dive.min_temp_k = stats.min_temp_k
+    dive.computer_model = d.computer_model
+    dive.computer_serial = d.computer_serial
+    dive.water_type = d.water_type
+    dive.latitude = d.latitude
+    dive.longitude = d.longitude
+    dive.source = source
+
+
+def _store_samples(db: Session, dive_id: int, d: ParsedDive) -> None:
+    db.execute(
+        insert(Sample),
+        [
+            {
+                "dive_id": dive_id,
+                "t_s": s.t_s,
+                "depth_m": s.depth_m,
+                "temp_k": s.temp_k,
+                "heart_rate": s.heart_rate,
+                "tank_pressure_bar": s.tank_pressure_bar,
+                "ndl_s": s.ndl_s,
+            }
+            for s in d.samples
+        ],
+    )
 
 
 @router.post("", response_model=UploadResult)
@@ -42,27 +76,45 @@ async def upload_dives(
     except ParseError as e:
         raise HTTPException(400, f"Could not parse {kind}: {e}")
 
+    source = kind.lower()
     prints = {id(d): fingerprint(d.started_at) for d in parsed.dives}
-    existing = set(
-        db.scalars(
-            select(Dive.fingerprint).where(
-                Dive.user_id == user.id, Dive.fingerprint.in_(prints.values())
-            )
+    existing = {
+        dive.fingerprint: dive
+        for dive in db.scalars(
+            select(Dive).where(Dive.user_id == user.id, Dive.fingerprint.in_(prints.values()))
         )
-    )
+    }
 
-    new_dives = []
+    new_dives: list[ParsedDive] = []
+    upgraded: list[Dive] = []
+    seen: set[str] = set()  # also skips a dive repeated within the same file
     for d in parsed.dives:
         fp = prints[id(d)]
-        if fp in existing:
+        if fp in seen:
             continue
-        existing.add(fp)  # also skips a dive repeated within the same file
-        new_dives.append(d)
+        seen.add(fp)
+        stored_dive = existing.get(fp)
+        if stored_dive is None:
+            new_dives.append(d)
+        elif source == "fit" and stored_dive.source != "fit":
+            # Swap in the watch's own recording; the dive keeps its id and upload
+            _fill(stored_dive, d, source)
+            db.execute(delete(Sample).where(Sample.dive_id == stored_dive.id))
+            _store_samples(db, stored_dive.id, d)
+            stored_dive.scores = []  # recomputed below from the new samples
+            upgraded.append(stored_dive)
 
-    skipped = len(parsed.dives) - len(new_dives)
+    skipped = len(parsed.dives) - len(new_dives) - len(upgraded)
     if not new_dives:
+        db.commit()
+        ensure_scores(db, user.id, upgraded)
         return UploadResult(
-            upload_id=None, filename=filename, added=0, skipped=skipped, warnings=parsed.warnings
+            upload_id=None,
+            filename=filename,
+            added=0,
+            updated=len(upgraded),
+            skipped=skipped,
+            warnings=parsed.warnings,
         )
 
     upload = Upload(
@@ -76,47 +128,20 @@ async def upload_dives(
 
     stored: list[Dive] = []
     for d in new_dives:
-        stats = summarize(d)
-        dive = Dive(
-            upload=upload,
-            user_id=user.id,
-            fingerprint=prints[id(d)],
-            started_at=d.started_at,
-            duration_s=stats.duration_s,
-            max_depth_m=stats.max_depth_m,
-            avg_depth_m=stats.avg_depth_m,
-            min_temp_k=stats.min_temp_k,
-            computer_model=d.computer_model,
-            computer_serial=d.computer_serial,
-            water_type=d.water_type,
-            latitude=d.latitude,
-            longitude=d.longitude,
-        )
+        dive = Dive(upload=upload, user_id=user.id, fingerprint=prints[id(d)])
+        _fill(dive, d, source)
         db.add(dive)
         stored.append(dive)
         db.flush()
-        db.execute(
-            insert(Sample),
-            [
-                {
-                    "dive_id": dive.id,
-                    "t_s": s.t_s,
-                    "depth_m": s.depth_m,
-                    "temp_k": s.temp_k,
-                    "heart_rate": s.heart_rate,
-                    "tank_pressure_bar": s.tank_pressure_bar,
-                    "ndl_s": s.ndl_s,
-                }
-                for s in d.samples
-            ],
-        )
+        _store_samples(db, dive.id, d)
 
     db.commit()
-    ensure_scores(db, user.id, stored)
+    ensure_scores(db, user.id, stored + upgraded)
     return UploadResult(
         upload_id=upload.id,
         filename=filename,
         added=len(new_dives),
+        updated=len(upgraded),
         skipped=skipped,
         warnings=parsed.warnings,
     )

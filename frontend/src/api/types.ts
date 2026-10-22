@@ -15,6 +15,7 @@ export interface UploadResult {
   upload_id: number | null;
   filename: string;
   added: number;
+  updated: number; // dives stored from UDDF that a FIT upload filled in
   skipped: number;
   warnings: string[];
 }

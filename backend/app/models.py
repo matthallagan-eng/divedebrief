@@ -60,6 +60,9 @@ class Dive(Base):
     min_temp_k: Mapped[float | None] = mapped_column(Float, nullable=True)
     computer_model: Mapped[str | None] = mapped_column(String(255), nullable=True)
     computer_serial: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # Format the samples came from: uddf | fit. A FIT upload of a dive stored
+    # from UDDF replaces its samples, since FIT is the watch's own recording.
+    source: Mapped[str] = mapped_column(String(8), default="uddf", server_default="uddf")
     water_type: Mapped[str | None] = mapped_column(String(8), nullable=True)  # salt | fresh
     # GPS start point, or the exit point when the watch had no fix at the start
     latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
