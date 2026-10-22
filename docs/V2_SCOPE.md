@@ -4,8 +4,7 @@ V1 shows what happened on a dive. V2 rates how well it was dived: each dive
 gets a skills scorecard, the logbook tracks those skills over time, and
 other divers can sign up and use it.
 
-Status: **draft** — open questions are at the end and need answers before
-the milestone they block.
+Status: **agreed**. Decisions are at the end.
 
 ## In scope
 
@@ -18,7 +17,7 @@ the milestone they block.
 ## Out of scope (V3 or later)
 
 - Logbook editing: notes, buddy, free-form dive fields. The two exceptions
-  are tank data for air efficiency (Q2) and site names (feature 4).
+  are the tank form for air efficiency and site names (feature 4).
 - Sharing dives between divers, instructors reviewing students
 - Gas-switch, rebreather, or decompression-dive analysis
 - Native mobile app
@@ -38,12 +37,12 @@ recomputed when a diver changes a setting or the algorithm changes.
 ### 1a. Ascent control
 
 - Ascent rate from depth samples, smoothed over a **10 s** window so sample
-  noise doesn't count (V1 uses 14 s, see Q1).
+  noise doesn't count (V1 used 14 s).
 - Thresholds: target **≤ 9 m/min (30 ft/min)**, violation **> 18 m/min (60 ft/min)**.
 - The final 6 m count more heavily than the rest of the ascent.
 - Score = % of ascent time within target, minus penalties for violation segments.
 - Reason example: "2 segments over 9 m/min, fastest 14 m/min between 8 m and 5 m."
-- Proposed defaults (Q5): final-6 m weight 2×; −10 points per violation segment, capped at −40.
+- Defaults: final-6 m weight 2×; −10 points per violation segment, capped at −40.
 
 ### 1b. Safety stop
 
@@ -67,15 +66,15 @@ recomputed when a diver changes a setting or the algorithm changes.
   changes along a reef don't count as instability.
 - Metrics: standard deviation of the detrended depth, and the count of
   unintended vertical excursions **> 1 m**.
-- Score from bands on both metrics (Q5).
+- Score from bands on both metrics.
 - Reason example: "4 excursions over 1 m; steadiest stretch was minutes 12–20."
 
 ### 1d. Air efficiency (SAC)
 
 - SAC (L/min) = (pressure used in bar × tank volume in L) ÷ (minutes × average ambient pressure in ATA)
-- ATA = depth_m / 10 + 1 in seawater; depth_m / 10.3 + 1 in fresh water (Q3).
+- ATA = depth_m / 10 + 1 in seawater; depth_m / 10.3 + 1 in fresh water, from the dive's site.
 - Needs tank pressure samples (FIT with air integration), or start/end
-  pressure and tank size entered by the diver (Q2).
+  pressure and tank size entered by the diver in the tank form.
 - Scored against the diver's own rolling baseline (last 5 dives with SAC),
   not an absolute good/bad number. The first dives score N/A with "Building
   your baseline (n of 5)".
@@ -106,7 +105,7 @@ recomputed when a diver changes a setting or the algorithm changes.
 - Store the extra channels when they're present: heart rate, tank pressure
   (air-integrated models), NDL, water type and the GPS start point.
 - **Done when:** your three dives, uploaded as `.fit`, match the stored UDDF
-  versions within 0.2 m max depth, 60 s duration and the same fingerprint (Q6).
+  versions within 0.2 m max depth, 60 s duration and the same fingerprint.
 
 ## 4. Dive sites and map
 
@@ -123,7 +122,7 @@ recomputed when a diver changes a setting or the algorithm changes.
 - Uploads, dives, sites, settings and scores all belong to one diver.
   Dedupe fingerprints become unique per diver, not across the whole database.
 - Existing V1 data is assigned to the first account created.
-- Hosted deployment (Q4). Uploads stay capped at 10 MB, with a per-diver
+- Hosted on Railway. Uploads stay capped at 10 MB, with a per-diver
   rate limit on uploads.
 
 ---
@@ -160,34 +159,20 @@ The order follows the dependencies. Each milestone ends with tests and its own P
 
 ---
 
-## Open questions
+## Decisions
 
-**Q1. Ascent window and the V1 ascent code.** The V2 spec uses a 10 s window;
-V1 uses 14 s. Recommendation:
-- Switch to 10 s and re-derive the golden cases.
-- Retire the frontend copy of the ascent code (`frontend/src/lib/ascent.ts`)
-  and have the dive page show backend results. With four skills, keeping two
-  implementations in sync stops being worth it.
-- The V1 "ascent limit" slider becomes the target threshold in settings.
+Settled 2026-10-21.
 
-**Q2. Tank data entry.** Logbook editing is deferred, but without air
-integration SAC can only come from manual entry. Recommendation: include just
-a tank form (size, start and end pressure) on the dive page in V2.
-
-**Q3. Fresh or salt water.** Your dives' GPS points are inland in northwest
-Ohio, so they're probably fresh water. Water type changes the ATA used in SAC.
-It also matters whether the watch's depth reading was calibrated for fresh or
-salt water. Recommendation: water type per site, default salt, with the FIT
-water-type field used when it's present.
-
-**Q4. Hosting.** Where should it run? Candidates: Fly.io, Render, Railway, a
-VPS with docker-compose. The app needs Postgres and space for uploads.
-
-**Q5. Score bands and penalties.** The spec leaves the exact values open for
-ascent penalties, safety-stop scoring and the buoyancy bands. Recommendation:
-- Ship the proposed defaults.
-- Tune them against your real dives before the milestone 2 and 3 PRs.
-- Show the scoring rules on a "How scores work" page.
-
-**Q6. FIT test files.** For the FIT import check, please add the original
-`.fit` files for your three dives to `backend/tests/fixtures/fit/real/`.
+1. **Ascent window: 10 s.** The golden cases are re-derived for 10 s. The
+   frontend copy of the ascent code (`frontend/src/lib/ascent.ts`) is retired,
+   and the dive page shows backend results. The V1 "ascent limit" slider
+   becomes the target threshold in settings.
+2. **Tank data: small tank form in V2.** Tank size plus start and end
+   pressure on the dive page. Other logbook editing waits for V3.
+3. **Water type: per site.** Default salt; the FIT water-type field is used when present.
+4. **Hosting: Railway.** Services for api and web, plus Railway Postgres.
+5. **Scoring numbers: ship the proposed defaults.** Tune them against the real
+   dives before the milestone 2 and 3 PRs, and explain them on a
+   "How scores work" page.
+6. **FIT test files:** the original `.fit` files for the three real dives go in
+   `backend/tests/fixtures/fit/real/`.
