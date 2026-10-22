@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
+from .routers import dives, uploads
 
 app = FastAPI(
     title="DiveDebrief API",
@@ -21,3 +22,7 @@ app.add_middleware(
 @app.get("/health", tags=["ops"])
 def health():
     return {"status": "ok"}
+
+
+app.include_router(uploads.router)
+app.include_router(dives.router)
