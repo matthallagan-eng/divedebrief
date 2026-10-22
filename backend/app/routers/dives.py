@@ -58,6 +58,7 @@ def get_dive(dive_id: int, db: Session = Depends(get_db), user: User = Depends(g
     return DiveDetail(
         **fields,
         computer_serial=dive.computer_serial,
+        source=dive.source,
         water_type=dive.water_type,
         latitude=dive.latitude,
         longitude=dive.longitude,

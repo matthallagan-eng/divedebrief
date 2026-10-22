@@ -50,6 +50,7 @@ def test_reupload_skips_known_dives_without_creating_upload(client):
         "upload_id": None,
         "filename": "single_dive.uddf",
         "added": 0,
+        "updated": 0,
         "skipped": 1,
         "warnings": [],
     }
@@ -148,6 +149,36 @@ def test_fit_upload_stores_extra_channels_and_dedupes_with_uddf(client):
     uddf = (FIXTURES / "uddf" / "real" / "test_dive.uddf").read_bytes()
     res = _upload(client, "test_dive.uddf", uddf)
     assert (res.json()["added"], res.json()["skipped"]) == (0, 1)
+
+
+def test_fit_upload_fills_in_a_dive_stored_from_uddf(client):
+    uddf = (FIXTURES / "uddf" / "real" / "test_dive.uddf").read_bytes()
+    _upload(client, "test_dive.uddf", uddf)
+    [before] = client.get("/dives").json()
+    old = client.get(f"/dives/{before['id']}").json()
+    assert old["source"] == "uddf" and old["latitude"] is None
+    assert old["samples"][0]["t_s"] == 1  # Subsurface's 1 s shift
+
+    fit = (FIXTURES / "fit" / "real" / "2026-08-09-12-02-28.fit").read_bytes()
+    res = client.post("/uploads", files={"file": ("dive.fit", fit, "application/octet-stream")})
+    body = res.json()
+    assert (body["added"], body["updated"], body["skipped"], body["upload_id"]) == (0, 1, 0, None)
+
+    [after] = client.get("/dives").json()
+    assert (after["id"], after["upload_id"]) == (before["id"], before["upload_id"])
+    new = client.get(f"/dives/{after['id']}").json()
+    assert new["source"] == "fit"
+    assert new["computer_model"] == "Garmin Descent G2"
+    assert new["water_type"] == "fresh" and new["latitude"] is not None
+    assert (new["samples"][0]["t_s"], new["samples"][0]["heart_rate"]) == (0, 81)
+    # Rescored from the FIT samples (ascent 82 vs 81 from UDDF)
+    assert [(s["skill"], s["score"]) for s in new["scores"]] == [
+        ("ascent", 82), ("stop", 71), ("buoyancy", 90),
+    ]
+
+    # A second FIT upload of the same dive has nothing to add
+    res = client.post("/uploads", files={"file": ("dive.fit", fit, "application/octet-stream")})
+    assert (res.json()["updated"], res.json()["skipped"]) == (0, 1)
 
 
 def test_upload_rejects_oversized_file(client, monkeypatch):
