@@ -33,6 +33,8 @@ class SkillResult:
     score: int | None  # None = N/A, explained by reason
     reason: str
     regions: list[Region] = field(default_factory=list)
+    # Numbers for trends across dives, e.g. ascent rates
+    metrics: dict[str, float] = field(default_factory=dict)
 
 
 def runs(flags: list[bool]) -> list[tuple[int, int]]:

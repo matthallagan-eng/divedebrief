@@ -121,10 +121,19 @@ recomputed when a diver changes a setting or the algorithm changes.
 
 ## 2. Ascent habits over time
 
-- Logbook page with a chart of each skill score per dive over time.
-- An ascent-rate trend: median and fastest ascent rate per dive.
-- Headline numbers: last 10 dives vs. the 10 before, for each skill.
-- Filterable by site (feature 4).
+- Logbook page with a chart of each skill score per dive over time, one
+  small chart per skill plus overall.
+- An ascent-rate trend: median and fastest ascent rate per dive, stored as
+  metrics on the ascent score (algorithm version 3).
+- Headline numbers: last 10 scored dives vs. the 10 before, for each skill.
+- Filterable by site (feature 4), including "Unknown site".
+
+## 2b. Dive notes (added 2026-10-24)
+
+- On the dive page: how the diver felt (Rough, Uneasy, OK, Good, Great),
+  sea life and landmarks as tags, and free-text notes.
+- Tags offer what the diver noted on earlier dives. Each site on the map
+  lists the sea life and landmarks noted there, most often noted first.
 
 ## 3. Direct FIT import
 
@@ -152,6 +161,11 @@ recomputed when a diver changes a setting or the algorithm changes.
 - UDDF exports from Subsurface carry the site's position only, so those dives
   are placed on the map but have no separate entry and exit points.
 - Dives without GPS go under "Unknown site".
+- Name suggestions (added 2026-10-24): the site panel offers names of dive
+  sites (OSM `sport=scuba_diving`) and bodies of water at or near the site,
+  from OpenStreetMap's Overpass API, with Nominatim as a fallback when Overpass
+  is busy. Only the site's position is sent. The answer is kept on the site,
+  so each site is looked up once.
 
 ## 5. Accounts, per-diver data, hosting
 

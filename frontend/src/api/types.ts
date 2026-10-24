@@ -37,6 +37,8 @@ export interface DiveSummary {
   avg_depth_m: number;
   min_temp_k: number | null;
   computer_model: string | null;
+  site_id: number | null;
+  site_name: string | null;
   overall_score: number | null;
   scores: SkillScore[];
 }
@@ -94,6 +96,7 @@ export interface DiveDetail extends DiveSummary {
   exit_latitude: number | null;
   exit_longitude: number | null;
   site: SiteRef | null;
+  notes: Notes | null;
   scores: SkillScoreDetail[];
   samples: Sample[];
   profile: ProfilePoint[];
@@ -126,6 +129,60 @@ export interface SiteOut extends SiteRef {
   average_scores: Record<Skill, number | null>;
   average_overall: number | null;
   dives: MapDive[]; // newest first
+  // From the dives' notes, most often noted first
+  sea_life: string[];
+  landmarks: string[];
+}
+
+export interface NameSuggestion {
+  name: string;
+  kind: string; // e.g. "Dive site", "Lake", "Reef"
+  distance_m: number; // 0 when the site is inside it
+}
+
+export interface NameSuggestions {
+  suggestions: NameSuggestion[];
+  error: string | null; // the lookup service couldn't be reached
+}
+
+export interface NotesInput {
+  feeling: number | null; // 1 rough ... 5 great
+  sea_life: string[];
+  landmarks: string[];
+  text: string;
+}
+
+export interface Notes extends NotesInput {
+  updated_at: string;
+}
+
+export interface NoteTags {
+  sea_life: string[];
+  landmarks: string[];
+}
+
+export interface TrendPoint {
+  id: number;
+  started_at: string;
+  site_id: number | null;
+  scores: Record<Skill, number | null>;
+  overall_score: number | null;
+  median_ascent_m_per_min: number | null;
+  max_ascent_m_per_min: number | null;
+}
+
+export interface Headline {
+  skill: Skill | "overall";
+  recent: number | null;
+  recent_dives: number;
+  previous: number | null;
+  previous_dives: number;
+}
+
+export interface Trends {
+  points: TrendPoint[]; // oldest first
+  headlines: Headline[];
+  window: number; // dives per headline period
 }
 
 export interface DiveMap {

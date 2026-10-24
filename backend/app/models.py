@@ -91,6 +91,9 @@ class Dive(Base):
     tank: Mapped["DiveTank | None"] = relationship(
         back_populates="dive", cascade="all, delete-orphan", passive_deletes=True
     )
+    notes: Mapped["DiveNotes | None"] = relationship(
+        back_populates="dive", cascade="all, delete-orphan", passive_deletes=True
+    )
 
 
 class Site(Base):
@@ -108,6 +111,9 @@ class Site(Base):
     # Set by the diver; overrides the water type the dive computer recorded
     water_type: Mapped[str | None] = mapped_column(String(8), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    # Names of dive sites and bodies of water nearby, from OpenStreetMap (app.places).
+    # Fetched once, the first time the diver opens the site; None = not fetched yet.
+    name_suggestions: Mapped[list | None] = mapped_column(JSONB, nullable=True)
 
     dives: Mapped[list["Dive"]] = relationship(back_populates="site")
 
@@ -150,6 +156,8 @@ class DiveScore(Base):
     score: Mapped[int | None] = mapped_column(Integer, nullable=True)
     reason: Mapped[str] = mapped_column(Text)
     regions: Mapped[list] = mapped_column(JSONB, default=list)
+    # Per-dive numbers for trends, e.g. median and fastest ascent rate
+    metrics: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}")
     algorithm_version: Mapped[int] = mapped_column(Integer)
     settings_version: Mapped[int] = mapped_column(Integer)
     computed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
@@ -173,3 +181,23 @@ class DiveTank(Base):
     source: Mapped[str] = mapped_column(String(8))
 
     dive: Mapped["Dive"] = relationship(back_populates="tank")
+
+
+class DiveNotes(Base):
+    """What the diver wrote about a dive."""
+
+    __tablename__ = "dive_notes"
+
+    dive_id: Mapped[int] = mapped_column(
+        ForeignKey("dives.id", ondelete="CASCADE"), primary_key=True
+    )
+    # 1 (rough) to 5 (great)
+    feeling: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    sea_life: Mapped[list] = mapped_column(JSONB, default=list)
+    landmarks: Mapped[list] = mapped_column(JSONB, default=list)
+    text: Mapped[str] = mapped_column(Text, default="")
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, onupdate=_utcnow
+    )
+
+    dive: Mapped["Dive"] = relationship(back_populates="notes")

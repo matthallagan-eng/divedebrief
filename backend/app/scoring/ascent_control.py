@@ -1,5 +1,8 @@
 """Ascent control score.
 
+Also records the median and fastest smoothed rate over the ascent time, for
+the ascent-rate trend in the logbook.
+
 1. Ascent time is every second (1 s grid) where the smoothed rate is above
    ASCENDING_MIN_RATE and the diver is below the surface threshold, so
    buoyancy wobble and surface swimming don't count.
@@ -13,6 +16,8 @@
 
 Dives with less than MIN_ASCENT_S of ascent time are N/A.
 """
+import statistics
+
 from ..analysis.stats import SURFACE_THRESHOLD_M
 from .common import Profile, Region, SkillResult, runs
 from .settings import ScoringSettings
@@ -41,6 +46,11 @@ def score_ascent(p: Profile, cfg: ScoringSettings) -> SkillResult:
         if r <= target:
             within += w
     base = 100 * within / total
+    rising = [r for r, asc in zip(p.rate, ascending) if asc]
+    metrics = {
+        "median_ascent_m_per_min": round(statistics.median(rising), 2),
+        "max_ascent_m_per_min": round(max(rising), 2),
+    }
 
     def segments(threshold: float) -> list[tuple[int, int]]:
         return [
@@ -63,7 +73,7 @@ def score_ascent(p: Profile, cfg: ScoringSettings) -> SkillResult:
         ))
 
     if not over:
-        fastest = max(r for r, asc in zip(p.rate, ascending) if asc)
+        fastest = max(rising)
         reason = f"All ascent within {target:g} m/min; fastest {fastest:.1f} m/min."
     else:
         a, b = max(over, key=lambda s: max(p.rate[s[0] : s[1] + 1]))
@@ -76,4 +86,4 @@ def score_ascent(p: Profile, cfg: ScoringSettings) -> SkillResult:
         if violations:
             k = len(violations)
             reason += f" {k} over {limit:g} m/min."
-    return SkillResult(SKILL, score, reason, regions)
+    return SkillResult(SKILL, score, reason, regions, metrics)

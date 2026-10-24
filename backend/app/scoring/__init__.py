@@ -7,7 +7,7 @@ from .common import Profile, Region, SkillResult
 from .safety_stop import score_stop
 from .settings import ScoringSettings
 
-ALGORITHM_VERSION = 2
+ALGORITHM_VERSION = 3
 
 
 def score_dive(times, depths, cfg: ScoringSettings) -> list[SkillResult]:

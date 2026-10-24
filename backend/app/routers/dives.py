@@ -1,12 +1,15 @@
+from collections import Counter
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from ..database import get_db
 from ..deps import get_current_user
-from ..models import Dive, DiveTank, User
+from ..models import Dive, DiveNotes, DiveTank, User
 from ..schemas import (
-    DiveDetail, DiveSummary, ProfilePoint, SampleOut, SiteRef, SkillScoreDetail, TankIn, TankOut,
+    DiveDetail, DiveSummary, NotesIn, NotesOut, NoteTags, ProfilePoint, SampleOut, SiteRef,
+    SkillScoreDetail, TankIn, TankOut,
 )
 from ..scoring import Profile, ScoringSettings, overall_score
 from ..scoring.store import SKILLS, ensure_scores
@@ -25,6 +28,8 @@ def _summary_fields(dive: Dive, cfg: ScoringSettings) -> dict:
         avg_depth_m=dive.avg_depth_m,
         min_temp_k=dive.min_temp_k,
         computer_model=dive.computer_model,
+        site_id=dive.site_id,
+        site_name=dive.site and dive.site.name,
         overall_score=overall_score({s.skill: s.score for s in scores}, cfg),
         scores=scores,
     )
@@ -35,11 +40,34 @@ def list_dives(db: Session = Depends(get_db), user: User = Depends(get_current_u
     dives = db.scalars(
         select(Dive)
         .where(Dive.user_id == user.id)
-        .options(selectinload(Dive.scores))
+        .options(selectinload(Dive.scores), selectinload(Dive.site))
         .order_by(Dive.started_at.desc())
     ).all()
     cfg = ensure_scores(db, user.id, list(dives))
     return [DiveSummary(**_summary_fields(d, cfg)) for d in dives]
+
+
+def tally(lists) -> list[str]:
+    """Distinct entries across lists, most frequent first, ignoring case.
+    Each keeps its spelling in the first list, so pass the oldest dive first."""
+    counts: Counter[str] = Counter()
+    spelling: dict[str, str] = {}
+    for tags in lists:
+        for tag in tags:
+            key = tag.casefold()
+            spelling.setdefault(key, tag)
+            counts[key] += 1
+    return [spelling[k] for k, _ in counts.most_common()]
+
+
+@router.get("/note-tags", response_model=NoteTags)
+def note_tags(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    notes = db.scalars(
+        select(DiveNotes).join(Dive).where(Dive.user_id == user.id).order_by(Dive.started_at)
+    ).all()
+    return NoteTags(
+        sea_life=tally(n.sea_life for n in notes), landmarks=tally(n.landmarks for n in notes)
+    )
 
 
 @router.get("/{dive_id}", response_model=DiveDetail)
@@ -49,7 +77,7 @@ def get_dive(dive_id: int, db: Session = Depends(get_db), user: User = Depends(g
         .where(Dive.id == dive_id, Dive.user_id == user.id)
         .options(
             selectinload(Dive.samples), selectinload(Dive.scores), selectinload(Dive.tank),
-            selectinload(Dive.site),
+            selectinload(Dive.site), selectinload(Dive.notes),
         )
     )
     if dive is None:
@@ -73,6 +101,7 @@ def get_dive(dive_id: int, db: Session = Depends(get_db), user: User = Depends(g
         exit_latitude=dive.exit_latitude,
         exit_longitude=dive.exit_longitude,
         site=dive.site and SiteRef.model_validate(dive.site),
+        notes=dive.notes and NotesOut.model_validate(dive.notes),
         samples=[SampleOut.model_validate(s) for s in dive.samples],
         profile=[
             ProfilePoint(t_s=t, depth_m=d, rate_m_per_min=r) for t, d, r in zip(p.t, p.depth, p.rate)
@@ -113,6 +142,19 @@ def delete_tank(dive_id: int, db: Session = Depends(get_db), user: User = Depend
     if dive.tank is not None:
         db.delete(dive.tank)
         db.commit()
+
+
+@router.put("/{dive_id}/notes", response_model=NotesOut)
+def put_notes(
+    dive_id: int, body: NotesIn, db: Session = Depends(get_db), user: User = Depends(get_current_user)
+):
+    dive = _own_dive(db, dive_id, user)
+    if dive.notes is None:
+        dive.notes = DiveNotes()
+    for field, value in body.model_dump().items():
+        setattr(dive.notes, field, value)
+    db.commit()
+    return dive.notes
 
 
 def _own_dive(db: Session, dive_id: int, user: User) -> Dive:

@@ -3,7 +3,7 @@ import type { FormEvent, ReactNode } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ChevronLeft, Globe2, MapPin, Waves } from "lucide-react";
 import { api } from "../api/client";
-import type { DiveMap, MapDive, SiteOut, SiteRef, Skill } from "../api/types";
+import type { DiveMap, MapDive, NameSuggestions, SiteOut, SiteRef, Skill } from "../api/types";
 import { diveFixes } from "../lib/map";
 import { formatDate, formatDepth, formatDuration, formatTime } from "../lib/format";
 import { SKILL_NAMES, formatScore } from "../lib/skills";
@@ -210,6 +210,8 @@ function SitePanel({
           ))}
           <p className="col-span-2 text-xs text-murk">Average per skill across this site's dives</p>
         </div>
+        <Sightings label="Sea life seen here" items={site.sea_life} />
+        <Sightings label="Landmarks" items={site.landmarks} />
         <ul className="divide-y divide-surface-border/60">
           {site.dives.map((d) => (
             <DiveRow key={d.id} dive={d} onClick={() => onSelectDive(d.id)} />
@@ -220,8 +222,36 @@ function SitePanel({
   );
 }
 
+function Sightings({ label, items }: { label: string; items: string[] }) {
+  if (!items.length) return null;
+  return (
+    <div className="border-b border-surface-border px-4 py-3">
+      <p className="text-xs text-murk">{label}</p>
+      <ul className="mt-1.5 flex flex-wrap gap-1.5">
+        {items.map((item) => (
+          <li key={item} className="rounded-md bg-lagoon/15 px-2 py-0.5 text-xs text-foam">
+            {item}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+const distance = (m: number) => (m === 0 ? "you're in it" : m < 1000 ? `${m} m away` : `${(m / 1000).toFixed(1)} km away`);
+
 function SiteEditor({ site, onSaved }: { site: SiteOut; onSaved: () => void }) {
   const [name, setName] = useState(site.name ?? "");
+  const [nearby, setNearby] = useState<NameSuggestions | null>(null);
+
+  useEffect(() => {
+    // Popular dive sites and bodies of water at this spot, from OpenStreetMap
+    api
+      .get<NameSuggestions>(`/sites/${site.id}/suggestions`)
+      .then(setNearby)
+      .catch(() => setNearby({ suggestions: [], error: "Couldn't look up names nearby." }));
+  }, [site.id]);
+  const suggestions = (nearby?.suggestions ?? []).filter((s) => s.name !== name.trim());
   const [water, setWater] = useState(site.water_type ?? "");
   const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -249,7 +279,7 @@ function SiteEditor({ site, onSaved }: { site: SiteOut; onSaved: () => void }) {
         <input
           value={name}
           maxLength={120}
-          placeholder="e.g. Blue Hole"
+          placeholder={nearby?.suggestions[0] ? `e.g. ${nearby.suggestions[0].name}` : "e.g. Blue Hole"}
           onChange={(e) => {
             setName(e.target.value);
             setStatus("idle");
@@ -257,6 +287,33 @@ function SiteEditor({ site, onSaved }: { site: SiteOut; onSaved: () => void }) {
           className={`mt-1 ${field}`}
         />
       </label>
+      {nearby === null ? (
+        <p className="text-xs text-murk">Looking up names nearby…</p>
+      ) : nearby.error ? (
+        <p className="text-xs text-murk">{nearby.error}</p>
+      ) : suggestions.length > 0 ? (
+        <div>
+          <p className="text-xs text-murk">Nearby on OpenStreetMap: tap to use</p>
+          <ul className="mt-1.5 flex flex-wrap gap-1.5">
+            {suggestions.map((s) => (
+              <li key={s.name}>
+                <button
+                  type="button"
+                  title={`${s.kind}, ${distance(s.distance_m)}`}
+                  onClick={() => {
+                    setName(s.name);
+                    setStatus("idle");
+                  }}
+                  className="rounded-md border border-surface-border px-2 py-1 text-left text-xs text-foam transition-colors hover:border-lagoon"
+                >
+                  {s.name}
+                  <span className="ml-1 text-murk">· {s.kind}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       <label className="block">
         <span className="text-xs text-murk">Water</span>
         <select
