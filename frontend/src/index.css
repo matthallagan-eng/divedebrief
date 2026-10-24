@@ -79,3 +79,16 @@ body {
 input[type="range"] {
   accent-color: var(--color-lagoon);
 }
+
+/* Map hover labels, in the app's colours rather than MapLibre's white */
+.dive-popup .maplibregl-popup-content {
+  background: var(--color-surface-raised);
+  color: var(--color-foam);
+  border: 1px solid var(--color-surface-border);
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.6rem;
+  font: 500 0.75rem var(--font-sans);
+}
+.dive-popup .maplibregl-popup-tip {
+  display: none;
+}

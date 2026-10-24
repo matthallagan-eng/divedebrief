@@ -5,7 +5,8 @@ import { useAuth } from "../context/AuthContext";
 import Ocean from "./Ocean";
 
 const nav = [
-  { to: "/", label: "Logbook" },
+  { to: "/", label: "Map" },
+  { to: "/logbook", label: "Logbook" },
   { to: "/upload", label: "Log dives" },
   { to: "/settings", label: "Settings" },
 ];

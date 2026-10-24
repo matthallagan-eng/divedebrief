@@ -47,6 +47,8 @@ def test_fit_metadata_and_extra_channels():
     # No GPS fix at the start of this dive, so the exit point is used
     assert dive.latitude == pytest.approx(41.3709, abs=1e-4)
     assert dive.longitude == pytest.approx(-83.3155, abs=1e-4)
+    assert dive.entry is None
+    assert dive.exit == pytest.approx((41.370896, -83.315543), abs=1e-6)
 
     first = dive.samples[0]
     assert (first.t_s, first.depth_m, first.heart_rate) == (0, 1.693, 81)
@@ -59,6 +61,8 @@ def test_fit_metadata_and_extra_channels():
 def test_start_position_preferred_when_present():
     [dive] = _fit("2026-08-08-15-21-24.fit").dives
     assert dive.latitude == pytest.approx(41.37065, abs=1e-4)
+    assert dive.entry == pytest.approx((41.37065, -83.315608), abs=1e-6)
+    assert dive.exit == pytest.approx((41.370493, -83.315226), abs=1e-6)
 
 
 @pytest.mark.parametrize(

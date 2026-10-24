@@ -156,7 +156,9 @@ def test_fit_upload_fills_in_a_dive_stored_from_uddf(client):
     _upload(client, "test_dive.uddf", uddf)
     [before] = client.get("/dives").json()
     old = client.get(f"/dives/{before['id']}").json()
-    assert old["source"] == "uddf" and old["latitude"] is None
+    # Subsurface exports the site position, but not separate entry and exit points
+    assert old["source"] == "uddf" and old["latitude"] == 41.370895
+    assert old["exit_latitude"] is None and old["site"] is not None
     assert old["samples"][0]["t_s"] == 1  # Subsurface's 1 s shift
 
     fit = (FIXTURES / "fit" / "real" / "2026-08-09-12-02-28.fit").read_bytes()
@@ -170,6 +172,8 @@ def test_fit_upload_fills_in_a_dive_stored_from_uddf(client):
     assert new["source"] == "fit"
     assert new["computer_model"] == "Garmin Descent G2"
     assert new["water_type"] == "fresh" and new["latitude"] is not None
+    assert new["exit_latitude"] == pytest.approx(41.370896, abs=1e-6)
+    assert new["site"]["id"] == old["site"]["id"]
     assert (new["samples"][0]["t_s"], new["samples"][0]["heart_rate"]) == (0, 81)
     # Rescored from the FIT samples (ascent 82 vs 81 from UDDF)
     assert [(s["skill"], s["score"]) for s in new["scores"]] == [

@@ -64,11 +64,21 @@ class Dive(Base):
     # from UDDF replaces its samples, since FIT is the watch's own recording.
     source: Mapped[str] = mapped_column(String(8), default="uddf", server_default="uddf")
     water_type: Mapped[str | None] = mapped_column(String(8), nullable=True)  # salt | fresh
-    # GPS start point, or the exit point when the watch had no fix at the start
+    # Where the dive is placed on the map and grouped into a site: the entry
+    # point, or the exit point when the watch had no fix at the start
     latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
     longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    # Surface GPS fixes from the FIT file; there is no GPS underwater
+    entry_latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    entry_longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    exit_latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    exit_longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    site_id: Mapped[int | None] = mapped_column(
+        ForeignKey("sites.id", ondelete="SET NULL"), index=True, nullable=True
+    )
 
     upload: Mapped["Upload"] = relationship(back_populates="dives")
+    site: Mapped["Site | None"] = relationship(back_populates="dives")
     samples: Mapped[list["Sample"]] = relationship(
         back_populates="dive",
         cascade="all, delete-orphan",
@@ -81,6 +91,25 @@ class Dive(Base):
     tank: Mapped["DiveTank | None"] = relationship(
         back_populates="dive", cascade="all, delete-orphan", passive_deletes=True
     )
+
+
+class Site(Base):
+    """Dives whose positions fall within app.sites.SITE_RADIUS_M of each other.
+    Kept when its last dive is deleted, so a re-upload finds its name again."""
+
+    __tablename__ = "sites"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    name: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    # Mean position of the site's dives
+    latitude: Mapped[float] = mapped_column(Float)
+    longitude: Mapped[float] = mapped_column(Float)
+    # Set by the diver; overrides the water type the dive computer recorded
+    water_type: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+    dives: Mapped[list["Dive"]] = relationship(back_populates="site")
 
 
 class Sample(Base):

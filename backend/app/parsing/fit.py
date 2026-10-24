@@ -70,7 +70,8 @@ def parse_fit(data: bytes) -> ParseResult:
         if not samples:
             result.warnings.append(f"Skipped dive #{index}: no depth samples")
             continue
-        lat, lon = _position(session)
+        entry, exit_ = _position(session, "start"), _position(session, "end")
+        lat, lon = entry or exit_ or (None, None)
         result.dives.append(
             ParsedDive(
                 started_at=(FIT_EPOCH + timedelta(seconds=start) + offset),
@@ -80,6 +81,8 @@ def parse_fit(data: bytes) -> ParseResult:
                 water_type=water,
                 latitude=lat,
                 longitude=lon,
+                entry=entry,
+                exit=exit_,
             )
         )
 
@@ -152,10 +155,9 @@ def _water_type(messages: dict) -> str | None:
     return None
 
 
-def _position(session: dict) -> tuple[float | None, float | None]:
-    # The watch often has no fix when the dive starts, so fall back to the exit point
-    for prefix in ("start_position", "end_position"):
-        lat, lon = session.get(f"{prefix}_lat"), session.get(f"{prefix}_long")
-        if lat is not None and lon is not None:
-            return lat * SEMICIRCLE_DEG, lon * SEMICIRCLE_DEG
-    return None, None
+def _position(session: dict, which: str) -> tuple[float, float] | None:
+    # The watch often has no fix yet when the dive starts
+    lat, lon = session.get(f"{which}_position_lat"), session.get(f"{which}_position_long")
+    if lat is None or lon is None:
+        return None
+    return lat * SEMICIRCLE_DEG, lon * SEMICIRCLE_DEG

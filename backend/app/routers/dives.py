@@ -6,7 +6,7 @@ from ..database import get_db
 from ..deps import get_current_user
 from ..models import Dive, DiveTank, User
 from ..schemas import (
-    DiveDetail, DiveSummary, ProfilePoint, SampleOut, SkillScoreDetail, TankIn, TankOut,
+    DiveDetail, DiveSummary, ProfilePoint, SampleOut, SiteRef, SkillScoreDetail, TankIn, TankOut,
 )
 from ..scoring import Profile, ScoringSettings, overall_score
 from ..scoring.store import SKILLS, ensure_scores
@@ -47,7 +47,10 @@ def get_dive(dive_id: int, db: Session = Depends(get_db), user: User = Depends(g
     dive = db.scalar(
         select(Dive)
         .where(Dive.id == dive_id, Dive.user_id == user.id)
-        .options(selectinload(Dive.samples), selectinload(Dive.scores), selectinload(Dive.tank))
+        .options(
+            selectinload(Dive.samples), selectinload(Dive.scores), selectinload(Dive.tank),
+            selectinload(Dive.site),
+        )
     )
     if dive is None:
         raise HTTPException(404, "Dive not found")
@@ -65,6 +68,11 @@ def get_dive(dive_id: int, db: Session = Depends(get_db), user: User = Depends(g
         water_type=dive.water_type,
         latitude=dive.latitude,
         longitude=dive.longitude,
+        entry_latitude=dive.entry_latitude,
+        entry_longitude=dive.entry_longitude,
+        exit_latitude=dive.exit_latitude,
+        exit_longitude=dive.exit_longitude,
+        site=dive.site and SiteRef.model_validate(dive.site),
         samples=[SampleOut.model_validate(s) for s in dive.samples],
         profile=[
             ProfilePoint(t_s=t, depth_m=d, rate_m_per_min=r) for t, d, r in zip(p.t, p.depth, p.rate)

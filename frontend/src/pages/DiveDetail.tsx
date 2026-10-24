@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowDownToLine, ChevronLeft, Gauge, Thermometer, Timer, Trash2 } from "lucide-react";
+import { ArrowDownToLine, ChevronLeft, Gauge, MapPin, Thermometer, Timer, Trash2 } from "lucide-react";
 import { api } from "../api/client";
 import type { DiveDetail as Dive, Region, ScoringSettings, SettingsResponse, Skill } from "../api/types";
 import { DiveCharts } from "../components/DiveCharts";
@@ -32,7 +32,7 @@ export default function DiveDetail() {
   async function handleDelete() {
     if (!dive || !confirm("Delete this dive from your logbook?")) return;
     await api.del(`/dives/${dive.id}`);
-    navigate("/");
+    navigate("/logbook");
   }
 
   if (error) {
@@ -62,6 +62,19 @@ export default function DiveDetail() {
               {[dive.computer_model, dive.computer_serial && `#${dive.computer_serial}`]
                 .filter(Boolean)
                 .join(" ") || "Unknown dive computer"}
+            </p>
+            <p className="mt-1 flex items-center gap-1.5 text-sm text-mist">
+              <MapPin size={14} className="text-murk" />
+              {dive.site ? (
+                <>
+                  {dive.site.name ?? "Unnamed site"}
+                  <Link to={`/?dive=${dive.id}`} className="text-aqua hover:text-foam">
+                    Show on map
+                  </Link>
+                </>
+              ) : (
+                "Unknown site: no GPS position"
+              )}
             </p>
           </div>
           <button
@@ -135,7 +148,7 @@ export default function DiveDetail() {
 
 function BackLink() {
   return (
-    <Link to="/" className="inline-flex items-center gap-1 text-sm text-murk hover:text-mist">
+    <Link to="/logbook" className="inline-flex items-center gap-1 text-sm text-murk hover:text-mist">
       <ChevronLeft size={14} />
       Logbook
     </Link>

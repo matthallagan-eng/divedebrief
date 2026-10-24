@@ -29,9 +29,13 @@ class ParsedDive:
     computer_model: str | None = None
     computer_serial: str | None = None
     water_type: str | None = None  # "salt" | "fresh"
-    # Start point, or the end point when the watch had no fix at the start
+    # Where the dive took place: the entry point, or the exit point when the
+    # watch had no fix at the start. UDDF has only the site's position.
     latitude: float | None = None
     longitude: float | None = None
+    # Surface GPS fixes going in and coming out (FIT only)
+    entry: tuple[float, float] | None = None
+    exit: tuple[float, float] | None = None
 
 
 @dataclass

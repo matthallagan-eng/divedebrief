@@ -14,6 +14,7 @@ from ..parsing.model import ParsedDive, ParseError
 from ..parsing.uddf import parse_uddf
 from ..schemas import UploadOut, UploadResult
 from ..scoring.store import ensure_scores
+from ..sites import assign_sites
 
 router = APIRouter(prefix="/uploads", tags=["uploads"])
 
@@ -34,6 +35,8 @@ def _fill(dive: Dive, d: ParsedDive, source: str) -> None:
     dive.water_type = d.water_type
     dive.latitude = d.latitude
     dive.longitude = d.longitude
+    dive.entry_latitude, dive.entry_longitude = d.entry or (None, None)
+    dive.exit_latitude, dive.exit_longitude = d.exit or (None, None)
     dive.source = source
 
 
@@ -118,6 +121,7 @@ async def upload_dives(
     skipped = len(parsed.dives) - len(new_dives) - len(upgraded)
     if not new_dives:
         db.commit()
+        assign_sites(db, user.id)
         ensure_scores(db, user.id, upgraded)
         return UploadResult(
             upload_id=None,
@@ -148,6 +152,8 @@ async def upload_dives(
         _sampled_tank(dive, d)
 
     db.commit()
+    # Before scoring: a site's water type feeds air efficiency
+    assign_sites(db, user.id)
     ensure_scores(db, user.id, stored + upgraded)
     return UploadResult(
         upload_id=upload.id,

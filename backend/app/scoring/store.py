@@ -2,10 +2,10 @@
 from dataclasses import asdict
 from itertools import groupby
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from ..models import Dive, DiveScore, DiveTank, Sample, UserSettings
+from ..models import Dive, DiveScore, DiveTank, Sample, Site, UserSettings
 from . import ALGORITHM_VERSION, AirInput, ScoringSettings, score_air, score_dive
 
 # Skills computed from a dive's own samples
@@ -89,10 +89,13 @@ def _refresh_air(
 ) -> bool:
     rows = db.execute(
         select(
-            Dive.id, Dive.started_at, Dive.duration_s, Dive.avg_depth_m, Dive.water_type,
+            Dive.id, Dive.started_at, Dive.duration_s, Dive.avg_depth_m,
+            # The diver's choice for the site wins over the dive computer's setting
+            func.coalesce(Site.water_type, Dive.water_type),
             DiveTank.volume_l, DiveTank.start_bar, DiveTank.end_bar,
         )
         .join(DiveTank, DiveTank.dive_id == Dive.id)
+        .outerjoin(Site, Site.id == Dive.site_id)
         .where(Dive.user_id == user_id)
     ).all()
     inputs = {r.id: AirInput(*r[1:]) for r in rows}

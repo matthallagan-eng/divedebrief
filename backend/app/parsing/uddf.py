@@ -38,6 +38,7 @@ def parse_uddf(data: bytes) -> ParseResult:
         raise UDDFParseError(f"Not a UDDF file (root element is <{root.tag}>)")
 
     model, serial = _single_dive_computer(root)
+    sites = _site_positions(root)
 
     result = ParseResult(dives=[])
     dive_elements = root.findall("profiledata/repetitiongroup/dive")
@@ -50,6 +51,11 @@ def parse_uddf(data: bytes) -> ParseResult:
             continue
         dive.computer_model = model
         dive.computer_serial = serial
+        # The dive links to its site by id, alongside links to buddies and the like
+        for link in dive_el.findall("informationbeforedive/link"):
+            if link.get("ref") in sites:
+                dive.latitude, dive.longitude = sites[link.get("ref")]
+                break
         result.dives.append(dive)
 
     if not result.dives:
@@ -72,6 +78,19 @@ def _single_dive_computer(root: etree._Element) -> tuple[str | None, str | None]
     dc = computers[0]
     model = _text(dc, "model") or _text(dc, "name")
     return model, _text(dc, "serialnumber")
+
+
+def _site_positions(root: etree._Element) -> dict[str, tuple[float, float]]:
+    """Site id -> (latitude, longitude), for the sites that have a position."""
+    out = {}
+    for site in root.findall("divesite/site"):
+        try:
+            lat, lon = _float(site, "geography/latitude"), _float(site, "geography/longitude")
+        except UDDFParseError:
+            continue  # a bad site position shouldn't lose the dive
+        if site.get("id") and lat is not None and lon is not None:
+            out[site.get("id")] = (lat, lon)
+    return out
 
 
 def _parse_dive(dive_el: etree._Element) -> ParsedDive:

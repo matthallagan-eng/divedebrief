@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom
 import Layout from "./components/Layout";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import AuthPage from "./pages/AuthPage";
+import Home from "./pages/Home";
 import Logbook from "./pages/Logbook";
 import DiveDetail from "./pages/DiveDetail";
 import Upload from "./pages/Upload";
@@ -33,7 +34,8 @@ export default function App() {
             <Route path="/register" element={<AuthPage mode="register" />} />
           </Route>
           <Route element={<Protected />}>
-            <Route path="/" element={<Logbook />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/logbook" element={<Logbook />} />
             <Route path="/dives/:id" element={<DiveDetail />} />
             <Route path="/upload" element={<Upload />} />
             <Route path="/settings" element={<Settings />} />
