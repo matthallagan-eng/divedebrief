@@ -76,6 +76,7 @@ def _refresh_samples(db: Session, stale: list[Dive], version: int, cfg: ScoringS
                 score=r.score,
                 reason=r.reason,
                 regions=[asdict(g) for g in r.regions],
+                metrics=r.metrics,
                 algorithm_version=ALGORITHM_VERSION,
                 settings_version=version,
             )

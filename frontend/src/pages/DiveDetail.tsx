@@ -4,6 +4,7 @@ import { ArrowDownToLine, ChevronLeft, Gauge, MapPin, Thermometer, Timer, Trash2
 import { api } from "../api/client";
 import type { DiveDetail as Dive, Region, ScoringSettings, SettingsResponse, Skill } from "../api/types";
 import { DiveCharts } from "../components/DiveCharts";
+import { DiveNotes } from "../components/DiveNotes";
 import { Scorecard } from "../components/Scorecard";
 import { StatCard } from "../components/StatCard";
 import { TankForm } from "../components/TankForm";
@@ -100,6 +101,8 @@ export default function DiveDetail() {
         <StatCard icon={<Timer size={14} />} label="Duration" value={formatDuration(dive.duration_s)} />
         <StatCard icon={<Thermometer size={14} />} label="Coldest water" value={formatTemp(dive.min_temp_k)} />
       </div>
+
+      <DiveNotes key={`${dive.id}-${dive.notes?.updated_at}`} diveId={dive.id} notes={dive.notes} onSaved={load} />
 
       <TankForm key={dive.id} diveId={dive.id} tank={dive.tank} onSaved={load} />
 

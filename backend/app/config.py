@@ -9,6 +9,13 @@ class Settings(BaseSettings):
     secret_key: str
     access_token_expire_minutes: int = 60 * 24 * 7
     max_upload_bytes: int = 10 * 1024 * 1024
+    # Public OpenStreetMap services for site name suggestions (app.places).
+    # Overpass servers are tried in order; they're often busy.
+    overpass_urls: str = (
+        "https://overpass-api.de/api/interpreter,"
+        "https://maps.mail.ru/osm/tools/overpass/api/interpreter"
+    )
+    nominatim_url: str = "https://nominatim.openstreetmap.org/reverse"
 
     class Config:
         env_file = ".env"

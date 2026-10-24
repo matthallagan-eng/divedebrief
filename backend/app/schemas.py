@@ -74,6 +74,8 @@ class DiveSummary(BaseModel):
     avg_depth_m: float
     min_temp_k: float | None
     computer_model: str | None
+    site_id: int | None
+    site_name: str | None
     overall_score: int | None
     scores: list[SkillScoreOut]
 
@@ -129,6 +131,53 @@ class SiteRef(BaseModel):
     water_type: str | None  # set by the diver; None = use the dive computer's
 
 
+NOTE_TAG_MAX = 60
+NOTE_TAGS_MAX = 40
+
+
+def _clean_tags(tags: list[str]) -> list[str]:
+    """Trimmed, single-spaced and de-duplicated ignoring case, in the order given."""
+    out, seen = [], set()
+    for tag in tags:
+        tag = " ".join(tag.split())
+        if tag and tag.casefold() not in seen:
+            seen.add(tag.casefold())
+            out.append(tag)
+    return out
+
+
+class NotesIn(BaseModel):
+    feeling: int | None = Field(None, ge=1, le=5)  # 1 rough ... 5 great
+    sea_life: list[str] = Field(default_factory=list, max_length=NOTE_TAGS_MAX)
+    landmarks: list[str] = Field(default_factory=list, max_length=NOTE_TAGS_MAX)
+    text: str = Field("", max_length=5000)
+
+    @field_validator("sea_life", "landmarks")
+    @classmethod
+    def _tags(cls, v: list[str]) -> list[str]:
+        if any(len(t.strip()) > NOTE_TAG_MAX for t in v):
+            raise ValueError(f"keep each entry to {NOTE_TAG_MAX} characters")
+        return _clean_tags(v)
+
+    @field_validator("text")
+    @classmethod
+    def _text(cls, v: str) -> str:
+        return v.strip()
+
+
+class NotesOut(NotesIn):
+    model_config = ConfigDict(from_attributes=True)
+
+    updated_at: datetime
+
+
+class NoteTags(BaseModel):
+    """What the diver has noted before, most often first, for autocomplete."""
+
+    sea_life: list[str]
+    landmarks: list[str]
+
+
 class DiveDetail(DiveSummary):
     computer_serial: str | None
     source: str
@@ -141,6 +190,7 @@ class DiveDetail(DiveSummary):
     exit_latitude: float | None
     exit_longitude: float | None
     site: SiteRef | None
+    notes: NotesOut | None
     scores: list[SkillScoreDetail]
     samples: list[SampleOut]
     # 1 s grid with smoothed ascent rate, for the charts
@@ -168,6 +218,9 @@ class SiteOut(SiteRef):
     average_scores: dict[str, int | None]
     average_overall: int | None
     dives: list[MapDive]  # newest first
+    # From the dives' notes, most often noted first
+    sea_life: list[str]
+    landmarks: list[str]
 
 
 class DiveMap(BaseModel):
@@ -183,6 +236,44 @@ class SiteIn(BaseModel):
     @classmethod
     def _blank_is_unnamed(cls, v: str | None) -> str | None:
         return (v or "").strip() or None
+
+
+class NameSuggestion(BaseModel):
+    name: str
+    kind: str  # e.g. "Dive site", "Lake", "Reef"
+    distance_m: int  # 0 when the site is inside it
+
+
+class NameSuggestions(BaseModel):
+    suggestions: list[NameSuggestion]
+    # Set when the lookup service couldn't be reached; it's tried again next time
+    error: str | None = None
+
+
+class TrendPoint(BaseModel):
+    id: int
+    started_at: datetime
+    site_id: int | None
+    scores: dict[str, int | None]
+    overall_score: int | None
+    median_ascent_m_per_min: float | None
+    max_ascent_m_per_min: float | None
+
+
+class Headline(BaseModel):
+    """A skill's average over the last HEADLINE_DIVES scored dives and the ones before."""
+
+    skill: str  # a skill, or "overall"
+    recent: int | None
+    recent_dives: int
+    previous: int | None
+    previous_dives: int
+
+
+class Trends(BaseModel):
+    points: list[TrendPoint]  # oldest first
+    headlines: list[Headline]
+    window: int  # dives per headline period
 
 
 class SettingsOut(BaseModel):
