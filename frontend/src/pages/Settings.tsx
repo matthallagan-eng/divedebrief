@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import type { ScoringSettings, SettingsResponse } from "../api/types";
+import { setSeaLife, useSeaLife } from "../lib/display";
 
 // Numeric settings; the water type has its own select below
 type Key = Exclude<keyof ScoringSettings, "default_water_type">;
@@ -112,6 +113,8 @@ export default function Settings() {
         </p>
       </div>
 
+      <SeaLifeSetting />
+
       {GROUPS.map((group) => (
         <section key={group.title} className="rounded-xl border border-surface-border bg-surface-raised/80">
           <h2 className="border-b border-surface-border px-5 py-3 text-sm font-medium text-foam">{group.title}</h2>
@@ -184,5 +187,45 @@ export default function Settings() {
         {status && <p className="text-sm text-mist" role="status">{status}</p>}
       </div>
     </form>
+  );
+}
+
+function SeaLifeSetting() {
+  const level = useSeaLife();
+  const describe =
+    level === 0 ? "None, just bubbles"
+    : level < 20 ? "A few fish"
+    : level < 35 ? "Fish, sharks and a wreck"
+    : level < 70 ? "Fish, sharks and a whale"
+    : "A busy reef";
+  return (
+    <section className="rounded-xl border border-surface-border bg-surface-raised/80">
+      <h2 className="border-b border-surface-border px-5 py-3 text-sm font-medium text-foam">Display</h2>
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
+        <div className="min-w-0 flex-1">
+          <label htmlFor="sea_life" className="text-sm text-foam">Background sea life</label>
+          <p className="text-xs text-murk">
+            Fish, sharks, whales and lobsters swimming over a reef and shipwreck. Changes right away, on this
+            device only, and doesn't affect scores.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <input
+            id="sea_life"
+            type="range"
+            min={0}
+            max={100}
+            step={5}
+            value={level}
+            aria-valuetext={`${level}%: ${describe}`}
+            onChange={(e) => setSeaLife(Number(e.target.value))}
+            className="w-40"
+          />
+          <span className="w-44 text-sm text-mist">
+            {level}% · {describe}
+          </span>
+        </div>
+      </div>
+    </section>
   );
 }

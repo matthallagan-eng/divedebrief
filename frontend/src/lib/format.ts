@@ -18,6 +18,11 @@ export function formatTemp(k: number | null): string {
   return k === null ? "—" : `${(k - 273.15).toFixed(0)} °C`;
 }
 
+export function formatTempRange(lowK: number, highK: number): string {
+  const [lo, hi] = [lowK, highK].map((k) => (k - 273.15).toFixed(0));
+  return lo === hi ? `${lo} °C` : `${lo}–${hi} °C`;
+}
+
 // Dive start times are wall-clock times tagged as UTC by the parser, so they
 // are formatted in UTC to show the time the dive computer recorded.
 export function formatDate(iso: string): string {

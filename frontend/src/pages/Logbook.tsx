@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowDownToLine, Award, Fish, Timer, Waves } from "lucide-react";
+import { ArrowDownToLine, Award, Fish, Thermometer, Timer, Waves } from "lucide-react";
 import { api } from "../api/client";
 import type { DiveSummary, SettingsResponse, Skill, Trends } from "../api/types";
 import { Habits } from "../components/Habits";
+import { LogStats } from "../components/LogStats";
+import { Tabs } from "../components/Tabs";
 import { StatCard } from "../components/StatCard";
 import { formatScore } from "../lib/skills";
-import { formatDate, formatDepth, formatDuration, formatHours, formatTemp, formatTime } from "../lib/format";
+import {
+  formatDate, formatDepth, formatDuration, formatHours, formatTemp, formatTempRange, formatTime,
+} from "../lib/format";
 
 export default function Logbook() {
   const [allDives, setAllDives] = useState<DiveSummary[] | null>(null);
@@ -17,6 +21,15 @@ export default function Logbook() {
   const [params, setParams] = useSearchParams();
   // "" = every site, "unknown" = dives without GPS, otherwise a site id
   const site = params.get("site") ?? "";
+  const tab = TABS.some((t) => t.key === params.get("tab")) ? (params.get("tab") as TabKey) : "dives";
+  // Both live in the URL, so a filtered tab can be bookmarked or linked
+  const update = (change: { site?: string; tab?: TabKey }) => {
+    const next = { site, tab, ...change };
+    const p: Record<string, string> = {};
+    if (next.site) p.site = next.site;
+    if (next.tab !== "dives") p.tab = next.tab;
+    setParams(p, { replace: true });
+  };
 
   useEffect(() => {
     Promise.all([api.get<DiveSummary[]>("/dives"), api.get<SettingsResponse>("/settings")])
@@ -64,6 +77,7 @@ export default function Logbook() {
   const recentAvg = scored.length
     ? Math.round(scored.reduce((sum, d) => sum + d.overall_score!, 0) / scored.length)
     : null;
+  const temps = dives.flatMap((d) => (d.min_temp_k === null ? [] : [d.min_temp_k]));
   const skillScore = (d: DiveSummary, skill: Skill) =>
     formatScore(d.scores.find((s) => s.skill === skill)?.score ?? null);
 
@@ -79,7 +93,7 @@ export default function Logbook() {
             Site
             <select
               value={site}
-              onChange={(e) => setParams(e.target.value ? { site: e.target.value } : {})}
+              onChange={(e) => update({ site: e.target.value })}
               className="rounded-lg border border-surface-border bg-surface px-3 py-1.5 text-sm text-foam outline-none transition-colors focus:border-lagoon"
             >
               <option value="">All sites</option>
@@ -94,7 +108,7 @@ export default function Logbook() {
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
         <StatCard icon={<Fish size={14} />} label="Dives logged" value={String(dives.length)} />
         <StatCard icon={<Timer size={14} />} label="Time underwater" value={formatHours(totalTime)} />
         <StatCard
@@ -104,6 +118,12 @@ export default function Logbook() {
           sub={formatDate(deepest.started_at)}
         />
         <StatCard
+          icon={<Thermometer size={14} />}
+          label="Water temperature"
+          value={temps.length ? formatTempRange(Math.min(...temps), Math.max(...temps)) : "—"}
+          sub={temps.length > 1 ? "coldest reading, by dive" : undefined}
+        />
+        <StatCard
           icon={<Award size={14} />}
           label="Average score"
           value={formatScore(recentAvg)}
@@ -111,63 +131,85 @@ export default function Logbook() {
         />
       </div>
 
-      {trends?.site === site && (
-        <Habits
-          trends={trends.data}
-          siteNames={siteNames}
-          target={settings.values.ascent_target_m_per_min}
-          violation={settings.values.ascent_violation_m_per_min}
-        />
-      )}
-
-      <div className="overflow-x-auto rounded-xl border border-surface-border bg-surface-raised/80">
-        <table className="w-full min-w-[1000px] text-left text-sm">
-          <thead className="border-b border-surface-border text-xs text-murk">
-            <tr>
-              <th className="px-4 py-3 font-medium">Date</th>
-              <th className="px-4 py-3 font-medium">Site</th>
-              <th className="px-4 py-3 text-right font-medium">Duration</th>
-              <th className="px-4 py-3 text-right font-medium">Max depth</th>
-              <th className="px-4 py-3 text-right font-medium">Avg depth</th>
-              <th className="px-4 py-3 text-right font-medium">Water</th>
-              <th className="px-4 py-3 text-right font-medium">Ascent</th>
-              <th className="px-4 py-3 text-right font-medium">Stop</th>
-              <th className="px-4 py-3 text-right font-medium">Buoyancy</th>
-              <th className="px-4 py-3 text-right font-medium">Air</th>
-              <th className="px-4 py-3 text-right font-medium">Overall</th>
-            </tr>
-          </thead>
-          <tbody className="tabular-nums">
-            {dives.map((d) => (
-              <tr
-                key={d.id}
-                onClick={() => navigate(`/dives/${d.id}`)}
-                className="cursor-pointer border-b border-surface-border/60 transition-colors last:border-0 hover:bg-lagoon/5"
-              >
-                <td className="px-4 py-3">
-                  <Link to={`/dives/${d.id}`} className="text-foam hover:text-aqua">
-                    {formatDate(d.started_at)}
-                  </Link>
-                  <span className="ml-2 text-murk">{formatTime(d.started_at)}</span>
-                </td>
-                <td className="max-w-40 truncate px-4 py-3 text-mist">{siteLabel(d)}</td>
-                <td className="px-4 py-3 text-right text-mist">{formatDuration(d.duration_s)}</td>
-                <td className="px-4 py-3 text-right text-foam">{formatDepth(d.max_depth_m)}</td>
-                <td className="px-4 py-3 text-right text-mist">{formatDepth(d.avg_depth_m)}</td>
-                <td className="px-4 py-3 text-right text-mist">{formatTemp(d.min_temp_k)}</td>
-                <td className="px-4 py-3 text-right text-mist">{skillScore(d, "ascent")}</td>
-                <td className="px-4 py-3 text-right text-mist">{skillScore(d, "stop")}</td>
-                <td className="px-4 py-3 text-right text-mist">{skillScore(d, "buoyancy")}</td>
-                <td className="px-4 py-3 text-right text-mist">{skillScore(d, "air")}</td>
-                <td className="px-4 py-3 text-right font-medium text-foam">{formatScore(d.overall_score)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Tabs
+        label="Logbook sections"
+        active={tab}
+        onChange={(t) => update({ tab: t })}
+        tabs={TABS.map((t) => ({ ...t, badge: t.key === "dives" ? String(dives.length) : undefined }))}
+      >
+        {tab === "habits" &&
+          (trends?.site === site ? (
+            <Habits
+              trends={trends.data}
+              siteNames={siteNames}
+              target={settings.values.ascent_target_m_per_min}
+              violation={settings.values.ascent_violation_m_per_min}
+            />
+          ) : (
+            <p className="text-sm text-murk">Loading trends…</p>
+          ))}
+        {tab === "stats" && <LogStats dives={dives} />}
+        {tab === "dives" && (
+          <div className="overflow-x-auto rounded-xl border border-surface-border bg-surface-raised/80">
+            <table className="w-full min-w-[1000px] text-left text-sm">
+              <thead className="border-b border-surface-border text-xs text-murk">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Date</th>
+                  <th className="px-4 py-3 font-medium">Site</th>
+                  <th className="px-4 py-3 text-right font-medium">Duration</th>
+                  <th className="px-4 py-3 text-right font-medium">Max depth</th>
+                  <th className="px-4 py-3 text-right font-medium">Avg depth</th>
+                  <th className="px-4 py-3 text-right font-medium">Water</th>
+                  <th className="px-4 py-3 text-right font-medium">Ascent</th>
+                  <th className="px-4 py-3 text-right font-medium">Stop</th>
+                  <th className="px-4 py-3 text-right font-medium">Buoyancy</th>
+                  <th className="px-4 py-3 text-right font-medium">Air</th>
+                  <th className="px-4 py-3 text-right font-medium">Overall</th>
+                </tr>
+              </thead>
+              <tbody className="tabular-nums">
+                {dives.map((d) => (
+                  <tr
+                    key={d.id}
+                    onClick={() => navigate(`/dives/${d.id}`)}
+                    className="cursor-pointer border-b border-surface-border/60 transition-colors last:border-0 hover:bg-lagoon/5"
+                  >
+                    <td className="px-4 py-3">
+                      <Link to={`/dives/${d.id}`} className="text-foam hover:text-aqua">
+                        {formatDate(d.started_at)}
+                      </Link>
+                      <span className="ml-2 text-murk">{formatTime(d.started_at)}</span>
+                    </td>
+                    <td className="max-w-40 truncate px-4 py-3 text-mist">{siteLabel(d)}</td>
+                    <td className="px-4 py-3 text-right text-mist">{formatDuration(d.duration_s)}</td>
+                    <td className="px-4 py-3 text-right text-foam">{formatDepth(d.max_depth_m)}</td>
+                    <td className="px-4 py-3 text-right text-mist">{formatDepth(d.avg_depth_m)}</td>
+                    <td className="px-4 py-3 text-right text-mist">{formatTemp(d.min_temp_k)}</td>
+                    <td className="px-4 py-3 text-right text-mist">{skillScore(d, "ascent")}</td>
+                    <td className="px-4 py-3 text-right text-mist">{skillScore(d, "stop")}</td>
+                    <td className="px-4 py-3 text-right text-mist">{skillScore(d, "buoyancy")}</td>
+                    <td className="px-4 py-3 text-right text-mist">{skillScore(d, "air")}</td>
+                    <td className="px-4 py-3 text-right font-medium text-foam">{formatScore(d.overall_score)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Tabs>
     </div>
   );
 }
+
+type TabKey = "dives" | "habits" | "stats";
+
+// Summary on top, details in tabs: the dive list, trends, and records and
+// averages, the way Subsurface and MacDive split a logbook
+const TABS: { key: TabKey; label: string }[] = [
+  { key: "dives", label: "Dives" },
+  { key: "habits", label: "Habits" },
+  { key: "stats", label: "Stats" },
+];
 
 function EmptyReef() {
   return (

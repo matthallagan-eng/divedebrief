@@ -71,9 +71,47 @@ body {
   100% { transform: translate(-6px, -105vh); opacity: 0; }
 }
 
+/* Sea life crosses the screen; the inner element bobs up and down */
+.swim {
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+.swim-right { animation-name: swim-right; }
+.swim-left { animation-name: swim-left; }
+.bob { animation: bob ease-in-out infinite; }
+
+@keyframes swim-right {
+  from { transform: translateX(-30vw); }
+  to { transform: translateX(110vw); }
+}
+
+@keyframes swim-left {
+  from { transform: translateX(110vw); }
+  to { transform: translateX(-30vw); }
+}
+
+@keyframes bob {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -8px; }
+}
+
+.sea-grass {
+  transform-origin: bottom;
+  transform-box: fill-box;
+  animation: grass 7s ease-in-out infinite alternate;
+}
+
+@keyframes grass {
+  from { transform: skewX(-4deg); }
+  to { transform: skewX(4deg); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .caustics { animation: none; }
   .bubble { display: none; }
+  /* Paused part-way, each creature stays where its start offset put it */
+  .swim, .bob, .sea-grass { animation-play-state: paused; }
 }
 
 input[type="range"] {
