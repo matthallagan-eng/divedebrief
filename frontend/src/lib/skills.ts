@@ -4,6 +4,7 @@ export const SKILL_NAMES: Record<Skill, string> = {
   ascent: "Ascent control",
   stop: "Safety stop",
   buoyancy: "Buoyancy",
+  air: "Air efficiency",
 };
 
 export function formatScore(score: number | null): string {

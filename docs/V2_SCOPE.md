@@ -96,7 +96,19 @@ recomputed when a diver changes a setting or the algorithm changes.
   not an absolute good/bad number. The first dives score N/A with "Building
   your baseline (n of 5)".
 - Reason example: "18.4 L/min, 9% better than your last 5 dives."
-- Your Descent Mk1 exports have no tank pressure, so your dives need manual entry.
+- Your Descent G2 has no tank transmitter, so your dives need manual entry.
+- Added while building (milestone 5):
+  - Average ATA comes from the dive's stored average depth (avg depth / k + 1),
+    which is exact because ATA is linear in depth and both cover the same
+    underwater time. So SAC needs no samples.
+  - Baseline = median SAC of the previous 5 dives with tank data, by start time.
+    Score = 75 at the baseline, ±1.5 points per % better or worse, clamped 0–100.
+  - The air score is re-checked on every read, because a tank edit changes later
+    dives' baselines. It's cheap: one query and no samples.
+  - Water type comes from the dive (FIT) or a new default_water_type setting,
+    until sites exist (milestone 6).
+  - The tank form takes psi or bar and offers common US tanks (AL80 = 11.1 L).
+    Sampled pressures are read-only; the diver adds only the tank size.
 
 ### 1e. Scorecard UI
 

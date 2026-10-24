@@ -1,5 +1,6 @@
 """Dive skill scoring. Bump ALGORITHM_VERSION whenever a score could change,
 so stored scores are recomputed."""
+from .air import AirInput, score_air
 from .ascent_control import score_ascent
 from .buoyancy import score_buoyancy
 from .common import Profile, Region, SkillResult
@@ -16,7 +17,12 @@ def score_dive(times, depths, cfg: ScoringSettings) -> list[SkillResult]:
 
 def overall_score(results: dict[str, int | None], cfg: ScoringSettings) -> int | None:
     """Weighted mean of the skills that have a score; None if none do."""
-    weights = {"ascent": cfg.weight_ascent, "stop": cfg.weight_stop, "buoyancy": cfg.weight_buoyancy}
+    weights = {
+        "ascent": cfg.weight_ascent,
+        "stop": cfg.weight_stop,
+        "buoyancy": cfg.weight_buoyancy,
+        "air": cfg.weight_air,
+    }
     scored = [(s, weights.get(k, 0)) for k, s in results.items() if s is not None and weights.get(k, 0) > 0]
     total = sum(w for _, w in scored)
     if not total:
@@ -25,6 +31,6 @@ def overall_score(results: dict[str, int | None], cfg: ScoringSettings) -> int |
 
 
 __all__ = [
-    "ALGORITHM_VERSION", "Profile", "Region", "ScoringSettings", "SkillResult",
-    "overall_score", "score_dive",
+    "ALGORITHM_VERSION", "AirInput", "Profile", "Region", "ScoringSettings", "SkillResult",
+    "overall_score", "score_air", "score_dive",
 ]

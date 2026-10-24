@@ -41,7 +41,7 @@ export interface DiveSummary {
   scores: SkillScore[];
 }
 
-export type Skill = "ascent" | "stop" | "buoyancy";
+export type Skill = "ascent" | "stop" | "buoyancy" | "air";
 
 export interface SkillScore {
   skill: Skill;
@@ -75,8 +75,17 @@ export interface Sample {
   ndl_s: number | null;
 }
 
+export interface Tank {
+  volume_l: number | null;
+  start_bar: number;
+  end_bar: number;
+  source: "sampled" | "manual";
+}
+
 export interface DiveDetail extends DiveSummary {
   computer_serial: string | null;
+  source: "uddf" | "fit";
+  tank: Tank | null;
   water_type: "salt" | "fresh" | null;
   latitude: number | null;
   longitude: number | null;
@@ -99,9 +108,11 @@ export interface ScoringSettings {
   stop_min_dive_depth_m: number;
   buoyancy_detrend_window_s: number;
   buoyancy_excursion_m: number;
+  default_water_type: "salt" | "fresh";
   weight_ascent: number;
   weight_stop: number;
   weight_buoyancy: number;
+  weight_air: number;
 }
 
 export interface SettingsResponse {

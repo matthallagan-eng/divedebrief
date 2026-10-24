@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowDownToLine, ChevronLeft, Gauge, Thermometer, Timer, Trash2 } from "lucide-react";
 import { api } from "../api/client";
@@ -6,6 +6,7 @@ import type { DiveDetail as Dive, Region, ScoringSettings, SettingsResponse, Ski
 import { DiveCharts } from "../components/DiveCharts";
 import { Scorecard } from "../components/Scorecard";
 import { StatCard } from "../components/StatCard";
+import { TankForm } from "../components/TankForm";
 import { formatDate, formatDepth, formatDuration, formatTemp, formatTime } from "../lib/format";
 import { SKILL_NAMES } from "../lib/skills";
 
@@ -17,7 +18,7 @@ export default function DiveDetail() {
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Skill | null>("ascent");
 
-  useEffect(() => {
+  const load = useCallback(() => {
     Promise.all([api.get<Dive>(`/dives/${id}`), api.get<SettingsResponse>("/settings")])
       .then(([d, s]) => {
         setDive(d);
@@ -25,6 +26,8 @@ export default function DiveDetail() {
       })
       .catch((e: Error) => setError(e.message));
   }, [id]);
+
+  useEffect(load, [load]);
 
   async function handleDelete() {
     if (!dive || !confirm("Delete this dive from your logbook?")) return;
@@ -84,6 +87,8 @@ export default function DiveDetail() {
         <StatCard icon={<Timer size={14} />} label="Duration" value={formatDuration(dive.duration_s)} />
         <StatCard icon={<Thermometer size={14} />} label="Coldest water" value={formatTemp(dive.min_temp_k)} />
       </div>
+
+      <TankForm key={dive.id} diveId={dive.id} tank={dive.tank} onSaved={load} />
 
       <DiveCharts
         profile={dive.profile}

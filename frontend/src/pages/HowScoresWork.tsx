@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import type { ScoringSettings, SettingsResponse } from "../api/types";
 
-// Constants mirror backend/app/scoring/ascent_control.py, safety_stop.py and buoyancy.py
+// Constants mirror backend/app/scoring/ascent_control.py, safety_stop.py, buoyancy.py and air.py
 
 export default function HowScoresWork() {
   const [s, setS] = useState<ScoringSettings | null>(null);
@@ -98,11 +98,32 @@ export default function HowScoresWork() {
         <p>Dives with less than 3 minutes of settled bottom time show N/A.</p>
       </Section>
 
+      <Section title="Air efficiency">
+        <p>
+          Based on your surface air consumption (SAC): how many litres of air a minute you'd breathe at
+          the surface. It's worked out from the pressure you used, your tank size, your time underwater
+          and your average depth. Tank pressure comes from your dive computer if it has a transmitter;
+          otherwise enter it on the dive page.
+        </p>
+        <ul>
+          <li>
+            Depth is turned into pressure for the dive's water type: 10 m per atmosphere in salt water,
+            10.3 m in fresh. Dives whose file doesn't say use your default, <b>{s.default_water_type}</b>.
+          </li>
+          <li>
+            Each dive is compared with the median SAC of your previous 5 dives that have one. Matching
+            it scores 75, and each 1% better or worse moves the score 1.5 points, so about 17% better
+            is 100.
+          </li>
+          <li>Until 5 earlier dives have tank data, the score shows N/A while your baseline builds.</li>
+        </ul>
+      </Section>
+
       <Section title="Overall">
         <p>
           The weighted average of the skills that have a score, with ascent control weighted{" "}
-          {s.weight_ascent}×, the safety stop {s.weight_stop}× and buoyancy {s.weight_buoyancy}×. N/A
-          skills are left out, not counted as zero.
+          {s.weight_ascent}×, the safety stop {s.weight_stop}×, buoyancy {s.weight_buoyancy}× and air
+          efficiency {s.weight_air}×. N/A skills are left out, not counted as zero.
         </p>
       </Section>
     </div>

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 from .scoring import ScoringSettings
 
@@ -93,9 +93,34 @@ class ProfilePoint(BaseModel):
     rate_m_per_min: float
 
 
+class TankIn(BaseModel):
+    volume_l: float = Field(ge=1, le=30)
+    # May be left out when the dive computer recorded the pressures
+    start_bar: float | None = Field(None, gt=0, le=350)
+    end_bar: float | None = Field(None, ge=0, le=350)
+
+    @model_validator(mode="after")
+    def _used_air(self):
+        if (self.start_bar is None) != (self.end_bar is None):
+            raise ValueError("give both start and end pressure, or neither")
+        if self.start_bar is not None and self.end_bar >= self.start_bar:
+            raise ValueError("end pressure must be below start pressure")
+        return self
+
+
+class TankOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    volume_l: float | None
+    start_bar: float
+    end_bar: float
+    source: str  # sampled | manual
+
+
 class DiveDetail(DiveSummary):
     computer_serial: str | None
     source: str
+    tank: TankOut | None
     water_type: str | None
     latitude: float | None
     longitude: float | None

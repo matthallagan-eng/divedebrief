@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
@@ -24,10 +26,14 @@ class ScoringSettings(BaseModel):
     buoyancy_detrend_window_s: int = Field(60, ge=20, le=300)
     buoyancy_excursion_m: float = Field(1.0, ge=0.3, le=3)
 
+    # Air efficiency: used when the dive itself has no water type
+    default_water_type: Literal["salt", "fresh"] = "salt"
+
     # Overall score weights; a weight of 0 leaves the skill out
     weight_ascent: float = Field(1.0, ge=0, le=10)
     weight_stop: float = Field(1.0, ge=0, le=10)
     weight_buoyancy: float = Field(1.0, ge=0, le=10)
+    weight_air: float = Field(1.0, ge=0, le=10)
 
     @model_validator(mode="after")
     def _ordered(self):
