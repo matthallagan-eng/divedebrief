@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
-from .routers import auth, dives, uploads
+from .routers import auth, dives, sites, uploads
 from .routers import settings as settings_router
 
 app = FastAPI(
@@ -28,4 +28,5 @@ def health():
 app.include_router(auth.router)
 app.include_router(uploads.router)
 app.include_router(dives.router)
+app.include_router(sites.router)
 app.include_router(settings_router.router)

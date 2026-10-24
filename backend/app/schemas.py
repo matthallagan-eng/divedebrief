@@ -1,6 +1,8 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
 from .scoring import ScoringSettings
 
@@ -117,6 +119,16 @@ class TankOut(BaseModel):
     source: str  # sampled | manual
 
 
+class SiteRef(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str | None  # None until the diver names it
+    latitude: float
+    longitude: float
+    water_type: str | None  # set by the diver; None = use the dive computer's
+
+
 class DiveDetail(DiveSummary):
     computer_serial: str | None
     source: str
@@ -124,10 +136,53 @@ class DiveDetail(DiveSummary):
     water_type: str | None
     latitude: float | None
     longitude: float | None
+    entry_latitude: float | None
+    entry_longitude: float | None
+    exit_latitude: float | None
+    exit_longitude: float | None
+    site: SiteRef | None
     scores: list[SkillScoreDetail]
     samples: list[SampleOut]
     # 1 s grid with smoothed ascent rate, for the charts
     profile: list[ProfilePoint]
+
+
+class MapDive(BaseModel):
+    """A dive as the map shows it: where it was, and how it went."""
+
+    id: int
+    started_at: datetime
+    duration_s: float
+    max_depth_m: float
+    overall_score: int | None
+    latitude: float | None
+    longitude: float | None
+    entry_latitude: float | None
+    entry_longitude: float | None
+    exit_latitude: float | None
+    exit_longitude: float | None
+
+
+class SiteOut(SiteRef):
+    # Mean of each skill's scores at this site, leaving out N/A; None if all N/A
+    average_scores: dict[str, int | None]
+    average_overall: int | None
+    dives: list[MapDive]  # newest first
+
+
+class DiveMap(BaseModel):
+    sites: list[SiteOut]  # only sites that still have dives
+    unknown: list[MapDive]  # dives without a GPS position
+
+
+class SiteIn(BaseModel):
+    name: str | None = Field(None, max_length=120)
+    water_type: Literal["salt", "fresh"] | None = None
+
+    @field_validator("name")
+    @classmethod
+    def _blank_is_unnamed(cls, v: str | None) -> str | None:
+        return (v or "").strip() or None
 
 
 class SettingsOut(BaseModel):

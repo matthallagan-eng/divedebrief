@@ -89,9 +89,48 @@ export interface DiveDetail extends DiveSummary {
   water_type: "salt" | "fresh" | null;
   latitude: number | null;
   longitude: number | null;
+  entry_latitude: number | null;
+  entry_longitude: number | null;
+  exit_latitude: number | null;
+  exit_longitude: number | null;
+  site: SiteRef | null;
   scores: SkillScoreDetail[];
   samples: Sample[];
   profile: ProfilePoint[];
+}
+
+export interface SiteRef {
+  id: number;
+  name: string | null; // null until the diver names it
+  latitude: number;
+  longitude: number;
+  water_type: "salt" | "fresh" | null; // null = use the dive computer's setting
+}
+
+// Surface GPS fixes only: there is no GPS underwater
+export interface MapDive {
+  id: number;
+  started_at: string;
+  duration_s: number;
+  max_depth_m: number;
+  overall_score: number | null;
+  latitude: number | null;
+  longitude: number | null;
+  entry_latitude: number | null;
+  entry_longitude: number | null;
+  exit_latitude: number | null;
+  exit_longitude: number | null;
+}
+
+export interface SiteOut extends SiteRef {
+  average_scores: Record<Skill, number | null>;
+  average_overall: number | null;
+  dives: MapDive[]; // newest first
+}
+
+export interface DiveMap {
+  sites: SiteOut[];
+  unknown: MapDive[]; // dives without a GPS position
 }
 
 // Mirrors backend/app/scoring/settings.py

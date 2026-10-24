@@ -138,11 +138,19 @@ recomputed when a diver changes a setting or the algorithm changes.
 
 ## 4. Dive sites and map
 
-- Dives whose GPS start points fall within **200 m** of each other group into one site.
+- Dives whose GPS positions fall within **200 m** of a site's centre join
+  that site; otherwise they start a new one. A dive's position is its entry
+  point, or its exit point when the watch had no fix going in.
 - The diver can name a site and set its water type, which feeds the SAC
-  calculation and future dives there.
-- Map of sites (Leaflet with OpenStreetMap tiles). Each site lists its dives
-  and its average score per skill.
+  calculation and future dives there. A site's water type overrides the FIT
+  water setting; with neither, the default from settings applies.
+- The home page is a globe of the diver's sites (MapLibre GL with
+  OpenStreetMap tiles). Clicking a pin zooms to the site, which lists its
+  dives and its average score per skill. Clicking a dive zooms in further and
+  draws its entry and exit points. The watch has no GPS underwater, so the
+  line between them is not the route.
+- UDDF exports from Subsurface carry the site's position only, so those dives
+  are placed on the map but have no separate entry and exit points.
 - Dives without GPS go under "Unknown site".
 
 ## 5. Accounts, per-diver data, hosting
@@ -205,3 +213,6 @@ Settled 2026-10-21.
    "How scores work" page.
 6. **FIT test files:** the original `.fit` files for the three real dives go in
    `backend/tests/fixtures/fit/real/`.
+7. **Map: a globe on the home page** (settled 2026-10-23), using MapLibre GL
+   instead of Leaflet, since Leaflet can't draw a globe. The logbook moves to
+   `/logbook`.
