@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowDownToLine, ChevronLeft, Gauge, MapPin, Thermometer, Timer, Trash2 } from "lucide-react";
 import { api } from "../api/client";
 import type { DiveDetail as Dive, Region, ScoringSettings, SettingsResponse, Skill } from "../api/types";
@@ -7,6 +7,7 @@ import { DiveCharts } from "../components/DiveCharts";
 import { DiveNotes } from "../components/DiveNotes";
 import { Scorecard } from "../components/Scorecard";
 import { StatCard } from "../components/StatCard";
+import { Tabs } from "../components/Tabs";
 import { TankForm } from "../components/TankForm";
 import { formatDate, formatDepth, formatDuration, formatTemp, formatTime } from "../lib/format";
 import { SKILL_NAMES } from "../lib/skills";
@@ -18,6 +19,9 @@ export default function DiveDetail() {
   const [settings, setSettings] = useState<ScoringSettings | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Skill | null>("ascent");
+  const [params, setParams] = useSearchParams();
+  const tab = TABS.some((t) => t.key === params.get("tab")) ? (params.get("tab") as TabKey) : "profile";
+  const setTab = (key: TabKey) => setParams(key === "profile" ? {} : { tab: key }, { replace: true });
 
   const load = useCallback(() => {
     Promise.all([api.get<Dive>(`/dives/${id}`), api.get<SettingsResponse>("/settings")])
@@ -92,61 +96,120 @@ export default function DiveDetail() {
         scores={dive.scores}
         overall={dive.overall_score}
         selected={selected}
-        onSelect={setSelected}
+        onSelect={(skill) => {
+          setSelected(skill);
+          if (skill) setTab(skill === "air" ? "air" : "profile");
+        }}
       />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard icon={<ArrowDownToLine size={14} />} label="Max depth" value={formatDepth(dive.max_depth_m)} />
-        <StatCard icon={<Gauge size={14} />} label="Average depth" value={formatDepth(dive.avg_depth_m)} />
         <StatCard icon={<Timer size={14} />} label="Duration" value={formatDuration(dive.duration_s)} />
-        <StatCard icon={<Thermometer size={14} />} label="Coldest water" value={formatTemp(dive.min_temp_k)} />
+        <StatCard
+          icon={<Thermometer size={14} />}
+          label="Water temperature"
+          value={formatTemp(dive.min_temp_k)}
+          // The coldest reading: the watch's sensor takes minutes to cool after it enters the water,
+          // so its warmest readings are the air, not the water
+          sub="coldest reading"
+        />
+        <StatCard icon={<Gauge size={14} />} label="Average depth" value={formatDepth(dive.avg_depth_m)} />
       </div>
 
-      <DiveNotes key={`${dive.id}-${dive.notes?.updated_at}`} diveId={dive.id} notes={dive.notes} onSaved={load} />
+      <Tabs
+        label="Dive details"
+        active={tab}
+        onChange={setTab}
+        tabs={TABS.map((t) => ({ ...t, badge: t.key === "data" ? String(dive.samples.length) : undefined }))}
+      >
+        {tab === "profile" && (
+          <div className="space-y-6">
+            <DiveCharts
+              profile={dive.profile}
+              skill={selected}
+              regions={regions}
+              target={settings.ascent_target_m_per_min}
+              violation={settings.ascent_violation_m_per_min}
+            />
+            <RegionTable
+              title={`${SKILL_NAMES.ascent}: stretches over ${settings.ascent_target_m_per_min} m/min`}
+              empty="None. Every ascent stayed within your target."
+              regions={ascentRegions}
+            />
+          </div>
+        )}
+        {tab === "notes" && (
+          <DiveNotes key={`${dive.id}-${dive.notes?.updated_at}`} diveId={dive.id} notes={dive.notes} onSaved={load} />
+        )}
+        {tab === "air" && <TankForm key={dive.id} diveId={dive.id} tank={dive.tank} onSaved={load} />}
+        {tab === "data" && <DiveData dive={dive} />}
+      </Tabs>
+    </div>
+  );
+}
 
-      <TankForm key={dive.id} diveId={dive.id} tank={dive.tank} onSaved={load} />
+type TabKey = "profile" | "notes" | "air" | "data";
 
-      <DiveCharts
-        profile={dive.profile}
-        skill={selected}
-        regions={regions}
-        target={settings.ascent_target_m_per_min}
-        violation={settings.ascent_violation_m_per_min}
-      />
+// Summary on top and details in tabs, as Subsurface, Garmin and MacDive lay out a dive
+const TABS: { key: TabKey; label: string }[] = [
+  { key: "profile", label: "Profile" },
+  { key: "notes", label: "Notes" },
+  { key: "air", label: "Air" },
+  { key: "data", label: "Data" },
+];
 
-      <RegionTable
-        title={`${SKILL_NAMES.ascent}: stretches over ${settings.ascent_target_m_per_min} m/min`}
-        empty="None. Every ascent stayed within your target."
-        regions={ascentRegions}
-      />
-
-      <details className="rounded-xl border border-surface-border bg-surface-raised/80">
-        <summary className="cursor-pointer px-5 py-3 text-sm text-mist hover:text-foam">
-          Profile data ({dive.samples.length} samples)
-        </summary>
-        <div className="max-h-80 overflow-y-auto border-t border-surface-border">
+function DiveData({ dive }: { dive: Dive }) {
+  const rows: [string, string][] = [
+    ["Dive computer", [dive.computer_model, dive.computer_serial && `#${dive.computer_serial}`].filter(Boolean).join(" ") || "Unknown"],
+    ["Imported from", dive.source === "fit" ? "Garmin FIT file" : "UDDF export"],
+    ["Water type", dive.site?.water_type ? `${dive.site.water_type} (set for the site)` : dive.water_type ?? "Not recorded"],
+    ["Entry point", coords(dive.entry_latitude, dive.entry_longitude)],
+    ["Exit point", coords(dive.exit_latitude, dive.exit_longitude)],
+  ];
+  return (
+    <div className="space-y-6">
+      <dl className="grid gap-x-8 gap-y-3 rounded-xl border border-surface-border bg-surface-raised/80 p-5 sm:grid-cols-2">
+        {rows.map(([label, value]) => (
+          <div key={label}>
+            <dt className="text-xs text-murk">{label}</dt>
+            <dd className="text-sm text-foam first-letter:uppercase">{value}</dd>
+          </div>
+        ))}
+      </dl>
+      <section className="rounded-xl border border-surface-border bg-surface-raised/80">
+        <h2 className="border-b border-surface-border px-5 py-3 text-sm font-medium text-foam">
+          Samples ({dive.samples.length})
+        </h2>
+        <div className="max-h-96 overflow-y-auto">
           <table className="w-full text-left text-sm tabular-nums">
             <thead className="sticky top-0 bg-surface-raised text-xs text-murk">
               <tr>
                 <th className="px-5 py-2 font-medium">Time</th>
                 <th className="px-5 py-2 text-right font-medium">Depth</th>
                 <th className="px-5 py-2 text-right font-medium">Temperature</th>
+                <th className="px-5 py-2 text-right font-medium">Heart rate</th>
               </tr>
             </thead>
             <tbody>
-              {dive.samples.map((s) => (
-                <tr key={s.t_s} className="border-t border-surface-border/50">
-                  <td className="px-5 py-1.5 font-mono text-mist">{formatDuration(s.t_s)}</td>
-                  <td className="px-5 py-1.5 text-right text-foam">{formatDepth(s.depth_m)}</td>
-                  <td className="px-5 py-1.5 text-right text-mist">{formatTemp(s.temp_k)}</td>
+              {dive.samples.map((x) => (
+                <tr key={x.t_s} className="border-t border-surface-border/50">
+                  <td className="px-5 py-1.5 font-mono text-mist">{formatDuration(x.t_s)}</td>
+                  <td className="px-5 py-1.5 text-right text-foam">{formatDepth(x.depth_m)}</td>
+                  <td className="px-5 py-1.5 text-right text-mist">{formatTemp(x.temp_k)}</td>
+                  <td className="px-5 py-1.5 text-right text-mist">{x.heart_rate === null ? "—" : `${x.heart_rate} bpm`}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </details>
+      </section>
     </div>
   );
+}
+
+function coords(lat: number | null, lon: number | null): string {
+  if (lat === null || lon === null) return "No GPS fix";
+  return `${Math.abs(lat).toFixed(5)}° ${lat >= 0 ? "N" : "S"}, ${Math.abs(lon).toFixed(5)}° ${lon >= 0 ? "E" : "W"}`;
 }
 
 function BackLink() {

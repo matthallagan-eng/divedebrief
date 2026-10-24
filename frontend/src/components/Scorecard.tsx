@@ -16,7 +16,7 @@ export function Scorecard({ scores, overall, selected, onSelect }: Props) {
         <h2 className="text-sm font-medium text-foam">Skills</h2>
         <Link to="/scores" className="text-xs text-aqua hover:text-foam">How scores work</Link>
       </div>
-      <div className="grid gap-4 md:grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(180px,1fr))]">
         <div className="rounded-xl border border-surface-border bg-surface-raised/80 p-5">
           <p className="text-xs font-medium text-murk">Overall</p>
           <p className="mt-2 text-4xl font-semibold text-foam">{formatScore(overall)}</p>
