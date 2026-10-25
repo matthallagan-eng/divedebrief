@@ -43,6 +43,12 @@ const AIR_DENSITY_G_L = 1.293;
 const METRES_PER_ATM = { salt: 10.0, fresh: 10.3 };
 const SAC_WINDOW_S = 60;
 const STORAGE_KEY = "divedebrief.profileGraphs";
+// Overlaid on their own axes: depth keeps the top of the chart and each line
+// gets a lane of its own below it, so none of them cross
+const DEPTH_SHARE = 0.38;
+const LANES_FROM = 0.58; // lanes fill the chart below this height, as a share from the bottom
+const LANE_GAP = 0.18; // of each lane's height
+const LANE_PX = 90;
 
 type SeriesKey =
   | "rate" | "temp" | "hr" | "pressure" | "sac" | "ndl" | "tts"
@@ -107,9 +113,10 @@ interface Prefs {
   series: SeriesKey[];
   depth: DepthKey[];
   overlay: boolean;
+  lanes: boolean; // overlaid lines each get their own axis and lane
 }
 
-const DEFAULT_PREFS: Prefs = { series: ["rate"], depth: [], overlay: false };
+const DEFAULT_PREFS: Prefs = { series: ["rate"], depth: [], overlay: false, lanes: true };
 
 function loadPrefs(): Prefs {
   try {
@@ -199,6 +206,8 @@ export function DiveCharts({ profile, samples, tankVolumeL, waterType, skill, re
     />
   );
   const margin = { top: 10, right: 8, bottom: 0, left: -8 };
+  const lanes = prefs.overlay && prefs.lanes && shown.length > 0;
+  const depthMax = depthTicks[depthTicks.length - 1];
   const activeDot = (color: string) => ({ r: 4, fill: color, stroke: SURFACE, strokeWidth: 2 });
 
   return (
@@ -211,20 +220,24 @@ export function DiveCharts({ profile, samples, tankVolumeL, waterType, skill, re
           onToggleSeries={(k) => update({ series: toggle(prefs.series, k) })}
           onToggleDepth={(k) => update({ depth: toggle(prefs.depth, k) })}
           onOverlay={(overlay) => update({ overlay })}
+          onLanes={(lanes) => update({ lanes })}
         />
 
         <div className="mb-3 mt-5 flex flex-wrap items-baseline justify-between gap-3">
           <h2 className="text-sm font-medium text-foam">Depth profile</h2>
           <Legend skill={skill} target={target} />
         </div>
-        <ResponsiveContainer width="100%" height={prefs.overlay && shown.length ? 360 : 300}>
-          <ComposedChart data={data} syncId="dive" syncMethod="value" margin={margin}>
+        <ResponsiveContainer
+          width="100%"
+          height={lanes ? 260 + LANE_PX * shown.length : prefs.overlay && shown.length ? 360 : 300}
+        >
+          <ComposedChart data={data} syncId="dive" syncMethod="value" margin={lanes ? { ...margin, right: 56 } : margin}>
             <CartesianGrid stroke={GRID} vertical={false} yAxisId="main" />
             {xAxis}
             <YAxis
               yAxisId="main"
               reversed
-              domain={[0, depthTicks[depthTicks.length - 1]]}
+              domain={[0, lanes ? depthMax / DEPTH_SHARE : depthMax]}
               ticks={depthTicks}
               interval={0}
               tick={{ fill: AXIS_TEXT, fontSize: 12 }}
@@ -284,31 +297,84 @@ export function DiveCharts({ profile, samples, tankVolumeL, waterType, skill, re
                 isAnimationActive={false}
               />
             )}
-            {/* Overlaid like Subsurface: each line on its own unmarked scale,
-                read off the tooltip rather than an axis */}
+            {/* Overlaid like Subsurface, either each on its own unmarked scale (read
+                off the tooltip) or each in its own lane with its own axis */}
             {prefs.overlay &&
-              shown.flatMap((s) => [
-                <YAxis key={`axis-${s.key}`} yAxisId={s.key} hide domain={paddedDomain(data, s.key)} />,
-                <Line
-                  key={s.key}
-                  yAxisId={s.key}
-                  dataKey={s.key}
-                  type="monotone"
-                  stroke={s.color}
-                  strokeDasharray={s.dash}
-                  strokeWidth={1.5}
-                  dot={false}
-                  connectNulls
-                  isAnimationActive={false}
-                  activeDot={activeDot(s.color)}
-                />,
-              ])}
+              shown.flatMap((s, i) => {
+                const ticks = seriesTicks(data, s, target, violation);
+                const isRate = s.key === "rate";
+                const axisMarks = lanes
+                  ? [
+                      ...ticks.map((v) => (
+                        <ReferenceLine
+                          key={`${s.key}-tick-${v}`}
+                          yAxisId={s.key}
+                          y={v}
+                          stroke={GRID}
+                          label={{ value: v, position: "right", fill: AXIS_TEXT, fontSize: 11 }}
+                        />
+                      )),
+                      <ReferenceLine
+                        key={`${s.key}-name`}
+                        yAxisId={s.key}
+                        y={ticks[ticks.length - 1]}
+                        stroke="none"
+                        label={{ value: `${s.label} (${s.unit})`, position: "insideTopLeft", fill: RULE, fontSize: 11 }}
+                      />,
+                      ...(isRate
+                        ? [
+                            <ReferenceLine key="rate-target" yAxisId={s.key} y={target} stroke={RULE} strokeWidth={1} />,
+                            <ReferenceLine key="rate-limit" yAxisId={s.key} y={violation} stroke={CORAL} strokeWidth={1} />,
+                          ]
+                        : []),
+                    ]
+                  : [];
+                return [
+                  <YAxis
+                    key={`axis-${s.key}`}
+                    yAxisId={s.key}
+                    hide
+                    domain={lanes ? laneDomain(ticks, i, shown.length) : paddedDomain(data, s.key)}
+                    allowDataOverflow
+                  />,
+                  ...axisMarks,
+                  <Line
+                    key={s.key}
+                    yAxisId={s.key}
+                    dataKey={s.key}
+                    type="monotone"
+                    stroke={s.color}
+                    strokeDasharray={s.dash}
+                    strokeWidth={1.5}
+                    dot={false}
+                    connectNulls
+                    isAnimationActive={false}
+                    activeDot={activeDot(s.color)}
+                  />,
+                  ...(isRate
+                    ? [
+                        <Line
+                          key="hlRate"
+                          yAxisId={s.key}
+                          dataKey="hlRate"
+                          type="monotone"
+                          stroke={CORAL}
+                          strokeWidth={1.5}
+                          dot={false}
+                          activeDot={false}
+                          connectNulls={false}
+                          isAnimationActive={false}
+                        />,
+                      ]
+                    : []),
+                ];
+              })}
           </ComposedChart>
         </ResponsiveContainer>
-        {prefs.overlay && shown.length > 0 && (
+        {prefs.overlay && !lanes && shown.length > 0 && (
           <p className="mt-2 text-xs text-murk">
-            Overlaid lines are each scaled to fit the chart; hover for their values, or switch to
-            stacked to read them off their own axes.
+            Overlapping lines are each scaled to fit the chart; hover for their values, or choose
+            own axes to read them off a scale.
           </p>
         )}
       </section>
@@ -344,10 +410,7 @@ interface SeriesChartProps {
 
 function SeriesChart({ def, data, xAxis, bands, tooltip, margin, target, violation }: SeriesChartProps) {
   const isRate = def.key === "rate";
-  const values = data.map((p) => p[def.key]).filter((v): v is number => v !== null);
-  const ticks = isRate
-    ? niceTicks(Math.min(...values, -target), Math.max(...values, violation + 2))
-    : niceTicks(Math.min(...values), Math.max(...values, Math.min(...values) + 1));
+  const ticks = seriesTicks(data, def, target, violation);
   return (
     <section className="rounded-xl border border-surface-border bg-surface-raised/80 p-5">
       <div className="mb-4">
@@ -421,31 +484,36 @@ interface PickerProps {
   onToggleSeries: (k: SeriesKey) => void;
   onToggleDepth: (k: DepthKey) => void;
   onOverlay: (overlay: boolean) => void;
+  onLanes: (lanes: boolean) => void;
 }
 
-function GraphPicker({ series, depth, prefs, onToggleSeries, onToggleDepth, onOverlay }: PickerProps) {
+function GraphPicker({ series, depth, prefs, onToggleSeries, onToggleDepth, onOverlay, onLanes }: PickerProps) {
   const groups = [...new Set(series.map((s) => s.group))];
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-sm font-medium text-foam">Graphs</h2>
-        <div role="group" aria-label="Graph layout" className="inline-flex rounded-lg border border-surface-border p-0.5">
-          {[
-            { overlay: false, label: "Stacked" },
-            { overlay: true, label: "Overlaid" },
-          ].map((o) => (
-            <button
-              key={o.label}
-              type="button"
-              aria-pressed={prefs.overlay === o.overlay}
-              onClick={() => onOverlay(o.overlay)}
-              className={`rounded-md px-3 py-1 text-xs transition-colors ${
-                prefs.overlay === o.overlay ? "bg-lagoon/20 text-foam" : "text-murk hover:text-mist"
-              }`}
-            >
-              {o.label}
-            </button>
-          ))}
+        <div className="flex flex-wrap gap-2">
+          {prefs.overlay && (
+            <Segmented
+              label="Overlaid scales"
+              value={prefs.lanes}
+              options={[
+                { value: true, label: "Own axes" },
+                { value: false, label: "Overlapping" },
+              ]}
+              onChange={onLanes}
+            />
+          )}
+          <Segmented
+            label="Graph layout"
+            value={prefs.overlay}
+            options={[
+              { value: false, label: "Stacked" },
+              { value: true, label: "Overlaid" },
+            ]}
+            onChange={onOverlay}
+          />
         </div>
       </div>
       <div className="flex flex-wrap gap-x-6 gap-y-3">
@@ -482,6 +550,33 @@ function GraphPicker({ series, depth, prefs, onToggleSeries, onToggleDepth, onOv
           </PickerGroup>
         ))}
       </div>
+    </div>
+  );
+}
+
+interface SegmentedProps<V> {
+  label: string;
+  value: V;
+  options: { value: V; label: string }[];
+  onChange: (value: V) => void;
+}
+
+function Segmented<V>({ label, value, options, onChange }: SegmentedProps<V>) {
+  return (
+    <div role="group" aria-label={label} className="inline-flex rounded-lg border border-surface-border p-0.5">
+      {options.map((o) => (
+        <button
+          key={o.label}
+          type="button"
+          aria-pressed={value === o.value}
+          onClick={() => onChange(o.value)}
+          className={`rounded-md px-3 py-1 text-xs transition-colors ${
+            value === o.value ? "bg-lagoon/20 text-foam" : "text-murk hover:text-mist"
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
     </div>
   );
 }
@@ -599,6 +694,25 @@ function buildPoints(
 
   const step = Math.max(1, Math.ceil(all.length / MAX_POINTS));
   return step === 1 ? all : all.filter((_, i) => i % step === 0);
+}
+
+/** Axis ticks for a series; ascent rate always shows the target and violation limit. */
+function seriesTicks(data: Point[], def: SeriesDef, target: number, violation: number): number[] {
+  const values = data.map((p) => p[def.key]).filter((v): v is number => v !== null);
+  return def.key === "rate"
+    ? niceTicks(Math.min(...values, -target), Math.max(...values, violation + 2))
+    : niceTicks(Math.min(...values), Math.max(...values, Math.min(...values) + 1));
+}
+
+/** Stretch an axis so its ticks fill lane `index` of `count`, top lane first, under the depth. */
+function laneDomain(ticks: number[], index: number, count: number): [number, number] {
+  const height = LANES_FROM / count;
+  const top = LANES_FROM - index * height - (height * LANE_GAP) / 2;
+  const bottom = top - height * (1 - LANE_GAP);
+  const lo = ticks[0];
+  const span = ticks[ticks.length - 1] - lo;
+  const perUnit = span / (top - bottom);
+  return [lo - bottom * perUnit, lo + span + (1 - top) * perUnit];
 }
 
 function paddedDomain(data: Point[], key: SeriesKey): [number, number] {
