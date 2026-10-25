@@ -2,6 +2,9 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from .difficulty import Difficulty
+from .units import Units
+
 
 class ScoringSettings(BaseModel):
     """Per-diver scoring thresholds. Defaults come from docs/V2_SCOPE.md."""
@@ -28,6 +31,11 @@ class ScoringSettings(BaseModel):
 
     # Air efficiency: used when the dive itself has no water type
     default_water_type: Literal["salt", "fresh"] = "salt"
+
+    # How strictly every skill is graded (see difficulty.py); easy suits newer divers
+    difficulty: Difficulty = "easy"
+    # Units for score reasons and the whole app. Thresholds above stay metric.
+    units: Units = "metric"
 
     # Overall score weights; a weight of 0 leaves the skill out
     weight_ascent: float = Field(1.0, ge=0, le=10)

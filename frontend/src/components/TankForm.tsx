@@ -1,10 +1,10 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import type { Tank } from "../api/types";
+import { useFormat } from "../lib/units";
 
-const PSI_PER_BAR = 14.5038;
-const UNIT_KEY = "divedebrief.pressureUnit";
 
 // Water volume in litres; US tanks are named by the air they hold
 const PRESETS: { label: string; litres: number }[] = [
@@ -15,27 +15,6 @@ const PRESETS: { label: string; litres: number }[] = [
   { label: "12 L", litres: 12 },
   { label: "15 L", litres: 15 },
 ];
-
-type Unit = "psi" | "bar";
-
-function loadUnit(): Unit {
-  try {
-    return localStorage.getItem(UNIT_KEY) === "bar" ? "bar" : "psi";
-  } catch {
-    return "psi";
-  }
-}
-
-function saveUnit(unit: Unit) {
-  try {
-    localStorage.setItem(UNIT_KEY, unit);
-  } catch {
-    // storage unavailable: the choice lasts until the page reloads
-  }
-}
-
-const toUnit = (bar: number, unit: Unit) => (unit === "psi" ? Math.round(bar * PSI_PER_BAR) : Math.round(bar));
-const toBar = (value: number, unit: Unit) => (unit === "psi" ? value / PSI_PER_BAR : value);
 
 interface Props {
   diveId: number;
@@ -48,21 +27,15 @@ const inputClass =
 
 export function TankForm({ diveId, tank, onSaved }: Props) {
   const sampled = tank?.source === "sampled";
-  const [unit, setUnit] = useState<Unit>(loadUnit);
+  // Pressures follow the units in Settings: psi for imperial, bar for metric
+  const f = useFormat();
+  const unit = f.pressureUnit;
+  const shown = (bar: number) => String(Math.round(f.toPressure(bar)));
   const [litres, setLitres] = useState<string>(tank?.volume_l != null ? String(tank.volume_l) : "");
-  const [start, setStart] = useState<string>(tank ? String(toUnit(tank.start_bar, unit)) : "");
-  const [end, setEnd] = useState<string>(tank ? String(toUnit(tank.end_bar, unit)) : "");
+  const [start, setStart] = useState<string>(tank ? shown(tank.start_bar) : "");
+  const [end, setEnd] = useState<string>(tank ? shown(tank.end_bar) : "");
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-
-  function switchUnit(next: Unit) {
-    if (next === unit) return;
-    const convert = (v: string) => (v === "" ? "" : String(toUnit(toBar(Number(v), unit), next)));
-    setStart(convert(start));
-    setEnd(convert(end));
-    setUnit(next);
-    saveUnit(next);
-  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -70,7 +43,7 @@ export function TankForm({ diveId, tank, onSaved }: Props) {
     setStatus(null);
     const body = sampled
       ? { volume_l: Number(litres) }
-      : { volume_l: Number(litres), start_bar: toBar(Number(start), unit), end_bar: toBar(Number(end), unit) };
+      : { volume_l: Number(litres), start_bar: f.fromPressure(Number(start)), end_bar: f.fromPressure(Number(end)) };
     try {
       await api.put(`/dives/${diveId}/tank`, body);
       setStatus("Saved.");
@@ -102,19 +75,9 @@ export function TankForm({ diveId, tank, onSaved }: Props) {
     <form onSubmit={handleSubmit} className="rounded-xl border border-surface-border bg-surface-raised/80">
       <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-surface-border px-5 py-3">
         <h2 className="text-sm font-medium text-foam">Tank</h2>
-        <div className="flex gap-1 text-xs" role="group" aria-label="Pressure unit">
-          {(["psi", "bar"] as const).map((u) => (
-            <button
-              key={u}
-              type="button"
-              aria-pressed={unit === u}
-              onClick={() => switchUnit(u)}
-              className={`rounded-md px-2 py-1 ${unit === u ? "bg-lagoon/15 text-foam" : "text-murk hover:text-mist"}`}
-            >
-              {u}
-            </button>
-          ))}
-        </div>
+        <p className="text-xs text-murk">
+          Pressures in {unit} · <Link to="/settings" className="text-aqua hover:text-foam">change units</Link>
+        </p>
       </div>
 
       <div className="flex flex-wrap items-end gap-x-6 gap-y-4 px-5 py-4">

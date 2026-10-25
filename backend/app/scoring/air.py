@@ -9,20 +9,21 @@
 2. The baseline is the median SAC of the diver's previous BASELINE_DIVES
    dives that have one, by start time. Until there are that many, the score
    is N/A while the baseline builds.
-3. Score = 75 at the baseline, POINTS_PER_PCT per % better (lower SAC) or
-   worse, clamped to 0-100. So about 17% better is 100 and 50% worse is 0.
+3. Score = air_at_baseline at the baseline, air_points_per_pct per % better
+   (lower SAC) or worse, clamped to 0-100, both set by the difficulty. On
+   easy, about 17% better is 100 and 50% worse is 0.
 """
 import statistics
 from dataclasses import dataclass
 from datetime import datetime
 
+from . import units as u
 from .common import SkillResult
+from .difficulty import GRADING
 from .settings import ScoringSettings
 
 SKILL = "air"
 BASELINE_DIVES = 5
-AT_BASELINE = 75
-POINTS_PER_PCT = 1.5
 METRES_PER_ATM = {"salt": 10.0, "fresh": 10.3}
 
 
@@ -63,14 +64,15 @@ def score_air(a: AirInput | None, history: list[AirInput], cfg: ScoringSettings)
     baseline = [s for h in earlier if (s := sac_l_min(h, cfg)) is not None][-BASELINE_DIVES:]
     if len(baseline) < BASELINE_DIVES:
         return SkillResult(
-            SKILL, None, f"{sac:.1f} L/min. Building your baseline ({len(baseline)} of {BASELINE_DIVES})."
+            SKILL, None, f"{u.sac(sac, cfg.units)}. Building your baseline ({len(baseline)} of {BASELINE_DIVES})."
         )
 
     typical = statistics.median(baseline)
     pct = (typical - sac) / typical * 100  # positive = used less air
-    score = round(min(100, max(0, AT_BASELINE + POINTS_PER_PCT * pct)))
+    g = GRADING[cfg.difficulty]
+    score = round(min(100, max(0, g.air_at_baseline + g.air_points_per_pct * pct)))
     if round(pct) == 0:
         compared = "in line with"
     else:
         compared = f"{abs(round(pct))}% {'better' if pct > 0 else 'worse'} than"
-    return SkillResult(SKILL, score, f"{sac:.1f} L/min, {compared} your last {BASELINE_DIVES} dives.")
+    return SkillResult(SKILL, score, f"{u.sac(sac, cfg.units)}, {compared} your last {BASELINE_DIVES} dives.")

@@ -260,3 +260,67 @@ def test_brief_dip_past_tolerance_does_not_split_the_stop():
     _, stop = _score(times, depths)
     [region] = stop.regions
     assert region.start_s < 220 and region.end_s > 400
+
+
+# --- difficulty and units ------------------------------------------------------
+
+NORMAL = DEFAULTS.model_copy(update={"difficulty": "normal"})
+HARD = DEFAULTS.model_copy(update={"difficulty": "hard"})
+IMPERIAL = DEFAULTS.model_copy(update={"units": "imperial"})
+
+
+def test_easy_is_the_default():
+    assert DEFAULTS.difficulty == "easy"
+    assert DEFAULTS.units == "metric"
+
+
+def test_harder_difficulty_costs_more_per_stretch_over():
+    # The burst from test_violation_costs_ten_points: one violation
+    profile = ([0, 60, 160, 170, 230], [20, 20, 10, 6, 0])
+    easy, _ = _score(*profile)
+    normal, _ = _score(*profile, NORMAL)
+    hard, _ = _score(*profile, HARD)
+    # One stretch over the target, which is also a violation: +5 and +2 normal, +10 and +4 hard
+    assert (easy.score - normal.score, easy.score - hard.score) == (7, 14)
+    assert easy.reason == normal.reason == hard.reason
+
+
+def test_harder_difficulty_has_less_drift_allowance():
+    # From test_short_stop_with_excursion_into_tolerance: 1.3 m of drift and 1 exit.
+    # Normal: 63.8 + 30 - 8 - 8 x 0.3 = 83.4. Hard: 63.8 + 30 - 10 - 12 x 0.7 = 75.4
+    profile = (
+        [0, 60.5, 210.5, 270.5, 283.5, 300.5, 313.5, 374.5, 424.5],
+        [20, 20, 5, 5, 6.3, 6.3, 5, 5, 0],
+    )
+    assert [_score(*profile, cfg)[1].score for cfg in (DEFAULTS, NORMAL, HARD)] == [89, 83, 75]
+
+
+def test_harder_difficulty_wants_steadier_buoyancy():
+    times = [0, 60.5, 240.5, 243.5, 248.5, 251.5, 450.5, 453.5, 458.5, 461.5, 660.5, 690.5, 870.5, 900.5]
+    depths = [0, 10, 10, 8.5, 8.5, 10, 10, 8.5, 8.5, 10, 10, 5, 5, 0]
+    easy, normal, hard = (_buoyancy(times, depths, cfg).score for cfg in (DEFAULTS, NORMAL, HARD))
+    assert easy == 80
+    assert easy > normal > hard
+
+
+def test_harder_difficulty_expects_better_air():
+    # 10% better than the baseline: 75 + 15 easy, 70 + 20 normal, 65 + 25 hard
+    assert [score_air(_air(10, 153), BASELINE, cfg).score for cfg in (DEFAULTS, NORMAL, HARD)] == [90, 90, 90]
+    # Matching it: 75 / 70 / 65
+    assert [score_air(_air(10, 170), BASELINE, cfg).score for cfg in (DEFAULTS, NORMAL, HARD)] == [75, 70, 65]
+
+
+def test_imperial_reasons():
+    ascent, stop = _score([0, 60, 160, 170, 230], [20, 20, 10, 6, 0], IMPERIAL)
+    assert ascent.reason == (
+        "1 segment over 30 ft/min, fastest 79 ft/min between 34 ft and 19 ft. 1 over 59 ft/min."
+    )
+    assert ascent.regions[0].label.endswith("ft")
+    _, stop = _score([0, 60.5, 210.5, 410.5, 460.5], [20, 20, 5, 5, 0], IMPERIAL)
+    assert stop.reason == "Held 3:20 of 3:00, steady at 16 ft."
+    _, skipped = _score([0, 60.5, 260.5], [20, 20, 0], IMPERIAL)
+    assert skipped.reason == "No stop found between 10 and 20 ft before surfacing."
+    air = score_air(_air(10, 153), BASELINE, IMPERIAL)
+    assert air.reason == "0.54 cu ft/min, 10% better than your last 5 dives."
+    # Units only change the words
+    assert ascent.score == _score([0, 60, 160, 170, 230], [20, 20, 10, 6, 0])[0].score

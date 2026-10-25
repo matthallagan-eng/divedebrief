@@ -211,14 +211,35 @@ export interface ScoringSettings {
   buoyancy_detrend_window_s: number;
   buoyancy_excursion_m: number;
   default_water_type: "salt" | "fresh";
+  difficulty: Difficulty;
+  units: "metric" | "imperial"; // thresholds above are always metric
   weight_ascent: number;
   weight_stop: number;
   weight_buoyancy: number;
   weight_air: number;
 }
 
+export type Difficulty = "easy" | "normal" | "hard";
+
+// Mirrors backend/app/scoring/difficulty.py
+export interface Grading {
+  ascent_violation_penalty: number;
+  ascent_over_target_penalty: number;
+  ascent_penalty_cap: number;
+  stop_exit_penalty: number;
+  stop_drift_allowance_m: number;
+  stop_drift_penalty: number;
+  stop_drift_penalty_cap: number;
+  buoyancy_wobble_good_m: number;
+  buoyancy_wobble_bad_m: number;
+  buoyancy_excursion_penalty: number;
+  air_at_baseline: number;
+  air_points_per_pct: number;
+}
+
 export interface SettingsResponse {
   values: ScoringSettings;
   defaults: ScoringSettings;
   version: number;
+  grading: Record<Difficulty, Grading>;
 }

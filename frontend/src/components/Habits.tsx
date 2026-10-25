@@ -3,6 +3,7 @@ import { Minus, TrendingDown, TrendingUp } from "lucide-react";
 import type { Headline, Skill, TrendPoint, Trends } from "../api/types";
 import { SKILL_NAMES, formatScore } from "../lib/skills";
 import { formatDate } from "../lib/format";
+import { useFormat } from "../lib/units";
 
 // Validated as a pair against surface-raised (dataviz validate_palette, dark)
 const LAGOON = "#1e9fbd";
@@ -36,13 +37,16 @@ interface Props {
 }
 
 export function Habits({ trends, siteNames, target, violation }: Props) {
+  // Ascent rates are stored in m/min
+  const f = useFormat();
+  const rate = (v: number | null) => (v === null ? null : f.toRate(v));
   const rows: Row[] = trends.points.map((p, i) => ({
     n: i + 1,
     point: p,
     overall: p.overall_score,
     ...p.scores,
-    median: p.median_ascent_m_per_min,
-    fastest: p.max_ascent_m_per_min,
+    median: rate(p.median_ascent_m_per_min),
+    fastest: rate(p.max_ascent_m_per_min),
   }));
   const headlines = new Map(trends.headlines.map((h) => [h.skill, h]));
   const site = (p: TrendPoint) => (p.site_id === null ? "Unknown site" : siteNames.get(p.site_id) ?? "Unnamed site");
@@ -63,7 +67,13 @@ export function Habits({ trends, siteNames, target, violation }: Props) {
         ))}
       </div>
 
-      <AscentTrend rows={rows} site={site} target={target} violation={violation} />
+      <AscentTrend
+        rows={rows}
+        site={site}
+        target={f.rateLabel(target)}
+        violation={f.rateLabel(violation)}
+        unit={f.rateUnit}
+      />
     </section>
   );
 }
@@ -138,22 +148,25 @@ function AscentTrend({
   site,
   target,
   violation,
+  unit,
 }: {
   rows: Row[];
   site: (p: TrendPoint) => string;
   target: number;
   violation: number;
+  unit: string;
 }) {
   const top = Math.max(violation + 3, ...rows.map((r) => r.fastest ?? 0));
-  const ceiling = Math.ceil(top / 5) * 5;
-  const ticks = Array.from({ length: ceiling / 5 + 1 }, (_, i) => i * 5);
+  const step = top > 40 ? 10 : 5; // ft/min runs about three times higher than m/min
+  const ceiling = Math.ceil(top / step) * step;
+  const ticks = Array.from({ length: ceiling / step + 1 }, (_, i) => i * step);
   return (
     <div className="rounded-xl border border-surface-border bg-surface-raised/80 p-5">
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
         <div>
           <h3 className="text-sm font-medium text-foam">Ascent rate per dive</h3>
           <p className="text-xs text-murk">
-            m/min while rising · solid rule is your {target} m/min target, dashed rule the {violation} m/min limit
+            {unit} while rising · solid rule is your {target} {unit} target, dashed rule the {violation} {unit} limit
           </p>
         </div>
         <ul className="flex gap-4 text-xs text-mist">
@@ -197,7 +210,7 @@ function AscentTrend({
               <PointTooltip
                 site={site}
                 render={(r) =>
-                  r.median === null ? "No ascent found" : `Median ${r.median.toFixed(1)} · fastest ${r.fastest!.toFixed(1)} m/min`
+                  r.median === null ? "No ascent found" : `Median ${r.median.toFixed(1)} · fastest ${r.fastest!.toFixed(1)} ${unit}`
                 }
               />
             }

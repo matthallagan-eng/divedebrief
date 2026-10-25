@@ -24,15 +24,18 @@
    - excursions = runs where the detrended depth is more than
      buoyancy_excursion_m off, lasting at least MIN_EXCURSION_S. Gaps under
      MERGE_GAP_S are bridged, so one bob up and back is one excursion.
-5. Score = up to 60 points for wobble (full at WOBBLE_GOOD_M, none at
-   WOBBLE_BAD_M, linear between) + up to 40 points for excursions, less
-   EXCURSION_PENALTY per excursion per 10 minutes of bottom time.
+5. Score = up to 60 points for wobble (full at buoyancy_wobble_good_m, none
+   at buoyancy_wobble_bad_m, linear between) + up to 40 points for
+   excursions, less buoyancy_excursion_penalty per excursion per 10 minutes
+   of bottom time, all set by the difficulty.
 """
 import statistics
 
 from ..analysis.ascent import ascent_rates
 from ..analysis.stats import SURFACE_THRESHOLD_M
+from . import units as u
 from .common import Profile, Region, SkillResult, bridge, runs
+from .difficulty import GRADING
 from .settings import ScoringSettings
 
 SKILL = "buoyancy"
@@ -44,9 +47,6 @@ MIN_PHASE_S = 60
 MIN_BOTTOM_S = 180
 MIN_EXCURSION_S = 5
 MERGE_GAP_S = 5
-WOBBLE_GOOD_M = 0.25
-WOBBLE_BAD_M = 1.0
-EXCURSION_PENALTY = 10  # per excursion per 10 minutes
 
 
 def _bottom_phase(depth: list[float], still: list[bool], a: int, b: int, ascent_depth: float):
@@ -100,20 +100,22 @@ def score_buoyancy(p: Profile, cfg: ScoringSettings) -> SkillResult:
                 calm = (gap_start + 1, gap_end - 1)
 
     wobble = statistics.pstdev(residuals)
-    wobble_pts = 60 * min(1.0, max(0.0, (WOBBLE_BAD_M - wobble) / (WOBBLE_BAD_M - WOBBLE_GOOD_M)))
+    g = GRADING[cfg.difficulty]
+    good, bad = g.buoyancy_wobble_good_m, g.buoyancy_wobble_bad_m
+    wobble_pts = 60 * min(1.0, max(0.0, (bad - wobble) / (bad - good)))
     per_10_min = len(excursions) / (bottom_s / 600)
-    excursion_pts = max(0.0, 40 - EXCURSION_PENALTY * per_10_min)
+    excursion_pts = max(0.0, 40 - g.buoyancy_excursion_penalty * per_10_min)
     score = round(wobble_pts + excursion_pts)
 
     n = len(excursions)
     minutes = round(bottom_s / 60)
-    limit = f"{cfg.buoyancy_excursion_m:g} m"
+    limit = u.length(cfg.buoyancy_excursion_m, cfg.units, "g")
     if n:
         reason = f"{n} excursion{'s' if n != 1 else ''} over {limit} in {minutes} min at the bottom"
         reason += f"; steadiest stretch was minutes {round(p.t[calm[0]] / 60)}–{round(p.t[calm[1]] / 60)}."
     else:
         reason = f"No excursions over {limit} in {minutes} min at the bottom."
-    reason += f" Typical wobble ±{wobble:.1f} m."
+    reason += f" Typical wobble ±{u.length(wobble, cfg.units, imperial='.1f')}."
 
     # Excursions first: the profile colors each point by the first region covering it
     regions = [Region(p.t[s], p.t[e], "Excursion", "warning") for s, e in excursions]

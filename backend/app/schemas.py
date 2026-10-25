@@ -5,6 +5,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
 from .scoring import ScoringSettings
+from .scoring.difficulty import Grading
 
 
 class UserCreate(BaseModel):
@@ -285,3 +286,5 @@ class SettingsOut(BaseModel):
     values: ScoringSettings
     defaults: ScoringSettings
     version: int
+    # What each difficulty costs, for the settings and how-scores-work pages
+    grading: dict[str, Grading]

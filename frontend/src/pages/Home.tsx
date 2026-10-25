@@ -5,7 +5,8 @@ import { ChevronLeft, Globe2, MapPin, Waves } from "lucide-react";
 import { api } from "../api/client";
 import type { DiveMap, MapDive, NameSuggestions, SiteOut, SiteRef, Skill } from "../api/types";
 import { diveFixes } from "../lib/map";
-import { formatDate, formatDepth, formatDuration, formatTime } from "../lib/format";
+import { formatDate, formatDuration, formatTime } from "../lib/format";
+import { useFormat } from "../lib/units";
 import { SKILL_NAMES, formatScore } from "../lib/skills";
 
 // MapLibre is most of the app's code, so other pages load without it
@@ -112,6 +113,7 @@ function PanelHeader({ children, onBack, back }: { children: ReactNode; onBack?:
 }
 
 function DiveRow({ dive, onClick }: { dive: MapDive; onClick: () => void }) {
+  const f = useFormat();
   return (
     <li>
       <button
@@ -121,7 +123,7 @@ function DiveRow({ dive, onClick }: { dive: MapDive; onClick: () => void }) {
         <span>
           <span className="text-foam">{formatDate(dive.started_at)}</span>
           <span className="ml-2 text-xs text-murk">
-            {formatDepth(dive.max_depth_m)} · {formatDuration(dive.duration_s)}
+            {f.depth(dive.max_depth_m)} · {formatDuration(dive.duration_s)}
           </span>
         </span>
         <span className="tabular-nums text-mist">{formatScore(dive.overall_score)}</span>
@@ -238,9 +240,10 @@ function Sightings({ label, items }: { label: string; items: string[] }) {
   );
 }
 
-const distance = (m: number) => (m === 0 ? "you're in it" : m < 1000 ? `${m} m away` : `${(m / 1000).toFixed(1)} km away`);
 
 function SiteEditor({ site, onSaved }: { site: SiteOut; onSaved: () => void }) {
+  const f = useFormat();
+  const distance = (m: number) => (m === 0 ? "you're in it" : `${f.distance(m)} away`);
   const [name, setName] = useState(site.name ?? "");
   const [nearby, setNearby] = useState<NameSuggestions | null>(null);
 
@@ -346,6 +349,7 @@ function SiteEditor({ site, onSaved }: { site: SiteOut; onSaved: () => void }) {
 }
 
 function DivePanel({ dive, site, onBack }: { dive: MapDive; site: SiteOut; onBack: () => void }) {
+  const f = useFormat();
   const { entry, exit } = diveFixes(dive);
   return (
     <>
@@ -357,7 +361,7 @@ function DivePanel({ dive, site, onBack }: { dive: MapDive; site: SiteOut; onBac
       </PanelHeader>
       <div className="flex-1 space-y-4 overflow-y-auto px-4 py-3">
         <dl className="grid grid-cols-3 gap-3">
-          <Stat label="Max depth" value={formatDepth(dive.max_depth_m)} />
+          <Stat label="Max depth" value={f.depth(dive.max_depth_m)} />
           <Stat label="Duration" value={formatDuration(dive.duration_s)} />
           <Stat label="Overall" value={formatScore(dive.overall_score)} />
         </dl>
