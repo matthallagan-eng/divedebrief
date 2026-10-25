@@ -301,7 +301,8 @@ export function DiveCharts({ profile, samples, tankVolumeL, waterType, skill, re
                 off the tooltip) or each in its own lane with its own axis */}
             {prefs.overlay &&
               shown.flatMap((s, i) => {
-                const ticks = seriesTicks(data, s, target, violation);
+                // A lane is short, so its axis gets only a few labels
+                const ticks = seriesTicks(data, s, target, violation, lanes ? 2 : 5);
                 const isRate = s.key === "rate";
                 const axisMarks = lanes
                   ? [
@@ -334,6 +335,7 @@ export function DiveCharts({ profile, samples, tankVolumeL, waterType, skill, re
                     key={`axis-${s.key}`}
                     yAxisId={s.key}
                     hide
+                    orientation="right"
                     domain={lanes ? laneDomain(ticks, i, shown.length) : paddedDomain(data, s.key)}
                     allowDataOverflow
                   />,
@@ -697,11 +699,13 @@ function buildPoints(
 }
 
 /** Axis ticks for a series; ascent rate always shows the target and violation limit. */
-function seriesTicks(data: Point[], def: SeriesDef, target: number, violation: number): number[] {
+function seriesTicks(data: Point[], def: SeriesDef, target: number, violation: number, steps = 5): number[] {
   const values = data.map((p) => p[def.key]).filter((v): v is number => v !== null);
+  const lo = Math.min(...values);
+  const hi = Math.max(...values);
   return def.key === "rate"
-    ? niceTicks(Math.min(...values, -target), Math.max(...values, violation + 2))
-    : niceTicks(Math.min(...values), Math.max(...values, Math.min(...values) + 1));
+    ? niceTicks(Math.min(lo, -target), Math.max(hi, violation + 2), steps)
+    : niceTicks(lo, hi > lo ? hi : lo + 1, steps);
 }
 
 /** Stretch an axis so its ticks fill lane `index` of `count`, top lane first, under the depth. */
@@ -724,8 +728,8 @@ function paddedDomain(data: Point[], key: SeriesKey): [number, number] {
 }
 
 /** Round ticks covering [min, max] with ~4-6 steps of 1, 2, 5 or 10 × 10^n. */
-function niceTicks(min: number, max: number): number[] {
-  const rough = (max - min) / 5;
+function niceTicks(min: number, max: number, steps = 5): number[] {
+  const rough = (max - min) / steps;
   const mag = 10 ** Math.floor(Math.log10(rough));
   const step = [1, 2, 5, 10].map((m) => m * mag).find((s) => s >= rough) ?? 10 * mag;
   const ticks: number[] = [];
