@@ -54,6 +54,10 @@ def test_fit_metadata_and_extra_channels():
     assert (first.t_s, first.depth_m, first.heart_rate) == (0, 1.693, 81)
     assert first.temp_k == pytest.approx(300.15)
     assert any(s.ndl_s for s in dive.samples)
+    # The watch's own decompression model, sampled with every record
+    assert all(s.ceiling_m == 0 and s.tts_s is not None for s in dive.samples)
+    assert max(s.n2_load_pct for s in dive.samples) == 42
+    assert first.po2_bar == pytest.approx(0.21, abs=0.03)
     # Descent G2 without a transmitter: no tank pressure
     assert all(s.tank_pressure_bar is None for s in dive.samples)
 

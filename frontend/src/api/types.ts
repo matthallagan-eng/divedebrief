@@ -75,6 +75,12 @@ export interface Sample {
   heart_rate: number | null;
   tank_pressure_bar: number | null;
   ndl_s: number | null;
+  // The dive computer's own calculations (FIT only)
+  ceiling_m: number | null; // next deco stop depth, 0 = none
+  tts_s: number | null;
+  n2_load_pct: number | null;
+  cns_pct: number | null;
+  po2_bar: number | null;
 }
 
 export interface Tank {

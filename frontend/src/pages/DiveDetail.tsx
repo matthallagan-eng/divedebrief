@@ -126,6 +126,9 @@ export default function DiveDetail() {
           <div className="space-y-6">
             <DiveCharts
               profile={dive.profile}
+              samples={dive.samples}
+              tankVolumeL={dive.tank?.volume_l ?? null}
+              waterType={dive.site?.water_type ?? dive.water_type ?? settings.default_water_type}
               skill={selected}
               regions={regions}
               target={settings.ascent_target_m_per_min}
