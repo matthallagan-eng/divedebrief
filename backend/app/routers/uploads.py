@@ -62,6 +62,11 @@ def _store_samples(db: Session, dive_id: int, d: ParsedDive) -> None:
                 "heart_rate": s.heart_rate,
                 "tank_pressure_bar": s.tank_pressure_bar,
                 "ndl_s": s.ndl_s,
+                "ceiling_m": s.ceiling_m,
+                "tts_s": s.tts_s,
+                "n2_load_pct": s.n2_load_pct,
+                "cns_pct": s.cns_pct,
+                "po2_bar": s.po2_bar,
             }
             for s in d.samples
         ],

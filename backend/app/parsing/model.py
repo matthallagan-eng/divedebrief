@@ -19,6 +19,12 @@ class ParsedSample:
     heart_rate: int | None = None
     tank_pressure_bar: float | None = None
     ndl_s: int | None = None
+    # What the dive computer calculated, when it records it (FIT only)
+    ceiling_m: float | None = None  # next decompression stop depth; 0 = no stop
+    tts_s: int | None = None  # time to surface
+    n2_load_pct: float | None = None  # leading tissue's nitrogen load
+    cns_pct: float | None = None  # oxygen toxicity (CNS clock)
+    po2_bar: float | None = None
 
 
 @dataclass

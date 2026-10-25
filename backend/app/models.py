@@ -130,6 +130,11 @@ class Sample(Base):
     heart_rate: Mapped[int | None] = mapped_column(Integer, nullable=True)
     tank_pressure_bar: Mapped[float | None] = mapped_column(Float, nullable=True)
     ndl_s: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    ceiling_m: Mapped[float | None] = mapped_column(Float, nullable=True)
+    tts_s: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    n2_load_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
+    cns_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
+    po2_bar: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     dive: Mapped["Dive"] = relationship(back_populates="samples")
 

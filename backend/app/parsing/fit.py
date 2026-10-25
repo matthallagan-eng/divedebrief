@@ -116,6 +116,11 @@ def _samples(records: list[dict], start: int, tanks: list[tuple[int, float]]) ->
                 heart_rate=r.get("heart_rate"),
                 tank_pressure_bar=pressure,
                 ndl_s=r.get("ndl_time"),
+                ceiling_m=r.get("next_stop_depth"),
+                tts_s=r.get("time_to_surface"),
+                n2_load_pct=r.get("n2_load"),
+                cns_pct=r.get("cns_load"),
+                po2_bar=r.get("po2"),
             ),
         )
     return sorted(out.values(), key=lambda s: s.t_s)

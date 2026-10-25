@@ -89,6 +89,11 @@ class SampleOut(BaseModel):
     heart_rate: int | None
     tank_pressure_bar: float | None
     ndl_s: int | None
+    ceiling_m: float | None
+    tts_s: int | None
+    n2_load_pct: float | None
+    cns_pct: float | None
+    po2_bar: float | None
 
 
 class ProfilePoint(BaseModel):

@@ -36,7 +36,13 @@ export function Tabs<K extends string>({ tabs, active, onChange, label, children
 
   return (
     <div>
-      <div role="tablist" aria-label={label} className="flex gap-1 overflow-x-auto border-b border-surface-border">
+      {/* The rule is an inset shadow, not a border the tabs overlap with -mb-px: that overlap made
+          the strip taller than its box, so Windows drew scroll arrows. Scrolls sideways on phones. */}
+      <div
+        role="tablist"
+        aria-label={label}
+        className="flex gap-1 overflow-x-auto overflow-y-hidden shadow-[inset_0_-1px_0_var(--color-surface-border)] [scrollbar-width:none]"
+      >
         {tabs.map((t, i) => {
           const selected = t.key === active;
           return (
@@ -53,7 +59,7 @@ export function Tabs<K extends string>({ tabs, active, onChange, label, children
               tabIndex={selected ? 0 : -1}
               onClick={() => onChange(t.key)}
               onKeyDown={(e) => handleKey(e, i)}
-              className={`-mb-px shrink-0 border-b-2 px-4 py-2.5 text-sm transition-colors ${
+              className={`shrink-0 border-b-2 px-4 py-2.5 text-sm transition-colors ${
                 selected ? "border-lagoon text-foam" : "border-transparent text-murk hover:text-mist"
               }`}
             >
