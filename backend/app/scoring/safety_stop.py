@@ -21,12 +21,15 @@ Dives shallower than stop_min_dive_depth_m are N/A.
      are sensor noise at the edge.
    - drift = shallowest to deepest point while roughly still
 6. Score = 70 x min(held / target, 1) + 30 stability points, less
-   EXIT_PENALTY per exit (max 3 exits counted) and DRIFT_PENALTY per metre of
-   drift beyond DRIFT_ALLOWANCE_M (max 15 points).
+   stop_exit_penalty per exit (max 3 exits counted) and stop_drift_penalty
+   per metre of drift beyond stop_drift_allowance_m (up to
+   stop_drift_penalty_cap), all set by the difficulty.
 """
 from ..analysis.ascent import ascent_rates
 from ..analysis.stats import SURFACE_THRESHOLD_M
+from . import units as u
 from .common import Profile, Region, SkillResult, bridge, fmt_mmss, runs
+from .difficulty import GRADING
 from .settings import ScoringSettings
 
 SKILL = "stop"
@@ -34,19 +37,17 @@ STATIONARY_WINDOW_S = 30
 STATIONARY_RATE = 3.0  # m/min
 MIN_STOP_S = 30
 MIN_EXIT_S = 5
-EXIT_PENALTY = 5
-DRIFT_ALLOWANCE_M = 1.5
-DRIFT_PENALTY = 5  # per metre beyond the allowance
-DRIFT_PENALTY_CAP = 15
 STEADY_RANGE_M = 0.3  # less drift than this reads as "steady"
 
 
 def score_stop(p: Profile, cfg: ScoringSettings) -> SkillResult:
+    units = cfg.units
     max_depth = max(p.depth, default=0.0)
     if max_depth < cfg.stop_min_dive_depth_m:
         return SkillResult(
             SKILL, None,
-            f"Max depth {max_depth:.1f} m is under {cfg.stop_min_dive_depth_m:g} m, so no stop is expected.",
+            f"Max depth {u.length(max_depth, units)} is under {u.length(cfg.stop_min_dive_depth_m, units, 'g')}, "
+            "so no stop is expected.",
         )
 
     lo, hi = cfg.stop_band_min_m, cfg.stop_band_max_m
@@ -68,7 +69,7 @@ def score_stop(p: Profile, cfg: ScoringSettings) -> SkillResult:
         if best is None or held > best[2]:
             best = (a, b, held)
 
-    band = f"{lo:g} and {hi:g} m"
+    band = u.length_range(lo, hi, units)
     if best is None or best[2] < MIN_STOP_S:
         return SkillResult(SKILL, 0, f"No stop found between {band} before surfacing.")
 
@@ -82,14 +83,17 @@ def score_stop(p: Profile, cfg: ScoringSettings) -> SkillResult:
     shallow, deep = min(depths), max(depths)
 
     time_pts = 70 * min(held / cfg.stop_target_s, 1.0)
-    drift_pen = min(DRIFT_PENALTY * max(0.0, deep - shallow - DRIFT_ALLOWANCE_M), DRIFT_PENALTY_CAP)
-    stability = 30 - EXIT_PENALTY * min(exits, 3) - drift_pen
+    g = GRADING[cfg.difficulty]
+    drift_pen = min(
+        g.stop_drift_penalty * max(0.0, deep - shallow - g.stop_drift_allowance_m), g.stop_drift_penalty_cap
+    )
+    stability = 30 - g.stop_exit_penalty * min(exits, 3) - drift_pen
     score = round(min(100, max(0, time_pts + stability)))
 
     if deep - shallow < STEADY_RANGE_M:
-        drift = f"steady at {(shallow + deep) / 2:.1f} m"
+        drift = f"steady at {u.length((shallow + deep) / 2, units)}"
     else:
-        drift = f"drifted between {shallow:.1f} m and {deep:.1f} m"
+        drift = f"drifted between {u.length(shallow, units)} and {u.length(deep, units)}"
     reason = f"Held {fmt_mmss(held)} of {fmt_mmss(cfg.stop_target_s)}, {drift}."
     if exits:
         reason += f" Left the band {exits} time{'s' if exits != 1 else ''}."

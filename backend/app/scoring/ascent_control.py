@@ -11,7 +11,9 @@ the ascent-rate trend in the logbook.
    the last metres matter most.
 3. Base = weighted % of ascent time at or under the target rate.
 4. Every run above the violation rate lasting at least MIN_SEGMENT_S costs
-   VIOLATION_PENALTY points, up to PENALTY_CAP.
+   ascent_violation_penalty points, and every run over the target rate costs
+   ascent_over_target_penalty, up to ascent_penalty_cap in all (all set by
+   the difficulty; easy charges nothing for runs over the target).
 5. Score = base - penalties, clamped to 0-100.
 
 Dives with less than MIN_ASCENT_S of ascent time are N/A.
@@ -19,15 +21,15 @@ Dives with less than MIN_ASCENT_S of ascent time are N/A.
 import statistics
 
 from ..analysis.stats import SURFACE_THRESHOLD_M
+from . import units as u
 from .common import Profile, Region, SkillResult, runs
+from .difficulty import GRADING
 from .settings import ScoringSettings
 
 SKILL = "ascent"
 ASCENDING_MIN_RATE = 3.0  # m/min
 MIN_SEGMENT_S = 3
 MIN_ASCENT_S = 10
-VIOLATION_PENALTY = 10
-PENALTY_CAP = 40
 
 
 def score_ascent(p: Profile, cfg: ScoringSettings) -> SkillResult:
@@ -60,30 +62,35 @@ def score_ascent(p: Profile, cfg: ScoringSettings) -> SkillResult:
 
     over = segments(target)
     violations = segments(limit)
-    penalty = min(VIOLATION_PENALTY * len(violations), PENALTY_CAP)
+    g = GRADING[cfg.difficulty]
+    penalty = min(
+        g.ascent_violation_penalty * len(violations) + g.ascent_over_target_penalty * len(over),
+        g.ascent_penalty_cap,
+    )
     score = round(min(100, max(0, base - penalty)))
 
+    units = cfg.units
     regions = []
     for a, b in over:
         peak = max(p.rate[a : b + 1])
         regions.append(Region(
             p.t[a], p.t[b],
-            f"{peak:.0f} m/min from {p.depth[a]:.1f} m to {p.depth[b]:.1f} m",
+            f"{u.rate(peak, units)} from {u.length(p.depth[a], units)} to {u.length(p.depth[b], units)}",
             "violation" if peak > limit else "warning",
         ))
 
     if not over:
         fastest = max(rising)
-        reason = f"All ascent within {target:g} m/min; fastest {fastest:.1f} m/min."
+        reason = f"All ascent within {u.rate(target, units, 'g')}; fastest {u.rate(fastest, units, '.1f')}."
     else:
         a, b = max(over, key=lambda s: max(p.rate[s[0] : s[1] + 1]))
         peak = max(p.rate[a : b + 1])
         n = len(over)
         reason = (
-            f"{n} segment{'s' if n != 1 else ''} over {target:g} m/min, fastest {peak:.0f} m/min "
-            f"between {p.depth[a]:.0f} m and {p.depth[b]:.0f} m."
+            f"{n} segment{'s' if n != 1 else ''} over {u.rate(target, units, 'g')}, fastest {u.rate(peak, units)} "
+            f"between {u.length(p.depth[a], units, '.0f')} and {u.length(p.depth[b], units, '.0f')}."
         )
         if violations:
             k = len(violations)
-            reason += f" {k} over {limit:g} m/min."
+            reason += f" {k} over {u.rate(limit, units, 'g')}."
     return SkillResult(SKILL, score, reason, regions, metrics)

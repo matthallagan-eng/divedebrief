@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import type { DiveSummary, Skill } from "../api/types";
-import { formatDate, formatDepth, formatDuration, formatTemp } from "../lib/format";
+import { formatDate, formatDuration } from "../lib/format";
+import { useFormat } from "../lib/units";
+import type { Format } from "../lib/units";
 import { SKILL_NAMES, formatScore } from "../lib/skills";
 
 const SKILLS: Skill[] = ["ascent", "stop", "buoyancy", "air"];
@@ -12,11 +14,11 @@ interface Measure {
 }
 
 // Min, average and max per measure, like Subsurface's statistics
-const MEASURES: Measure[] = [
-  { label: "Max depth", value: (d) => d.max_depth_m, format: formatDepth },
-  { label: "Average depth", value: (d) => d.avg_depth_m, format: formatDepth },
+const measures = (f: Format): Measure[] => [
+  { label: "Max depth", value: (d) => d.max_depth_m, format: f.depth },
+  { label: "Average depth", value: (d) => d.avg_depth_m, format: f.depth },
   { label: "Duration", value: (d) => d.duration_s, format: formatDuration },
-  { label: "Coldest water", value: (d) => d.min_temp_k, format: (k) => formatTemp(k) },
+  { label: "Coldest water", value: (d) => d.min_temp_k, format: (k) => f.temp(k) },
   { label: "Overall score", value: (d) => d.overall_score, format: (v) => String(Math.round(v)) },
   ...SKILLS.map((skill) => ({
     label: SKILL_NAMES[skill],
@@ -35,10 +37,11 @@ function best(dives: DiveSummary[], value: (d: DiveSummary) => number | null, pi
 }
 
 export function LogStats({ dives }: { dives: DiveSummary[] }) {
+  const f = useFormat();
   const records = [
-    { label: "Deepest", ...best(dives, (d) => d.max_depth_m, "max"), format: formatDepth },
+    { label: "Deepest", ...best(dives, (d) => d.max_depth_m, "max"), format: f.depth },
     { label: "Longest", ...best(dives, (d) => d.duration_s, "max"), format: formatDuration },
-    { label: "Coldest", ...best(dives, (d) => d.min_temp_k, "min"), format: (k: number) => formatTemp(k) },
+    { label: "Coldest", ...best(dives, (d) => d.min_temp_k, "min"), format: (k: number) => f.temp(k) },
     { label: "Best overall score", ...best(dives, (d) => d.overall_score, "max"), format: formatScore },
   ];
 
@@ -77,7 +80,7 @@ export function LogStats({ dives }: { dives: DiveSummary[] }) {
             </tr>
           </thead>
           <tbody>
-            {MEASURES.map((m) => {
+            {measures(f).map((m) => {
               const values = dives.map(m.value).filter((v): v is number => v !== null);
               const cell = (v: number | null) => (v === null ? "N/A" : m.format(v));
               return (

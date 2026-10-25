@@ -103,9 +103,24 @@ def test_settings_default_then_update_rescores(client):
     assert dive["overall_score"] == 67
 
 
+def test_units_and_difficulty_rescore(client):
+    res = client.get("/settings").json()
+    assert (res["values"]["units"], res["values"]["difficulty"]) == ("metric", "easy")
+    assert res["grading"]["easy"]["ascent_violation_penalty"] == 10
+    assert set(res["grading"]) == {"easy", "normal", "hard"}
+
+    _upload(client, "fast.uddf", FAST_ASCENT)
+    put = client.put("/settings", json={**res["values"], "units": "imperial", "difficulty": "hard"})
+    assert put.status_code == 200
+    [dive] = client.get("/dives").json()
+    assert "ft/min" in dive["scores"][0]["reason"]
+
+
 @pytest.mark.parametrize(
     "change",
     [
+        {"units": "furlongs"},
+        {"difficulty": "nightmare"},
         {"ascent_violation_m_per_min": 8},  # not above the 9 m/min target
         {"stop_band_max_m": 3},  # not deeper than the 3 m band min
         {"ascent_window_s": 1},

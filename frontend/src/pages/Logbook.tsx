@@ -9,10 +9,12 @@ import { Tabs } from "../components/Tabs";
 import { StatCard } from "../components/StatCard";
 import { formatScore } from "../lib/skills";
 import {
-  formatDate, formatDepth, formatDuration, formatHours, formatTemp, formatTempRange, formatTime,
+  formatDate, formatDuration, formatHours, formatTime,
 } from "../lib/format";
+import { useFormat } from "../lib/units";
 
 export default function Logbook() {
+  const f = useFormat();
   const [allDives, setAllDives] = useState<DiveSummary[] | null>(null);
   const [settings, setSettings] = useState<SettingsResponse | null>(null);
   const [trends, setTrends] = useState<{ site: string; data: Trends } | null>(null);
@@ -114,13 +116,13 @@ export default function Logbook() {
         <StatCard
           icon={<ArrowDownToLine size={14} />}
           label="Deepest dive"
-          value={formatDepth(deepest.max_depth_m)}
+          value={f.depth(deepest.max_depth_m)}
           sub={formatDate(deepest.started_at)}
         />
         <StatCard
           icon={<Thermometer size={14} />}
           label="Water temperature"
-          value={temps.length ? formatTempRange(Math.min(...temps), Math.max(...temps)) : "—"}
+          value={temps.length ? f.tempRange(Math.min(...temps), Math.max(...temps)) : "—"}
           sub={temps.length > 1 ? "coldest reading, by dive" : undefined}
         />
         <StatCard
@@ -182,9 +184,9 @@ export default function Logbook() {
                     </td>
                     <td className="max-w-40 truncate px-4 py-3 text-mist">{siteLabel(d)}</td>
                     <td className="px-4 py-3 text-right text-mist">{formatDuration(d.duration_s)}</td>
-                    <td className="px-4 py-3 text-right text-foam">{formatDepth(d.max_depth_m)}</td>
-                    <td className="px-4 py-3 text-right text-mist">{formatDepth(d.avg_depth_m)}</td>
-                    <td className="px-4 py-3 text-right text-mist">{formatTemp(d.min_temp_k)}</td>
+                    <td className="px-4 py-3 text-right text-foam">{f.depth(d.max_depth_m)}</td>
+                    <td className="px-4 py-3 text-right text-mist">{f.depth(d.avg_depth_m)}</td>
+                    <td className="px-4 py-3 text-right text-mist">{f.temp(d.min_temp_k)}</td>
                     <td className="px-4 py-3 text-right text-mist">{skillScore(d, "ascent")}</td>
                     <td className="px-4 py-3 text-right text-mist">{skillScore(d, "stop")}</td>
                     <td className="px-4 py-3 text-right text-mist">{skillScore(d, "buoyancy")}</td>

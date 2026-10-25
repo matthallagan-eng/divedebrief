@@ -9,10 +9,12 @@ import { Scorecard } from "../components/Scorecard";
 import { StatCard } from "../components/StatCard";
 import { Tabs } from "../components/Tabs";
 import { TankForm } from "../components/TankForm";
-import { formatDate, formatDepth, formatDuration, formatTemp, formatTime } from "../lib/format";
+import { formatDate, formatDuration, formatTime } from "../lib/format";
+import { useFormat } from "../lib/units";
 import { SKILL_NAMES } from "../lib/skills";
 
 export default function DiveDetail() {
+  const f = useFormat();
   const { id } = useParams();
   const navigate = useNavigate();
   const [dive, setDive] = useState<Dive | null>(null);
@@ -103,17 +105,17 @@ export default function DiveDetail() {
       />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard icon={<ArrowDownToLine size={14} />} label="Max depth" value={formatDepth(dive.max_depth_m)} />
+        <StatCard icon={<ArrowDownToLine size={14} />} label="Max depth" value={f.depth(dive.max_depth_m)} />
         <StatCard icon={<Timer size={14} />} label="Duration" value={formatDuration(dive.duration_s)} />
         <StatCard
           icon={<Thermometer size={14} />}
           label="Water temperature"
-          value={formatTemp(dive.min_temp_k)}
+          value={f.temp(dive.min_temp_k)}
           // The coldest reading: the watch's sensor takes minutes to cool after it enters the water,
           // so its warmest readings are the air, not the water
           sub="coldest reading"
         />
-        <StatCard icon={<Gauge size={14} />} label="Average depth" value={formatDepth(dive.avg_depth_m)} />
+        <StatCard icon={<Gauge size={14} />} label="Average depth" value={f.depth(dive.avg_depth_m)} />
       </div>
 
       <Tabs
@@ -135,7 +137,7 @@ export default function DiveDetail() {
               violation={settings.ascent_violation_m_per_min}
             />
             <RegionTable
-              title={`${SKILL_NAMES.ascent}: stretches over ${settings.ascent_target_m_per_min} m/min`}
+              title={`${SKILL_NAMES.ascent}: stretches over ${f.rateLabel(settings.ascent_target_m_per_min)} ${f.rateUnit}`}
               empty="None. Every ascent stayed within your target."
               regions={ascentRegions}
             />
@@ -162,6 +164,7 @@ const TABS: { key: TabKey; label: string }[] = [
 ];
 
 function DiveData({ dive }: { dive: Dive }) {
+  const f = useFormat();
   const rows: [string, string][] = [
     ["Dive computer", [dive.computer_model, dive.computer_serial && `#${dive.computer_serial}`].filter(Boolean).join(" ") || "Unknown"],
     ["Imported from", dive.source === "fit" ? "Garmin FIT file" : "UDDF export"],
@@ -197,8 +200,8 @@ function DiveData({ dive }: { dive: Dive }) {
               {dive.samples.map((x) => (
                 <tr key={x.t_s} className="border-t border-surface-border/50">
                   <td className="px-5 py-1.5 font-mono text-mist">{formatDuration(x.t_s)}</td>
-                  <td className="px-5 py-1.5 text-right text-foam">{formatDepth(x.depth_m)}</td>
-                  <td className="px-5 py-1.5 text-right text-mist">{formatTemp(x.temp_k)}</td>
+                  <td className="px-5 py-1.5 text-right text-foam">{f.depth(x.depth_m)}</td>
+                  <td className="px-5 py-1.5 text-right text-mist">{f.temp(x.temp_k)}</td>
                   <td className="px-5 py-1.5 text-right text-mist">{x.heart_rate === null ? "—" : `${x.heart_rate} bpm`}</td>
                 </tr>
               ))}

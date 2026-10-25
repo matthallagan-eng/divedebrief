@@ -14,6 +14,8 @@ import {
 } from "recharts";
 import type { ProfilePoint, Region, Sample, Skill } from "../api/types";
 import { formatDuration } from "../lib/format";
+import { useFormat } from "../lib/units";
+import type { Format } from "../lib/units";
 
 const LAGOON = "#1e9fbd";
 const CORAL = "#de6650";
@@ -104,6 +106,20 @@ const SERIES: SeriesDef[] = [
   { key: "density", label: "Gas density", group: "Gas", color: VIOLET, dash: "1 2 6 2", unit: "g/L", digits: 1, hint: "Density of the air you breathed, calculated; above 5.2 g/L breathing gets hard" },
 ];
 
+/** SERIES with units for display; values are converted in buildPoints. */
+function seriesFor(f: Format): SeriesDef[] {
+  const units: Partial<Record<SeriesKey, [string, number]>> = {
+    rate: [f.rateUnit, 1],
+    temp: [f.tempUnit, 0],
+    pressure: [f.pressureUnit, 0],
+    sac: [f.sacUnit, f.units === "imperial" ? 2 : 1],
+  };
+  return SERIES.map((s) => {
+    const u = units[s.key];
+    return u ? { ...s, unit: u[0], digits: u[1] } : s;
+  });
+}
+
 const DEPTH_OVERLAYS: { key: DepthKey; label: string; color: string; dash?: string; hint: string }[] = [
   { key: "mean", label: "Mean depth", color: LAGOON, dash: DASHED, hint: "Running average depth so far" },
   { key: "ceiling", label: "Ceiling", color: ORANGE, hint: "Decompression ceiling from the dive computer" },
@@ -146,7 +162,14 @@ interface Props {
   violation: number;
 }
 
-export function DiveCharts({ profile, samples, tankVolumeL, waterType, skill, regions, target, violation }: Props) {
+export function DiveCharts({
+  profile, samples, tankVolumeL, waterType, skill, regions, target: targetM, violation: violationM,
+}: Props) {
+  // Everything below works in display units: buildPoints converts the samples
+  const f = useFormat();
+  const target = f.rateLabel(targetM);
+  const violation = f.rateLabel(violationM);
+  const allSeries = useMemo(() => seriesFor(f), [f]);
   const [prefs, setPrefs] = useState(loadPrefs);
   const update = (change: Partial<Prefs>) => {
     const next = { ...prefs, ...change };
@@ -155,18 +178,18 @@ export function DiveCharts({ profile, samples, tankVolumeL, waterType, skill, re
   };
 
   const data = useMemo(
-    () => buildPoints(profile, samples, regions, tankVolumeL, METRES_PER_ATM[waterType]),
-    [profile, samples, regions, tankVolumeL, waterType],
+    () => buildPoints(profile, samples, regions, tankVolumeL, METRES_PER_ATM[waterType], f),
+    [profile, samples, regions, tankVolumeL, waterType, f],
   );
 
   // Only offer what this dive recorded, or what can be calculated from it
   const available = useMemo(() => {
     const has = (k: keyof Point) => data.some((p) => p[k] !== null);
     return {
-      series: SERIES.filter((s) => has(s.key)),
+      series: allSeries.filter((s) => has(s.key)),
       depth: DEPTH_OVERLAYS.filter((d) => has(d.key)),
     };
-  }, [data]);
+  }, [data, allSeries]);
   const shown = available.series.filter((s) => prefs.series.includes(s.key));
   const depthShown = available.depth.filter((d) => prefs.depth.includes(d.key));
 
@@ -225,7 +248,7 @@ export function DiveCharts({ profile, samples, tankVolumeL, waterType, skill, re
 
         <div className="mb-3 mt-5 flex flex-wrap items-baseline justify-between gap-3">
           <h2 className="text-sm font-medium text-foam">Depth profile</h2>
-          <Legend skill={skill} target={target} />
+          <Legend skill={skill} target={target} unit={f.rateUnit} />
         </div>
         <ResponsiveContainer
           width="100%"
@@ -243,7 +266,7 @@ export function DiveCharts({ profile, samples, tankVolumeL, waterType, skill, re
               tick={{ fill: AXIS_TEXT, fontSize: 12 }}
               tickLine={false}
               axisLine={false}
-              unit=" m"
+              unit={` ${f.depthUnit}`}
               width={56}
             />
             {bands}
@@ -421,7 +444,7 @@ function SeriesChart({ def, data, xAxis, bands, tooltip, margin, target, violati
         </h2>
         <p className="text-xs text-murk">
           {isRate
-            ? `Above zero is rising toward the surface · light rule is your ${target} m/min target, coral rule the ${violation} m/min violation limit`
+            ? `Above zero is rising toward the surface · light rule is your ${target} ${def.unit} target, coral rule the ${violation} ${def.unit} violation limit`
             : def.hint}
         </p>
       </div>
@@ -635,6 +658,7 @@ function buildPoints(
   regions: Region[],
   tankVolumeL: number | null,
   metresPerAtm: number,
+  f: Format,
 ): Point[] {
   const sorted = [...samples].sort((a, b) => a.t_s - b.t_s);
   let j = -1;
@@ -646,7 +670,7 @@ function buildPoints(
   const all: Point[] = profile.map((p, i) => {
     while (j + 1 < sorted.length && sorted[j + 1].t_s <= p.t_s) {
       j++;
-      if (sorted[j].temp_k !== null) temp = sorted[j].temp_k! - 273.15;
+      if (sorted[j].temp_k !== null) temp = sorted[j].temp_k;
       if (sorted[j].tank_pressure_bar !== null) pressure = sorted[j].tank_pressure_bar;
     }
     const s = j >= 0 ? sorted[j] : null;
@@ -694,6 +718,22 @@ function buildPoints(
     }
   }
 
+  // Calculations above are metric; convert for display last
+  if (f.units === "imperial") {
+    const or = (v: number | null, to: (x: number) => number) => (v === null ? null : to(v));
+    for (const p of all) {
+      p.depth = f.toDepth(p.depth);
+      p.mean = f.toDepth(p.mean);
+      p.hlDepth = or(p.hlDepth, f.toDepth);
+      p.ceiling = or(p.ceiling, f.toDepth);
+      p.rate = f.toRate(p.rate);
+      p.hlRate = or(p.hlRate, f.toRate);
+      p.pressure = or(p.pressure, f.toPressure);
+      p.sac = or(p.sac, f.toSac);
+    }
+  }
+  for (const p of all) p.temp = p.temp === null ? null : f.toTemp(p.temp);
+
   const step = Math.max(1, Math.ceil(all.length / MAX_POINTS));
   return step === 1 ? all : all.filter((_, i) => i % step === 0);
 }
@@ -740,7 +780,7 @@ function niceTicks(min: number, max: number, steps = 5): number[] {
   return ticks;
 }
 
-function Legend({ skill, target }: { skill: Skill | null; target: number }) {
+function Legend({ skill, target, unit }: { skill: Skill | null; target: number; unit: string }) {
   return (
     <ul className="flex flex-wrap gap-4 text-xs text-mist">
       <li className="flex items-center gap-1.5">
@@ -750,7 +790,7 @@ function Legend({ skill, target }: { skill: Skill | null; target: number }) {
       {skill === "ascent" && (
         <li className="flex items-center gap-1.5">
           <span className="h-0.5 w-4 rounded-full" style={{ background: CORAL }} />
-          Ascent over {target} m/min
+          Ascent over {target} {unit}
         </li>
       )}
       {skill === "stop" && (
@@ -783,13 +823,16 @@ interface TooltipProps {
 }
 
 function ProfileTooltip({ active, payload, series, depth }: TooltipProps) {
+  const f = useFormat();
   if (!active || !payload?.length) return null;
+  // Values are already in display units; feet need no decimal
+  const len = (v: number) => `${v.toFixed(f.units === "imperial" ? 0 : 1)} ${f.depthUnit}`;
   const p = payload[0].payload;
   const rows: { label: string; value: string; color: string; dash?: string }[] = [
-    { label: "Depth", value: `${p.depth.toFixed(1)} m`, color: LAGOON },
+    { label: "Depth", value: len(p.depth), color: LAGOON },
     ...depth.map((d) => ({
       label: d.label,
-      value: d.key === "ceiling" ? (p.ceiling ? `${p.ceiling.toFixed(1)} m` : "No stop") : `${p.mean.toFixed(1)} m`,
+      value: d.key === "ceiling" ? (p.ceiling ? len(p.ceiling) : "No stop") : len(p.mean),
       color: d.color,
       dash: d.dash,
     })),

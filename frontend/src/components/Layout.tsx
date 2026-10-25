@@ -1,7 +1,11 @@
 import { NavLink, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import type { ReactNode } from "react";
 import { Waves } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { api } from "../api/client";
+import type { SettingsResponse } from "../api/types";
+import { setUnits } from "../lib/units";
 import Ocean from "./Ocean";
 
 const nav = [
@@ -14,6 +18,11 @@ const nav = [
 export default function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  // Units are saved with the diver's settings; the cached copy may be from another account or device
+  useEffect(() => {
+    api.get<SettingsResponse>("/settings").then((s) => setUnits(s.values.units)).catch(() => {});
+  }, [user?.id]);
 
   function handleLogout() {
     logout();
