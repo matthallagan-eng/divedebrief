@@ -2,6 +2,7 @@
 from dataclasses import asdict
 
 from app.debrief import GearView, PreviousDive, ScoreView, build_debrief
+from app.schemas import DebriefItem
 from app.scoring import Profile, ScoringSettings, score_dive
 
 DEFAULTS = ScoringSettings()
@@ -88,3 +89,41 @@ def test_weighting_compared_with_last_dive():
     assert "may have helped" in w.detail
     # Buoyancy went up by more than 10 too
     assert any(i.title == "Better than last dive" for i in debrief.items)
+
+
+# --- goal from last dive -------------------------------------------------------
+
+FAST = ([0, 60.25, 150.25], [18, 18, 0])  # straight up at 12 m/min, no stop
+
+
+def _focus(times, depths):
+    return _debrief(times, depths)[0].focus
+
+
+def test_goal_met_when_the_skill_has_nothing_left_to_work_on():
+    # Last dive's focus was its ascent; this dive's ascent was clean
+    focus = DebriefItem(kind="work_on", skill="ascent", title="Slow your ascents", detail="")
+    previous = PreviousDive(scores={"ascent": 40}, gear=None, focus=focus)
+    debrief, scores = _debrief(*CLEAN, previous=previous)
+    assert debrief.goal.status == "met"
+    assert debrief.goal.title == focus.title
+    assert debrief.goal.detail.startswith(f"Nailed it (40 → {scores['ascent'].score}).")
+
+
+def test_goal_not_yet():
+    focus = _focus(*FAST)  # the skipped stop
+    previous = PreviousDive(scores={"stop": 0}, gear=None, focus=focus)
+    debrief, _ = _debrief(*FAST, previous=previous)
+    assert (debrief.goal.skill, debrief.goal.status) == ("stop", "not_yet")
+
+
+def test_goal_closer_when_the_score_rose():
+    focus = _focus(*FAST)
+    previous = PreviousDive(scores={"stop": 0}, gear=None, focus=focus)
+    # A stop that drifts: still work to do, but scored well above 0
+    debrief, _ = _debrief([0, 60.5, 230.5, 290.5, 310.5, 380.5, 430.5], [20, 20, 3.5, 3.5, 6.3, 6.3, 0], previous=previous)
+    assert debrief.goal.status == "closer"
+
+
+def test_no_goal_without_a_previous_focus():
+    assert _debrief(*CLEAN)[0].goal is None

@@ -2,8 +2,9 @@ import { useEffect, useId, useState } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
 import { X } from "lucide-react";
 import { api } from "../api/client";
-import type { Notes, NotesInput, NoteTags } from "../api/types";
+import type { Notes, NotesInput, NoteTags, Thermocline } from "../api/types";
 import { formatLocalDateTime } from "../lib/format";
+import { useFormat } from "../lib/units";
 
 const FEELINGS = ["Rough", "Uneasy", "OK", "Good", "Great"]; // feeling 1-5
 
@@ -14,15 +15,21 @@ const TAGS_MAX = 40;
 interface Props {
   diveId: number;
   notes: Notes | null;
+  thermocline: Thermocline | null; // detected from the watch's temperatures
   onSaved: () => void;
 }
 
-const empty: NotesInput = { feeling: null, sea_life: [], landmarks: [], text: "" };
+const empty: NotesInput = { feeling: null, sea_life: [], landmarks: [], text: "", visibility_m: null, buddy: null };
 
-export function DiveNotes({ diveId, notes, onSaved }: Props) {
+export function DiveNotes({ diveId, notes, thermocline, onSaved }: Props) {
+  const f = useFormat();
   // The page remounts this on each save (see DiveDetail), so the draft starts from what was stored
   const saved: NotesInput = notes ?? empty;
   const [draft, setDraft] = useState<NotesInput>(() => pick(saved));
+  // Visibility is stored in metres; the box shows the diver's units
+  const [visibility, setVisibility] = useState(
+    saved.visibility_m === null ? "" : String(+f.toDepth(saved.visibility_m).toFixed(1)),
+  );
   const [known, setKnown] = useState<NoteTags>({ sea_life: [], landmarks: [] });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,6 +88,43 @@ export function DiveNotes({ diveId, notes, onSaved }: Props) {
         </div>
       </fieldset>
 
+      <fieldset>
+        <legend className="text-xs text-murk">Conditions</legend>
+        <div className="mt-2 flex flex-wrap items-end gap-x-6 gap-y-3">
+          <label className="space-y-1 text-xs text-murk">
+            <span className="block">Visibility ({f.depthUnit})</span>
+            <input
+              type="number" min={0} max={f.toDepth(100)} step="any"
+              value={visibility}
+              onChange={(e) => {
+                setVisibility(e.target.value);
+                const v = e.target.value === "" ? null : Math.round(f.fromDepth(Number(e.target.value)) * 10) / 10;
+                update({ visibility_m: v });
+              }}
+              className="w-24 rounded-lg border border-surface-border bg-surface px-3 py-1.5 text-right text-sm text-foam outline-none transition-colors focus:border-lagoon"
+            />
+          </label>
+          <label className="space-y-1 text-xs text-murk">
+            <span className="block">Buddy</span>
+            <input
+              type="text" maxLength={80} placeholder="Who you dived with"
+              value={draft.buddy ?? ""}
+              onChange={(e) => update({ buddy: e.target.value || null })}
+              className="w-56 rounded-lg border border-surface-border bg-surface px-3 py-1.5 text-sm text-foam outline-none transition-colors placeholder:text-murk focus:border-lagoon"
+            />
+          </label>
+          <div className="space-y-1 text-xs text-murk">
+            <span className="block">Thermocline</span>
+            <p className="py-1.5 text-sm text-mist">
+              {thermocline
+                ? `${f.depth(thermocline.top_m)}–${f.depth(thermocline.bottom_m)}: ${f.temp(thermocline.above_k)} → ${f.temp(thermocline.below_k)}`
+                : "None found"}
+            </p>
+          </div>
+        </div>
+        <p className="mt-2 text-xs text-murk">The thermocline is found from your watch's temperatures; you don't enter it.</p>
+      </fieldset>
+
       <div className="grid gap-5 md:grid-cols-2">
         <TagInput
           label="Sea life"
@@ -104,7 +148,7 @@ export function DiveNotes({ diveId, notes, onSaved }: Props) {
           value={draft.text}
           maxLength={5000}
           rows={4}
-          placeholder="Visibility, conditions, buddy, gear, anything you want to remember…"
+          placeholder="Current, surface conditions, anything you want to remember…"
           onChange={(e) => update({ text: e.target.value })}
           className="mt-1 w-full resize-y rounded-lg border border-surface-border bg-surface px-3 py-2 text-sm text-foam outline-none transition-colors placeholder:text-murk focus:border-lagoon"
         />
@@ -125,7 +169,10 @@ export function DiveNotes({ diveId, notes, onSaved }: Props) {
 }
 
 function pick(n: NotesInput): NotesInput {
-  return { feeling: n.feeling, sea_life: n.sea_life, landmarks: n.landmarks, text: n.text };
+  return {
+    feeling: n.feeling, sea_life: n.sea_life, landmarks: n.landmarks, text: n.text,
+    visibility_m: n.visibility_m, buddy: n.buddy,
+  };
 }
 
 interface TagInputProps {

@@ -104,6 +104,7 @@ export interface DiveDetail extends DiveSummary {
   site: SiteRef | null;
   notes: Notes | null;
   gear: Gear | null;
+  thermocline: Thermocline | null;
   debrief: Debrief;
   scores: SkillScoreDetail[];
   samples: Sample[];
@@ -158,6 +159,8 @@ export interface NotesInput {
   sea_life: string[];
   landmarks: string[];
   text: string;
+  visibility_m: number | null;
+  buddy: string | null;
 }
 
 export interface Notes extends NotesInput {
@@ -273,8 +276,33 @@ export interface DebriefItem {
   at_s: number | null;
 }
 
+export interface Goal {
+  skill: Skill;
+  title: string;
+  status: "met" | "closer" | "not_yet" | "not_scored";
+  detail: string;
+}
+
 export interface Debrief {
   headline: string;
+  goal: Goal | null; // last dive's focus, checked against this one
   focus: DebriefItem | null;
   items: DebriefItem[];
+}
+
+export interface Thermocline {
+  top_m: number;
+  bottom_m: number;
+  above_k: number;
+  below_k: number;
+}
+
+export interface Milestone {
+  key: string;
+  title: string;
+  description: string;
+  earned_dive_id: number | null;
+  earned_at: string | null;
+  progress: number;
+  target: number;
 }

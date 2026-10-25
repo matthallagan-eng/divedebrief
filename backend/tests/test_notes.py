@@ -80,3 +80,23 @@ def test_deleting_a_dive_deletes_its_notes(client):
     client.put(f"/dives/{dive}/notes", json={"sea_life": ["Barracuda"]})
     client.delete(f"/dives/{dive}")
     assert client.get("/dives/note-tags").json()["sea_life"] == []
+
+
+def test_conditions_are_saved(client):
+    dive = _dive(client)
+    client.put(f"/dives/{dive}/notes", json={"visibility_m": 8, "buddy": "  Sam  "})
+    notes = client.get(f"/dives/{dive}").json()["notes"]
+    assert (notes["visibility_m"], notes["buddy"]) == (8, "Sam")
+    client.put(f"/dives/{dive}/notes", json={"buddy": "  "})
+    assert client.get(f"/dives/{dive}").json()["notes"]["buddy"] is None
+    assert client.put(f"/dives/{dive}/notes", json={"visibility_m": -1}).status_code == 422
+
+
+def test_milestones_endpoint(client):
+    assert all(m["earned_dive_id"] is None for m in client.get("/milestones").json())
+    dive = _dive(client)
+    milestones = {m["key"]: m for m in client.get("/milestones").json()}
+    assert milestones["dives_1"]["earned_dive_id"] == dive
+    # The debrief of the dive that earned it says so
+    titles = [i["title"] for i in client.get(f"/dives/{dive}").json()["debrief"]["items"]]
+    assert "Milestone: First dive logged" in titles

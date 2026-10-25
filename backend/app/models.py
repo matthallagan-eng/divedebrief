@@ -204,6 +204,8 @@ class DiveNotes(Base):
     sea_life: Mapped[list] = mapped_column(JSONB, default=list)
     landmarks: Mapped[list] = mapped_column(JSONB, default=list)
     text: Mapped[str] = mapped_column(Text, default="")
+    visibility_m: Mapped[float | None] = mapped_column(Float, nullable=True)
+    buddy: Mapped[str | None] = mapped_column(String(80), nullable=True)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, onupdate=_utcnow
     )

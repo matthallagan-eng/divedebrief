@@ -5,6 +5,7 @@ import { api } from "../api/client";
 import type { DiveSummary, SettingsResponse, Skill, Trends } from "../api/types";
 import { Habits } from "../components/Habits";
 import { LogStats } from "../components/LogStats";
+import { Milestones } from "../components/Milestones";
 import { Tabs } from "../components/Tabs";
 import { StatCard } from "../components/StatCard";
 import { formatScore } from "../lib/skills";
@@ -151,6 +152,7 @@ export default function Logbook() {
             <p className="text-sm text-murk">Loading trends…</p>
           ))}
         {tab === "stats" && <LogStats dives={dives} />}
+        {tab === "milestones" && <Milestones />}
         {tab === "dives" && (
           <div className="overflow-x-auto rounded-xl border border-surface-border bg-surface-raised/80">
             <table className="w-full min-w-[1000px] text-left text-sm">
@@ -203,13 +205,14 @@ export default function Logbook() {
   );
 }
 
-type TabKey = "dives" | "habits" | "stats";
+type TabKey = "dives" | "habits" | "milestones" | "stats";
 
 // Summary on top, details in tabs: the dive list, trends, and records and
 // averages, the way Subsurface and MacDive split a logbook
 const TABS: { key: TabKey; label: string }[] = [
   { key: "dives", label: "Dives" },
   { key: "habits", label: "Habits" },
+  { key: "milestones", label: "Milestones" },
   { key: "stats", label: "Stats" },
 ];
 

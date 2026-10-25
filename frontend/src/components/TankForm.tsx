@@ -69,7 +69,8 @@ export function TankForm({ diveId, tank, onSaved }: Props) {
     }
   }
 
-  const preset = PRESETS.find((p) => String(p.litres) === litres)?.label ?? "custom";
+  // Nothing entered yet reads as "choose", not as a custom size
+  const preset = litres === "" ? "" : PRESETS.find((p) => String(p.litres) === litres)?.label ?? "custom";
 
   return (
     <form onSubmit={handleSubmit} className="rounded-xl border border-surface-border bg-surface-raised/80">
@@ -91,6 +92,9 @@ export function TankForm({ diveId, tank, onSaved }: Props) {
             }}
             className="rounded-lg border border-surface-border bg-surface px-3 py-1.5 text-sm text-foam outline-none focus:border-lagoon"
           >
+            <option value="" disabled>
+              Choose a tank
+            </option>
             {PRESETS.map((p) => (
               <option key={p.label} value={p.label}>
                 {p.label} ({p.litres} L)

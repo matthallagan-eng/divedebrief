@@ -1,12 +1,12 @@
-import { CircleCheck, Crosshair, Info, ChartLine } from "lucide-react";
+import { ChartLine, CircleCheck, Crosshair, Flag, Info, TrendingUp } from "lucide-react";
 import type { ReactNode } from "react";
-import type { Debrief as DebriefData, DebriefItem, Skill } from "../api/types";
+import type { Debrief as DebriefData, DebriefItem, Goal, Skill } from "../api/types";
 import { formatDuration } from "../lib/format";
 import { SKILL_NAMES } from "../lib/skills";
 
 interface Props {
   debrief: DebriefData;
-  onShow: (skill: Skill | null) => void; // open the profile with this skill's moments highlighted
+  onShow: (skill: Skill | null, at: number | null) => void; // open the profile at this moment
 }
 
 // Each kind wears an icon and a label as well as a color, so it never rests on color alone
@@ -17,6 +17,13 @@ const KINDS: Record<DebriefItem["kind"], { label: string; icon: ReactNode; tone:
 };
 const ORDER: DebriefItem["kind"][] = ["work_on", "good", "info"];
 
+const GOAL_STATUS: Record<Goal["status"], { label: string; icon: ReactNode; tone: string }> = {
+  met: { label: "Met", icon: <CircleCheck size={14} />, tone: "text-seagrass" },
+  closer: { label: "Getting closer", icon: <TrendingUp size={14} />, tone: "text-aqua" },
+  not_yet: { label: "Not yet", icon: <Crosshair size={14} />, tone: "text-coral" },
+  not_scored: { label: "Not scored", icon: <Info size={14} />, tone: "text-murk" },
+};
+
 /** The instructor-style debrief, written by fixed rules from the dive's scores and profile. */
 export function Debrief({ debrief, onShow }: Props) {
   const { focus } = debrief;
@@ -24,11 +31,12 @@ export function Debrief({ debrief, onShow }: Props) {
   return (
     <div className="space-y-6">
       <section className="rounded-xl border border-lagoon/40 bg-surface-raised/80 p-5">
+        {debrief.goal && <GoalCheck goal={debrief.goal} />}
         <p className="text-base font-medium text-foam">{debrief.headline}</p>
         {focus && (
           <div className="mt-4 rounded-lg border border-surface-border bg-surface/60 p-4">
             <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-coral">
-              <Crosshair size={14} /> Focus for your next dive
+              <Flag size={14} /> Goal for your next dive
             </p>
             <Item item={focus} onShow={onShow} />
           </div>
@@ -64,6 +72,23 @@ export function Debrief({ debrief, onShow }: Props) {
   );
 }
 
+function GoalCheck({ goal }: { goal: Goal }) {
+  const s = GOAL_STATUS[goal.status];
+  return (
+    <div className="mb-4 border-b border-surface-border pb-4">
+      <p className="text-xs uppercase tracking-wide text-murk">Your goal from last dive</p>
+      <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+        <span className="text-sm font-medium text-foam">{goal.title}</span>
+        <span className={`inline-flex items-center gap-1 text-sm ${s.tone}`}>
+          {s.icon}
+          {s.label}
+        </span>
+      </p>
+      <p className="mt-1 text-sm text-mist">{goal.detail}</p>
+    </div>
+  );
+}
+
 function Item({ item, onShow }: { item: DebriefItem; onShow: Props["onShow"] }) {
   const showable = item.skill && item.skill !== "air" && item.at_s !== null;
   return (
@@ -76,7 +101,7 @@ function Item({ item, onShow }: { item: DebriefItem; onShow: Props["onShow"] }) 
       {showable && (
         <button
           type="button"
-          onClick={() => onShow(item.skill)}
+          onClick={() => onShow(item.skill, item.at_s)}
           className="inline-flex items-center gap-1 text-xs text-aqua hover:text-foam"
         >
           <ChartLine size={12} />
