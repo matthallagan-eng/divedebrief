@@ -23,6 +23,8 @@ export default function DiveDetail() {
   const [settings, setSettings] = useState<ScoringSettings | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Skill | null>("ascent");
+  // A moment the debrief pointed at, marked on the profile
+  const [marker, setMarker] = useState<number | null>(null);
   const [params, setParams] = useSearchParams();
   // The debrief opens first; ?tab=air from older links means the gear tab
   const asked = params.get("tab") === "air" ? "gear" : params.get("tab");
@@ -104,6 +106,7 @@ export default function DiveDetail() {
         selected={selected}
         onSelect={(skill) => {
           setSelected(skill);
+          setMarker(null);
           if (skill) setTab(skill === "air" ? "gear" : "profile");
         }}
       />
@@ -131,8 +134,9 @@ export default function DiveDetail() {
         {tab === "debrief" && (
           <Debrief
             debrief={dive.debrief}
-            onShow={(skill) => {
+            onShow={(skill, at) => {
               setSelected(skill);
+              setMarker(at);
               setTab("profile");
             }}
           />
@@ -148,6 +152,7 @@ export default function DiveDetail() {
               regions={regions}
               target={settings.ascent_target_m_per_min}
               violation={settings.ascent_violation_m_per_min}
+              marker={marker}
             />
             <RegionTable
               title={`${SKILL_NAMES.ascent}: stretches over ${f.rateLabel(settings.ascent_target_m_per_min)} ${f.rateUnit}`}
@@ -157,7 +162,13 @@ export default function DiveDetail() {
           </div>
         )}
         {tab === "notes" && (
-          <DiveNotes key={`${dive.id}-${dive.notes?.updated_at}`} diveId={dive.id} notes={dive.notes} onSaved={load} />
+          <DiveNotes
+            key={`${dive.id}-${dive.notes?.updated_at}`}
+            diveId={dive.id}
+            notes={dive.notes}
+            thermocline={dive.thermocline}
+            onSaved={load}
+          />
         )}
         {tab === "gear" && (
           <div className="space-y-6">

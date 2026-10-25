@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
-from .routers import auth, dives, sites, trends, uploads
+from .routers import auth, dives, milestones, sites, trends, uploads
 from .routers import settings as settings_router
 
 app = FastAPI(
@@ -31,3 +31,4 @@ app.include_router(dives.router)
 app.include_router(sites.router)
 app.include_router(trends.router)
 app.include_router(settings_router.router)
+app.include_router(milestones.router)

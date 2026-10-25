@@ -157,6 +157,14 @@ class NotesIn(BaseModel):
     sea_life: list[str] = Field(default_factory=list, max_length=NOTE_TAGS_MAX)
     landmarks: list[str] = Field(default_factory=list, max_length=NOTE_TAGS_MAX)
     text: str = Field("", max_length=5000)
+    # Conditions
+    visibility_m: float | None = Field(None, ge=0, le=100)
+    buddy: str | None = Field(None, max_length=80)
+
+    @field_validator("buddy")
+    @classmethod
+    def _buddy(cls, v: str | None) -> str | None:
+        return (v or "").strip() or None
 
     @field_validator("sea_life", "landmarks")
     @classmethod
@@ -212,10 +220,41 @@ class DebriefItem(BaseModel):
     at_s: float | None = None  # a moment on the profile to show
 
 
+class Goal(BaseModel):
+    """Last dive's focus, checked against this dive."""
+
+    skill: str
+    title: str
+    status: Literal["met", "closer", "not_yet", "not_scored"]
+    detail: str
+
+
 class Debrief(BaseModel):
     headline: str
+    goal: Goal | None = None
     focus: DebriefItem | None  # the one thing to work on next dive
     items: list[DebriefItem]
+
+
+class ThermoclineOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    top_m: float
+    bottom_m: float
+    above_k: float
+    below_k: float
+
+
+class MilestoneOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    key: str
+    title: str
+    description: str
+    earned_dive_id: int | None
+    earned_at: datetime | None
+    progress: int
+    target: int
 
 
 class NoteTags(BaseModel):
@@ -239,6 +278,7 @@ class DiveDetail(DiveSummary):
     site: SiteRef | None
     notes: NotesOut | None
     gear: GearOut | None
+    thermocline: ThermoclineOut | None
     debrief: Debrief
     scores: list[SkillScoreDetail]
     samples: list[SampleOut]

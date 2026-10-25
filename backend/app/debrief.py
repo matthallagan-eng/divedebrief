@@ -3,16 +3,20 @@ its scores and profile by fixed rules (no AI), in the diver's units.
 
 Each skill gives at most one "work on" item and otherwise a "good" one, with
 the moment on the profile it's about. The focus for next dive is the work-on
-item of the lowest-scoring skill. Comparisons use the diver's previous dive,
+item of the lowest-scoring skill, and becomes the goal checked on the next
+dive: met when that skill has nothing left to work on, closer when its score
+rose by GOAL_CLOSER points. Comparisons use the diver's previous dive,
 including what they wore, so weighting changes show up next to buoyancy.
 """
 from dataclasses import dataclass
 
+from .analysis.thermocline import Thermocline
+from .milestones import Milestone
 from .scoring import Profile, ScoringSettings
 from .scoring import units as u
 from .scoring.common import fmt_mmss
 from .scoring.difficulty import GRADING
-from .schemas import Debrief, DebriefItem
+from .schemas import Debrief, DebriefItem, Goal
 
 OPEN_WATER_LIMIT_M = 18.0
 NDL_TIGHT_S = 5 * 60
@@ -23,6 +27,8 @@ SUIT_LABELS = {
 }
 KG_PER_LB = 0.453592
 CHANGE_WORTH_NOTING = 10  # score points between dives
+GOAL_CLOSER = 5
+KELVIN = 273.15
 
 
 @dataclass(frozen=True)
@@ -42,6 +48,7 @@ class GearView:
 class PreviousDive:
     scores: dict[str, int | None]
     gear: GearView | None
+    focus: DebriefItem | None = None  # its debrief's focus: this dive's goal
 
 
 def weight(kg: float, units: str) -> str:
@@ -58,6 +65,8 @@ def build_debrief(
     has_tank: bool,
     gear: GearView | None,
     previous: PreviousDive | None,
+    thermocline: Thermocline | None = None,
+    new_milestones: list[Milestone] = (),
 ) -> Debrief:
     units = cfg.units
     items: list[DebriefItem] = []
@@ -78,12 +87,54 @@ def build_debrief(
             kind="info", skill="air", title="Track your air",
             detail="Add your tank size and start and end pressures in the Gear tab to see how efficiently you breathe.",
         ))
+    if thermocline:
+        items.append(_thermocline(thermocline, units))
     if previous:
         items += _compared(scores, previous)
+    for m in new_milestones:
+        items.append(DebriefItem(kind="good", skill=None, title=f"Milestone: {m.title}", detail=m.description))
 
     scored = [(v.score, k) for k, v in scores.items() if v.score is not None and k in work_on]
     focus = work_on[min(scored)[1]] if scored else None
-    return Debrief(headline=_headline(scores, cfg, focus), focus=focus, items=items)
+    goal = previous and previous.focus and _goal(previous.focus, scores, items, work_on, previous)
+    return Debrief(headline=_headline(scores, cfg, focus), goal=goal, focus=focus, items=items)
+
+
+def _goal(
+    focus: DebriefItem, scores: dict[str, ScoreView], items: list[DebriefItem],
+    work_on: dict[str, DebriefItem], previous: PreviousDive,
+) -> Goal:
+    skill = focus.skill
+    now, before = (scores.get(skill).score if scores.get(skill) else None), previous.scores.get(skill)
+    name = SKILL_LABELS[skill]
+    if now is None:
+        return Goal(skill=skill, title=focus.title, status="not_scored",
+                    detail=f"This dive couldn't score {name}, so the goal carries on to your next one.")
+    change = f" ({before} → {now})" if before is not None else ""
+    if skill not in work_on:
+        praise = next((i.detail for i in items if i.skill == skill and i.kind == "good"), "")
+        return Goal(skill=skill, title=focus.title, status="met",
+                    detail=f"Nailed it{change}. {praise}".strip())
+    if before is not None and now - before >= GOAL_CLOSER:
+        return Goal(skill=skill, title=focus.title, status="closer",
+                    detail=f"Getting there: {name} went from {before} to {now}. Keep at it.")
+    return Goal(skill=skill, title=focus.title, status="not_yet",
+                detail=f"Not yet{change}. It's still worth working on; see below.")
+
+
+def _thermocline(th: Thermocline, units: str) -> DebriefItem:
+    def temp(k: float) -> str:
+        c = k - KELVIN
+        return f"{c * 9 / 5 + 32:.0f} °F" if units == "imperial" else f"{c:.0f} °C"
+
+    return DebriefItem(
+        kind="info", skill=None, title="Thermocline",
+        detail=(
+            f"The water got colder between about {u.length(th.top_m, units)} and "
+            f"{u.length(th.bottom_m, units)}, from {temp(th.above_k)} to {temp(th.below_k)}. "
+            "Expect it there next time you dive this site, and dress for the colder water below."
+        ),
+    )
 
 
 def _headline(scores: dict[str, ScoreView], cfg: ScoringSettings, focus: DebriefItem | None) -> str:

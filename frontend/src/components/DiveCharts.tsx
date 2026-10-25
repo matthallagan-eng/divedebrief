@@ -160,10 +160,11 @@ interface Props {
   regions: Region[];
   target: number;
   violation: number;
+  marker?: number | null; // a moment to mark, in seconds, e.g. from the debrief
 }
 
 export function DiveCharts({
-  profile, samples, tankVolumeL, waterType, skill, regions, target: targetM, violation: violationM,
+  profile, samples, tankVolumeL, waterType, skill, regions, target: targetM, violation: violationM, marker,
 }: Props) {
   // Everything below works in display units: buildPoints converts the samples
   const f = useFormat();
@@ -221,6 +222,18 @@ export function DiveCharts({
       ifOverflow="hidden"
     />
   ));
+  if (marker != null) {
+    bands.push(
+      <ReferenceLine
+        key="marker"
+        x={marker}
+        yAxisId="main"
+        stroke={RULE}
+        strokeDasharray={DASHED}
+        label={{ value: formatDuration(marker), position: "insideTopRight", fill: RULE, fontSize: 11 }}
+      />,
+    );
+  }
   const tooltipSeries = shown;
   const tooltip = (
     <Tooltip
