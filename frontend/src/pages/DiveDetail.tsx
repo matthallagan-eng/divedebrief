@@ -3,8 +3,10 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { ArrowDownToLine, ChevronLeft, Gauge, MapPin, Thermometer, Timer, Trash2 } from "lucide-react";
 import { api } from "../api/client";
 import type { DiveDetail as Dive, Region, ScoringSettings, SettingsResponse, Skill } from "../api/types";
+import { Debrief } from "../components/Debrief";
 import { DiveCharts } from "../components/DiveCharts";
 import { DiveNotes } from "../components/DiveNotes";
+import { GearForm } from "../components/GearForm";
 import { Scorecard } from "../components/Scorecard";
 import { StatCard } from "../components/StatCard";
 import { Tabs } from "../components/Tabs";
@@ -22,8 +24,10 @@ export default function DiveDetail() {
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Skill | null>("ascent");
   const [params, setParams] = useSearchParams();
-  const tab = TABS.some((t) => t.key === params.get("tab")) ? (params.get("tab") as TabKey) : "profile";
-  const setTab = (key: TabKey) => setParams(key === "profile" ? {} : { tab: key }, { replace: true });
+  // The debrief opens first; ?tab=air from older links means the gear tab
+  const asked = params.get("tab") === "air" ? "gear" : params.get("tab");
+  const tab = TABS.some((t) => t.key === asked) ? (asked as TabKey) : "debrief";
+  const setTab = (key: TabKey) => setParams(key === "debrief" ? {} : { tab: key }, { replace: true });
 
   const load = useCallback(() => {
     Promise.all([api.get<Dive>(`/dives/${id}`), api.get<SettingsResponse>("/settings")])
@@ -100,7 +104,7 @@ export default function DiveDetail() {
         selected={selected}
         onSelect={(skill) => {
           setSelected(skill);
-          if (skill) setTab(skill === "air" ? "air" : "profile");
+          if (skill) setTab(skill === "air" ? "gear" : "profile");
         }}
       />
 
@@ -124,6 +128,15 @@ export default function DiveDetail() {
         onChange={setTab}
         tabs={TABS.map((t) => ({ ...t, badge: t.key === "data" ? String(dive.samples.length) : undefined }))}
       >
+        {tab === "debrief" && (
+          <Debrief
+            debrief={dive.debrief}
+            onShow={(skill) => {
+              setSelected(skill);
+              setTab("profile");
+            }}
+          />
+        )}
         {tab === "profile" && (
           <div className="space-y-6">
             <DiveCharts
@@ -146,20 +159,26 @@ export default function DiveDetail() {
         {tab === "notes" && (
           <DiveNotes key={`${dive.id}-${dive.notes?.updated_at}`} diveId={dive.id} notes={dive.notes} onSaved={load} />
         )}
-        {tab === "air" && <TankForm key={dive.id} diveId={dive.id} tank={dive.tank} onSaved={load} />}
+        {tab === "gear" && (
+          <div className="space-y-6">
+            <GearForm key={`${dive.id}-${dive.gear?.updated_at}`} diveId={dive.id} gear={dive.gear} onSaved={load} />
+            <TankForm key={dive.id} diveId={dive.id} tank={dive.tank} onSaved={load} />
+          </div>
+        )}
         {tab === "data" && <DiveData dive={dive} />}
       </Tabs>
     </div>
   );
 }
 
-type TabKey = "profile" | "notes" | "air" | "data";
+type TabKey = "debrief" | "profile" | "notes" | "gear" | "data";
 
 // Summary on top and details in tabs, as Subsurface, Garmin and MacDive lay out a dive
 const TABS: { key: TabKey; label: string }[] = [
+  { key: "debrief", label: "Debrief" },
   { key: "profile", label: "Profile" },
   { key: "notes", label: "Notes" },
-  { key: "air", label: "Air" },
+  { key: "gear", label: "Gear" },
   { key: "data", label: "Data" },
 ];
 

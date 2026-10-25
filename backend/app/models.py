@@ -94,6 +94,9 @@ class Dive(Base):
     notes: Mapped["DiveNotes | None"] = relationship(
         back_populates="dive", cascade="all, delete-orphan", passive_deletes=True
     )
+    gear: Mapped["DiveGear | None"] = relationship(
+        back_populates="dive", cascade="all, delete-orphan", passive_deletes=True
+    )
 
 
 class Site(Base):
@@ -206,3 +209,22 @@ class DiveNotes(Base):
     )
 
     dive: Mapped["Dive"] = relationship(back_populates="notes")
+
+
+class DiveGear(Base):
+    """What the diver wore, so weighting can be compared with buoyancy."""
+
+    __tablename__ = "dive_gear"
+
+    dive_id: Mapped[int] = mapped_column(
+        ForeignKey("dives.id", ondelete="CASCADE"), primary_key=True
+    )
+    weight_kg: Mapped[float | None] = mapped_column(Float, nullable=True)
+    # none | shorty | 3mm | 5mm | 7mm | semidry | drysuit
+    suit: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    tank_material: Mapped[str | None] = mapped_column(String(16), nullable=True)  # aluminum | steel
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, onupdate=_utcnow
+    )
+
+    dive: Mapped["Dive"] = relationship(back_populates="gear")

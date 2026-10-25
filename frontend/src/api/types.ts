@@ -103,6 +103,8 @@ export interface DiveDetail extends DiveSummary {
   exit_longitude: number | null;
   site: SiteRef | null;
   notes: Notes | null;
+  gear: Gear | null;
+  debrief: Debrief;
   scores: SkillScoreDetail[];
   samples: Sample[];
   profile: ProfilePoint[];
@@ -242,4 +244,37 @@ export interface SettingsResponse {
   defaults: ScoringSettings;
   version: number;
   grading: Record<Difficulty, Grading>;
+}
+
+export type Suit = "none" | "shorty" | "3mm" | "5mm" | "7mm" | "semidry" | "drysuit";
+
+export interface GearInput {
+  weight_kg: number | null;
+  suit: Suit | null;
+  tank_material: "aluminum" | "steel" | null;
+}
+
+export interface Gear extends GearInput {
+  updated_at: string;
+}
+
+export interface GearHistoryRow extends GearInput {
+  dive_id: number;
+  started_at: string;
+  site_name: string | null;
+  buoyancy_score: number | null;
+}
+
+export interface DebriefItem {
+  kind: "good" | "work_on" | "info";
+  skill: Skill | null; // null: about the dive as a whole
+  title: string;
+  detail: string;
+  at_s: number | null;
+}
+
+export interface Debrief {
+  headline: string;
+  focus: DebriefItem | null;
+  items: DebriefItem[];
 }
