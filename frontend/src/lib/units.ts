@@ -10,6 +10,7 @@ const FT_PER_M = 3.28084;
 const PSI_PER_BAR = 14.5038;
 const L_PER_CU_FT = 28.3168;
 const KELVIN = 273.15;
+const KG_PER_LB = 0.453592;
 
 const listeners = new Set<() => void>();
 
@@ -52,6 +53,7 @@ export interface Format {
   tempUnit: string;
   pressureUnit: string;
   sacUnit: string;
+  weightUnit: string;
   // Numbers in display units, for chart axes and form fields
   toDepth: (m: number) => number;
   fromDepth: (value: number) => number;
@@ -61,6 +63,8 @@ export interface Format {
   toPressure: (bar: number) => number;
   fromPressure: (value: number) => number;
   toSac: (lPerMin: number) => number;
+  toWeight: (kg: number) => number;
+  fromWeight: (value: number) => number;
   rateLabel: (mPerMin: number) => number; // a threshold as shown in text: whole ft/min, 0.1 m/min
   // Labelled strings
   depth: (m: number) => string;
@@ -82,6 +86,7 @@ export function makeFormat(units: Units): Format {
     tempUnit,
     pressureUnit: imperial ? "psi" : "bar",
     sacUnit: imperial ? "cu ft/min" : "L/min",
+    weightUnit: imperial ? "lb" : "kg",
     toDepth,
     fromDepth: (v) => (imperial ? v / FT_PER_M : v),
     toRate: toDepth,
@@ -90,6 +95,8 @@ export function makeFormat(units: Units): Format {
     toPressure: (bar) => (imperial ? bar * PSI_PER_BAR : bar),
     fromPressure: (v) => (imperial ? v / PSI_PER_BAR : v),
     toSac: (l) => (imperial ? l / L_PER_CU_FT : l),
+    toWeight: (kg) => (imperial ? kg / KG_PER_LB : kg),
+    fromWeight: (v) => (imperial ? v * KG_PER_LB : v),
     rateLabel: (r) => +toDepth(r).toFixed(imperial ? 0 : 1),
     // A foot is a third of a metre, so feet need no decimal
     depth: (m) => (imperial ? `${Math.round(m * FT_PER_M)} ft` : `${m.toFixed(1)} m`),

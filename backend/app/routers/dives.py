@@ -6,10 +6,11 @@ from sqlalchemy.orm import Session, selectinload
 
 from ..database import get_db
 from ..deps import get_current_user
-from ..models import Dive, DiveNotes, DiveTank, User
+from ..debrief import GearView, PreviousDive, ScoreView, build_debrief
+from ..models import Dive, DiveGear, DiveNotes, DiveTank, User
 from ..schemas import (
-    DiveDetail, DiveSummary, NotesIn, NotesOut, NoteTags, ProfilePoint, SampleOut, SiteRef,
-    SkillScoreDetail, TankIn, TankOut,
+    DiveDetail, DiveSummary, GearHistoryRow, GearIn, GearOut, NotesIn, NotesOut, NoteTags, ProfilePoint,
+    SampleOut, SiteRef, SkillScoreDetail, TankIn, TankOut,
 )
 from ..scoring import Profile, ScoringSettings, overall_score
 from ..scoring.store import SKILLS, ensure_scores
@@ -70,6 +71,49 @@ def note_tags(db: Session = Depends(get_db), user: User = Depends(get_current_us
     )
 
 
+@router.get("/gear-history", response_model=list[GearHistoryRow])
+def gear_history(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """Dives with gear logged, newest first, with their buoyancy score."""
+    dives = db.scalars(
+        select(Dive)
+        .join(DiveGear)
+        .where(Dive.user_id == user.id)
+        .options(selectinload(Dive.scores), selectinload(Dive.site), selectinload(Dive.gear))
+        .order_by(Dive.started_at.desc())
+    ).all()
+    ensure_scores(db, user.id, list(dives))
+    return [
+        GearHistoryRow(
+            dive_id=d.id,
+            started_at=d.started_at,
+            site_name=d.site and d.site.name,
+            weight_kg=d.gear.weight_kg,
+            suit=d.gear.suit,
+            tank_material=d.gear.tank_material,
+            buoyancy_score=next((s.score for s in d.scores if s.skill == "buoyancy"), None),
+        )
+        for d in dives
+    ]
+
+
+def _gear_view(gear: DiveGear | None) -> GearView | None:
+    return gear and GearView(weight_kg=gear.weight_kg, suit=gear.suit)
+
+
+def _previous(db: Session, dive: Dive, user: User) -> PreviousDive | None:
+    prev = db.scalar(
+        select(Dive)
+        .where(Dive.user_id == user.id, Dive.started_at < dive.started_at)
+        .options(selectinload(Dive.scores), selectinload(Dive.gear))
+        .order_by(Dive.started_at.desc())
+        .limit(1)
+    )
+    if prev is None:
+        return None
+    ensure_scores(db, user.id, [prev])
+    return PreviousDive(scores={s.skill: s.score for s in prev.scores}, gear=_gear_view(prev.gear))
+
+
 @router.get("/{dive_id}", response_model=DiveDetail)
 def get_dive(dive_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     dive = db.scalar(
@@ -77,7 +121,7 @@ def get_dive(dive_id: int, db: Session = Depends(get_db), user: User = Depends(g
         .where(Dive.id == dive_id, Dive.user_id == user.id)
         .options(
             selectinload(Dive.samples), selectinload(Dive.scores), selectinload(Dive.tank),
-            selectinload(Dive.site), selectinload(Dive.notes),
+            selectinload(Dive.site), selectinload(Dive.notes), selectinload(Dive.gear),
         )
     )
     if dive is None:
@@ -88,6 +132,15 @@ def get_dive(dive_id: int, db: Session = Depends(get_db), user: User = Depends(g
     )
     fields = _summary_fields(dive, cfg)
     fields["scores"] = [SkillScoreDetail.model_validate(s) for s in fields["scores"]]
+    debrief = build_debrief(
+        p,
+        {s.skill: ScoreView(s.score, s.regions, s.metrics or {}) for s in dive.scores},
+        cfg,
+        [s.ndl_s for s in dive.samples if s.ndl_s is not None],
+        has_tank=dive.tank is not None,
+        gear=_gear_view(dive.gear),
+        previous=_previous(db, dive, user),
+    )
     return DiveDetail(
         **fields,
         computer_serial=dive.computer_serial,
@@ -102,6 +155,8 @@ def get_dive(dive_id: int, db: Session = Depends(get_db), user: User = Depends(g
         exit_longitude=dive.exit_longitude,
         site=dive.site and SiteRef.model_validate(dive.site),
         notes=dive.notes and NotesOut.model_validate(dive.notes),
+        gear=dive.gear and GearOut.model_validate(dive.gear),
+        debrief=debrief,
         samples=[SampleOut.model_validate(s) for s in dive.samples],
         profile=[
             ProfilePoint(t_s=t, depth_m=d, rate_m_per_min=r) for t, d, r in zip(p.t, p.depth, p.rate)
@@ -155,6 +210,27 @@ def put_notes(
         setattr(dive.notes, field, value)
     db.commit()
     return dive.notes
+
+
+@router.put("/{dive_id}/gear", response_model=GearOut)
+def put_gear(
+    dive_id: int, body: GearIn, db: Session = Depends(get_db), user: User = Depends(get_current_user)
+):
+    dive = _own_dive(db, dive_id, user)
+    if dive.gear is None:
+        dive.gear = DiveGear()
+    for field, value in body.model_dump().items():
+        setattr(dive.gear, field, value)
+    db.commit()
+    return dive.gear
+
+
+@router.delete("/{dive_id}/gear", status_code=204)
+def delete_gear(dive_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    dive = _own_dive(db, dive_id, user)
+    if dive.gear is not None:
+        db.delete(dive.gear)
+        db.commit()
 
 
 def _own_dive(db: Session, dive_id: int, user: User) -> Dive:

@@ -100,4 +100,7 @@ def score_stop(p: Profile, cfg: ScoringSettings) -> SkillResult:
 
     start_s, end_s = p.t[deepest + h0], p.t[deepest + h1]
     region = Region(start_s, end_s, f"Stop: held {fmt_mmss(held)}")
-    return SkillResult(SKILL, score, reason, [region])
+    metrics = {
+        "held_s": held, "exits": exits, "shallowest_m": round(shallow, 2), "deepest_m": round(deep, 2),
+    }
+    return SkillResult(SKILL, score, reason, [region], metrics)

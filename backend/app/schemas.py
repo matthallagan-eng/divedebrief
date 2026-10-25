@@ -177,6 +177,47 @@ class NotesOut(NotesIn):
     updated_at: datetime
 
 
+Suit = Literal["none", "shorty", "3mm", "5mm", "7mm", "semidry", "drysuit"]
+
+
+class GearIn(BaseModel):
+    weight_kg: float | None = Field(None, ge=0, le=30)
+    suit: Suit | None = None
+    tank_material: Literal["aluminum", "steel"] | None = None
+
+
+class GearOut(GearIn):
+    model_config = ConfigDict(from_attributes=True)
+
+    updated_at: datetime
+
+
+class GearHistoryRow(BaseModel):
+    """One dive with gear logged, for comparing weighting with buoyancy."""
+
+    dive_id: int
+    started_at: datetime
+    site_name: str | None
+    weight_kg: float | None
+    suit: str | None
+    tank_material: str | None
+    buoyancy_score: int | None
+
+
+class DebriefItem(BaseModel):
+    kind: Literal["good", "work_on", "info"]
+    skill: str | None  # ascent | stop | buoyancy | air, or None for the dive as a whole
+    title: str
+    detail: str
+    at_s: float | None = None  # a moment on the profile to show
+
+
+class Debrief(BaseModel):
+    headline: str
+    focus: DebriefItem | None  # the one thing to work on next dive
+    items: list[DebriefItem]
+
+
 class NoteTags(BaseModel):
     """What the diver has noted before, most often first, for autocomplete."""
 
@@ -197,6 +238,8 @@ class DiveDetail(DiveSummary):
     exit_longitude: float | None
     site: SiteRef | None
     notes: NotesOut | None
+    gear: GearOut | None
+    debrief: Debrief
     scores: list[SkillScoreDetail]
     samples: list[SampleOut]
     # 1 s grid with smoothed ascent rate, for the charts

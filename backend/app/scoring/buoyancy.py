@@ -120,4 +120,5 @@ def score_buoyancy(p: Profile, cfg: ScoringSettings) -> SkillResult:
     # Excursions first: the profile colors each point by the first region covering it
     regions = [Region(p.t[s], p.t[e], "Excursion", "warning") for s, e in excursions]
     regions += [Region(p.t[s], p.t[e], "Bottom phase") for s, e in phases]
-    return SkillResult(SKILL, score, reason, regions)
+    metrics = {"wobble_m": round(wobble, 3), "excursions": n, "bottom_s": bottom_s}
+    return SkillResult(SKILL, score, reason, regions, metrics)
