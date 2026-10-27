@@ -35,19 +35,27 @@ export function AchievementTestPanel() {
         >
           {all.map((a) => (
             <option key={a.key} value={a.key}>
-              {TIER_LABEL[a.tier]}: {a.secret ? "The Kraken (secret)" : a.name}
+              {TIER_LABEL[a.tier]}: {a.preview_name ?? a.name}
             </option>
           ))}
         </select>
         <button
           className={button}
           disabled={!chosen}
-          // The secret one is previewed under its real name
-          onClick={() => chosen && preview({ kind: "one", creature: chosen.secret ? { ...chosen, name: "The Kraken", goal: "Earn every other creature." } : chosen })}
+          // Previewed as if earned, under its real name
+          onClick={() => chosen && preview({ kind: "one", creature: { ...chosen, name: chosen.preview_name ?? chosen.name } })}
         >
           Preview reveal
         </button>
-        <button className={button} onClick={() => preview({ kind: "many", creatures: all.filter((a) => a.tier !== "legendary").slice(0, 10) })}>
+        <button
+          className={button}
+          onClick={() =>
+            preview({
+              kind: "many",
+              creatures: all.filter((a) => a.tier !== "legendary").slice(0, 10).map((a) => ({ ...a, name: a.preview_name ?? a.name })),
+            })
+          }
+        >
           Preview first-time reveal
         </button>
         <label className="flex items-center gap-2 text-sm text-mist">

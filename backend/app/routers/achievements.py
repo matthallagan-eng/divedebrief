@@ -99,12 +99,13 @@ def list_achievements(db: Session = Depends(get_db), user: User = Depends(get_cu
     out = []
     for c in CREATURES:
         p = progress[c.key]
-        hidden = c.secret and not p.earned
+        # A locked creature's name is part of the surprise, so it isn't sent
         out.append(AchievementOut(
             key=c.key,
-            name="???" if hidden else c.name,
+            name=c.name if p.earned else "???",
+            preview_name=c.name if settings.achievement_test_mode else None,
             tier=c.tier,
-            goal="A secret. Keep diving." if hidden else c.goal,
+            goal="A secret. Keep diving." if c.secret and not p.earned else c.goal,
             coming_soon=c.coming_soon,
             secret=c.secret,
             earned_dive_id=p.earned_dive_id,

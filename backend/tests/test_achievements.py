@@ -127,6 +127,8 @@ def test_api_lists_achievements_and_remembers_seen_reveals(client):
     assert a["clownfish"]["earned_dive_id"] and a["sergeant_major"]["earned_dive_id"]
     assert a["pufferfish"]["earned_dive_id"]  # two dives on 9 August
     assert a["green_turtle"]["progress"] == 3 and a["green_turtle"]["earned_at"] is None
+    # Locked creatures keep their names secret
+    assert (a["clownfish"]["name"], a["green_turtle"]["name"], a["green_turtle"]["preview_name"]) == ("Clownfish", "???", None)
     assert (a["kraken"]["name"], a["kraken"]["goal"]) == ("???", "A secret. Keep diving.")
 
     assert client.post("/achievements/seen", json={"keys": ["clownfish", "clownfish", "not_a_creature"]}).status_code == 204
@@ -139,7 +141,9 @@ def test_test_mode_reset_is_hidden_unless_enabled(client, monkeypatch):
     client.post("/achievements/seen", json={"keys": ["clownfish"]})
     assert client.post("/achievements/test/reset-seen").status_code == 404
     monkeypatch.setattr(settings, "achievement_test_mode", True)
-    assert client.get("/achievements").json()["test_mode"]
+    body = client.get("/achievements").json()
+    assert body["test_mode"]
+    assert {a["key"]: a["preview_name"] for a in body["achievements"]}["blue_whale"] == "Blue whale"
     assert client.post("/achievements/test/reset-seen").status_code == 204
     assert client.get("/achievements").json()["first_reveal"]
 

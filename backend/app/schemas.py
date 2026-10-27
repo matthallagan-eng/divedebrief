@@ -267,7 +267,8 @@ class MilestoneOut(BaseModel):
 
 class AchievementOut(BaseModel):
     key: str
-    name: str  # "???" for a secret one until it's earned
+    name: str  # "???" until it's earned
+    preview_name: str | None  # TEMPORARY: the real name, in test mode only
     tier: str  # common | uncommon | rare | epic | legendary
     goal: str
     coming_soon: str | None  # the feature it needs before it can be earned

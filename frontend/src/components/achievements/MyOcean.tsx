@@ -82,7 +82,9 @@ function Card({ a, show }: { a: Achievement; show: boolean }) {
           <CreatureFigure creature={a.key} height={64} maxWidth={150} locked={!show} />
         )}
       </div>
-      <p className={`mt-3 text-sm font-medium ${show ? "text-foam" : "text-mist"}`}>{a.name}</p>
+      <p className={`mt-3 text-sm font-medium ${show ? "text-foam" : "text-mist"}`}>
+        {earned ? a.name : show ? (a.preview_name ?? a.name) : "???"}
+      </p>
       <p className="mt-0.5 text-xs text-murk">{a.goal}</p>
       <div className="mt-auto pt-3 text-xs">
         {earned ? (
