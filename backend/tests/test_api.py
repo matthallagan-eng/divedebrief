@@ -72,6 +72,7 @@ def test_same_day_dives_get_a_surface_interval(client):
     # 08:00 and 11:00 the same day, less the first dive's length
     assert second["surface_interval_s"] == 3 * 3600 - first["duration_s"]
     assert (third["dive_of_day"], third["dives_that_day"]) == (1, 1)
+    assert (first["sea_life"], first["buddy"]) == ([], None)
 
     detail = client.get(f"/dives/{second['id']}").json()
     assert detail["surface_interval_s"] == second["surface_interval_s"]

@@ -146,6 +146,10 @@ recomputed when a diver changes a setting or the algorithm changes.
 - The debrief asks for a longer rest when the interval is under 1 hour, and
   suggests "deepest dive first" when a repeat dive is at least 2 m deeper
   than the one before it.
+- The logbook's dive list can be grouped by day, month, site, sea life or
+  buddy (collapsible groups with a count and average score; a dive shows
+  under each animal seen on it) and sorted by any column, from the header or
+  the Sort menu. The view lives in the URL, next to the site filter.
 
 ## 3. Direct FIT import
 

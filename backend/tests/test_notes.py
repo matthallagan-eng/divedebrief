@@ -24,6 +24,9 @@ def test_notes_are_saved_cleaned_and_returned(client):
     assert notes["sea_life"] == ["Green turtle", "Sergeant major"]
     assert notes["landmarks"] == ["Mooring buoy"]
     assert notes["text"] == "Calm and clear, 20 m vis."
+    # The logbook list carries the sea life and buddy for grouping
+    [listed] = client.get("/dives").json()
+    assert (listed["sea_life"], listed["buddy"]) == (["Green turtle", "Sergeant major"], None)
 
     # Saving again replaces the notes
     client.put(f"/dives/{dive}/notes", json={"feeling": None, "text": "Rewritten"})

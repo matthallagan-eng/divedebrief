@@ -84,6 +84,9 @@ class DiveSummary(BaseModel):
     dives_that_day: int
     surface_interval_s: float | None  # None for the day's first dive
     previous_dive_id: int | None  # the day's dive before this one
+    # From the notes, for grouping the logbook
+    sea_life: list[str]
+    buddy: str | None
 
 
 class SampleOut(BaseModel):

@@ -40,6 +40,8 @@ def _summary_fields(dive: Dive, cfg: ScoringSettings, day: DayPlace) -> dict:
         dives_that_day=day.dives_that_day,
         surface_interval_s=day.surface_interval_s,
         previous_dive_id=day.previous_dive_id,
+        sea_life=dive.notes.sea_life if dive.notes else [],
+        buddy=dive.notes and dive.notes.buddy,
     )
 
 
@@ -48,7 +50,7 @@ def list_dives(db: Session = Depends(get_db), user: User = Depends(get_current_u
     dives = db.scalars(
         select(Dive)
         .where(Dive.user_id == user.id)
-        .options(selectinload(Dive.scores), selectinload(Dive.site))
+        .options(selectinload(Dive.scores), selectinload(Dive.site), selectinload(Dive.notes))
         .order_by(Dive.started_at.desc())
     ).all()
     cfg = ensure_scores(db, user.id, list(dives))
