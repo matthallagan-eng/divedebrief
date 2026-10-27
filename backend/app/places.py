@@ -23,6 +23,7 @@ from dataclasses import asdict, dataclass
 import httpx
 
 from .config import settings
+from .marine import marine_areas
 from .sites import distance_m
 
 DIVE_SITE_RADIUS_M = 1500
@@ -32,6 +33,9 @@ SEA_RADIUS_M = 40_000
 AT_SITE_M = 300
 MAX_SUGGESTIONS = 5
 TIMEOUT_S = 10
+# Overpass usually answers in a second or two; when it's this slow it's at
+# capacity, and the diver shouldn't wait on it
+OVERPASS_WAIT_S = 6
 # Overpass asks clients to identify themselves
 USER_AGENT = "DiveDebrief/0.1 (dive log app; https://github.com/matthallagan-eng/divedebrief)"
 
@@ -78,7 +82,7 @@ def local_name(tags: dict) -> str:
 
 def _overpass(url: str, query: str) -> list[dict]:
     try:
-        res = httpx.post(url, data={"data": query}, headers={"User-Agent": USER_AGENT}, timeout=TIMEOUT_S + 2)
+        res = httpx.post(url, data={"data": query}, headers={"User-Agent": USER_AGENT}, timeout=OVERPASS_WAIT_S)
         res.raise_for_status()
         return res.json()["elements"]
     except (httpx.HTTPError, ValueError, KeyError) as e:
@@ -144,24 +148,52 @@ def _classify(el: dict, inside: bool, distance: int) -> tuple[int, str] | None:
     return None
 
 
-def suggest_names(lat: float, lon: float, elements: list[dict] | None = None) -> list[Suggestion]:
-    """Ranked, de-duplicated name suggestions for a site at (lat, lon).
-    Raises PlacesUnavailable when nothing could be looked up, so the caller
-    can try again later instead of keeping an empty answer."""
-    if elements is None:
-        with ThreadPoolExecutor(2) as pool:
-            reverse = pool.submit(reverse_lookup, lat, lon)
-            try:
-                elements = fetch_elements(lat, lon)
-            except PlacesUnavailable as overpass:
-                try:
-                    found = reverse.result()
-                except PlacesUnavailable:
-                    found = []
-                if not found:
-                    raise overpass
-                return found
+# Natural Earth classes for small, local areas, ranked like nearby water;
+# seas, gulfs and oceans rank with the seas Overpass finds
+LOCAL_MARINE = {"reef", "lagoon", "bay", "inlet", "fjord", "sound", "channel", "strait"}
+
+
+def _marine(lat: float, lon: float) -> list[tuple[int, int, Suggestion]]:
+    return [
+        (3 if m.kind in LOCAL_MARINE else 5, 0, Suggestion(m.name, m.kind.capitalize(), 0))
+        for m in marine_areas(lat, lon)
+    ]
+
+
+def _ranked(entries) -> list[Suggestion]:
+    """Best first, one per name ignoring case, keeping each name's best rank."""
     ranked: dict[str, tuple[int, int, Suggestion]] = {}
+    for rank, distance, s in entries:
+        key = s.name.casefold()
+        if key not in ranked or (rank, distance) < ranked[key][:2]:
+            ranked[key] = (rank, distance, s)
+    return [s for _, _, s in sorted(ranked.values(), key=lambda r: r[:2])][:MAX_SUGGESTIONS]
+
+
+def lookup_names(lat: float, lon: float) -> tuple[list[Suggestion], bool]:
+    """Suggestions for a site, and whether the lookup was complete: False
+    when Overpass couldn't be reached, so the answer shouldn't be kept.
+    Raises PlacesUnavailable when nothing at all could be found that way."""
+    with ThreadPoolExecutor(2) as pool:
+        reverse = pool.submit(reverse_lookup, lat, lon)
+        try:
+            elements = fetch_elements(lat, lon)
+        except PlacesUnavailable as overpass:
+            try:
+                found = [(3, s.distance_m, s) for s in reverse.result()]
+            except PlacesUnavailable:
+                found = []
+            partial = _ranked(found + _marine(lat, lon))
+            if not partial:
+                raise overpass
+            return partial, False
+    return suggest_names(lat, lon, elements), True
+
+
+def suggest_names(lat: float, lon: float, elements: list[dict]) -> list[Suggestion]:
+    """Ranked, de-duplicated name suggestions from Overpass elements, with the
+    marine areas the site is in."""
+    entries = _marine(lat, lon)
     for el in elements:
         name = local_name(el.get("tags", {}))
         if not name:
@@ -176,7 +208,5 @@ def suggest_names(lat: float, lon: float, elements: list[dict] | None = None) ->
         if kind is None:
             continue
         rank, label = kind
-        key = name.casefold()
-        if key not in ranked or (rank, distance) < ranked[key][:2]:
-            ranked[key] = (rank, distance, Suggestion(name, label, distance))
-    return [s for _, _, s in sorted(ranked.values(), key=lambda r: r[:2])][:MAX_SUGGESTIONS]
+        entries.append((rank, distance, Suggestion(name, label, distance)))
+    return _ranked(entries)

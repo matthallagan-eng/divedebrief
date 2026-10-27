@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session, selectinload
 from ..database import get_db
 from ..deps import get_current_user
 from ..models import Dive, Site, User
-from ..places import PlacesUnavailable, suggest_names
+from ..places import PlacesUnavailable, lookup_names
 from ..schemas import DiveMap, MapDive, NameSuggestions, SiteIn, SiteOut, SiteRef
 from ..scoring import overall_score
 from ..scoring.store import SKILLS, ensure_scores
@@ -70,9 +70,14 @@ def name_suggestions(site_id: int, db: Session = Depends(get_db), user: User = D
     site = _own_site(db, site_id, user)
     if site.name_suggestions is None:
         try:
-            found = suggest_names(site.latitude, site.longitude)
+            found, complete = lookup_names(site.latitude, site.longitude)
         except PlacesUnavailable:
-            return NameSuggestions(suggestions=[], error="Couldn't reach OpenStreetMap to look up names nearby.")
+            return NameSuggestions(
+                suggestions=[], error="OpenStreetMap is busy right now, so names nearby couldn't be looked up. Try again in a few minutes."
+            )
+        if not complete:
+            # What could be found without Overpass; it's asked again next time
+            return NameSuggestions(suggestions=[s.as_dict() for s in found])
         site.name_suggestions = [s.as_dict() for s in found]
         db.commit()
     return NameSuggestions(suggestions=site.name_suggestions)
