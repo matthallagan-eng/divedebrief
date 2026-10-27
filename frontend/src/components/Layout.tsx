@@ -13,6 +13,7 @@ const nav = [
   { to: "/", label: "Map" },
   { to: "/logbook", label: "Logbook" },
   { to: "/upload", label: "Log dives" },
+  { to: "/ocean", label: "My ocean" },
   { to: "/settings", label: "Settings" },
 ];
 
@@ -42,7 +43,8 @@ export default function Layout({ children }: { children: ReactNode }) {
               </span>
               <span className="text-sm font-semibold tracking-tight">DiveDebrief</span>
             </NavLink>
-            <nav className="flex w-full items-center justify-between gap-4 whitespace-nowrap sm:w-auto sm:justify-end sm:gap-5">
+            {/* On phones the links take their own row under the logo and Sign out */}
+            <nav className="order-last flex w-full items-center justify-between gap-3 whitespace-nowrap sm:order-none sm:ml-auto sm:w-auto sm:justify-end sm:gap-5">
               {nav.map((item) => (
                 <NavLink
                   key={item.to}
@@ -57,14 +59,14 @@ export default function Layout({ children }: { children: ReactNode }) {
                   {item.label}
                 </NavLink>
               ))}
-              <button
-                onClick={handleLogout}
-                title={user?.email}
-                className="rounded-lg border border-surface-border px-3 py-1.5 text-sm text-murk transition-colors hover:border-lagoon/60 hover:text-mist"
-              >
-                Sign out
-              </button>
             </nav>
+            <button
+              onClick={handleLogout}
+              title={user?.email}
+              className="rounded-lg border border-surface-border px-3 py-1.5 text-sm text-murk transition-colors hover:border-lagoon/60 hover:text-mist"
+            >
+              Sign out
+            </button>
           </div>
           {/* Wave edge where the header meets the water */}
           <svg

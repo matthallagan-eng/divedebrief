@@ -305,16 +305,6 @@ export interface Thermocline {
   below_k: number;
 }
 
-export interface Milestone {
-  key: string;
-  title: string;
-  description: string;
-  earned_dive_id: number | null;
-  earned_at: string | null;
-  progress: number;
-  target: number;
-}
-
 export type Tier = "common" | "uncommon" | "rare" | "epic" | "legendary";
 
 // An achievement and the sea creature it unlocks (app/achievements.py)

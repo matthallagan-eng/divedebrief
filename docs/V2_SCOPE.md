@@ -163,9 +163,14 @@ recomputed when a diver changes a setting or the algorithm changes.
   still scales it.
 - A reveal pops up when one is earned (the silhouette swims in and lights
   up); the first time, everything already earned is revealed together. The
-  logbook's "My ocean" tab shows the collection, locked ones as silhouettes.
+  "My ocean" page shows the collection, locked ones as silhouettes.
 - Seven need certification cards or dive photos and show "Coming with ...".
   Nothing rewards diving deeper than the diver's training.
+- Replaces milestones (2026-10-27), which overlapped: the Milestones tab and
+  `/milestones` are gone, and a dive's debrief names the creatures it
+  unlocked. "My ocean" is its own page, in the menu after "Log dives".
+- Locked creatures are flat silhouettes named "???"; the API doesn't send
+  their names.
 - TEMPORARY test mode (`ACHIEVEMENT_TEST_MODE`, on in docker-compose):
   preview any reveal, show every creature, replay real unlocks.
 

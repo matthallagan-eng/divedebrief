@@ -1,6 +1,6 @@
 """Achievements: each one unlocks a sea creature for the background ocean.
 
-Like milestones, they're worked out from the diver's whole logbook on every
+They're worked out from the diver's whole logbook on every
 read, oldest dive first, so they follow the current settings. Each is earned
 on the first dive that reaches it. The rarer the tier, the more it takes.
 

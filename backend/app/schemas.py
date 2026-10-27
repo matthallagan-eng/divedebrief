@@ -253,18 +253,6 @@ class ThermoclineOut(BaseModel):
     below_k: float
 
 
-class MilestoneOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    key: str
-    title: str
-    description: str
-    earned_dive_id: int | None
-    earned_at: datetime | None
-    progress: int
-    target: int
-
-
 class AchievementOut(BaseModel):
     key: str
     name: str  # "???" until it's earned

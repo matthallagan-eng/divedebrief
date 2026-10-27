@@ -10,7 +10,8 @@ from ..deps import get_current_user
 from ..debrief import GearView, PreviousDive, ScoreView, build_debrief
 from ..dive_day import DayPlace, day_bounds, place_in_day
 from ..models import Dive, DiveGear, DiveNotes, DiveTank, User
-from .milestones import load_milestones
+from ..achievements import BY_KEY, compute_achievements
+from .achievements import load_facts
 from ..schemas import (
     DiveDetail, DiveSummary, GearHistoryRow, GearIn, GearOut, NotesIn, NotesOut, NoteTags, ProfilePoint,
     SampleOut, SiteRef, SkillScoreDetail, TankIn, TankOut, ThermoclineOut,
@@ -131,6 +132,13 @@ def _previous(db: Session, dive: Dive, user: User) -> PreviousDive | None:
     return PreviousDive(scores={s.skill: s.score for s in prev.scores}, gear=_gear_view(prev.gear), focus=focus)
 
 
+def _creatures_earned_on(db: Session, user: User, dive: Dive):
+    """Creatures (achievements) this dive unlocked, for its debrief."""
+    facts, cfg = load_facts(db, user)
+    progress = compute_achievements(facts, cfg.stop_target_s)
+    return [BY_KEY[k] for k, p in progress.items() if p.earned_dive_id == dive.id]
+
+
 @router.get("/{dive_id}", response_model=DiveDetail)
 def get_dive(dive_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     dive = db.scalar(
@@ -167,7 +175,7 @@ def get_dive(dive_id: int, db: Session = Depends(get_db), user: User = Depends(g
         gear=_gear_view(dive.gear),
         previous=_previous(db, dive, user),
         thermocline=thermocline,
-        new_milestones=[m for m in load_milestones(db, user) if m.earned_dive_id == dive.id],
+        new_creatures=_creatures_earned_on(db, user, dive),
         day=day,
     )
     return DiveDetail(
