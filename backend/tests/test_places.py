@@ -54,6 +54,17 @@ def test_suggestions_are_capped():
     assert len(suggest_names(12.16, -68.28, elements=elements)) == places.MAX_SUGGESTIONS
 
 
+
+def test_names_are_suggested_in_english_when_osm_has_one():
+    elements = [
+        {"type": "node", "lat": 27.0, "lon": 34.0, "tags": {"name": "البحر الأحمر", "name:en": "Red Sea", "place": "sea"}},
+        {"type": "node", "lat": 27.0, "lon": 34.001, "tags": {"name": "珊瑚礁", "sport": "scuba_diving"}},
+    ]
+    names = [s.name for s in suggest_names(27.0, 34.0, elements=elements)]
+    # Without an English name, the local one is still better than nothing
+    assert names == ["珊瑚礁", "Red Sea"]
+
+
 def _refuse(*args, **kwargs):
     raise httpx.ConnectError("no route")
 

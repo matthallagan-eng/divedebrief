@@ -182,6 +182,12 @@ recomputed when a diver changes a setting or the algorithm changes.
   from OpenStreetMap's Overpass API, with Nominatim as a fallback when Overpass
   is busy. Only the site's position is sent. The answer is kept on the site,
   so each site is looked up once.
+- Labels in the viewer's language (added 2026-10-26): the globe uses
+  OpenFreeMap's vector tiles (OpenStreetMap data, no key) instead of the
+  standard raster tiles, whose labels are drawn in each country's own script.
+  Every name label shows the browser's language, then English, then the Latin
+  spelling; a name only in another script is left off. Name suggestions
+  prefer `name:en` and ask Nominatim for English.
 
 ## 5. Accounts, per-diver data, hosting
 

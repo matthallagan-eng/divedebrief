@@ -68,6 +68,14 @@ out tags;
 out tags center;"""
 
 
+# Names are suggested in English when OpenStreetMap has one, not in the local script
+LANGUAGE = "en"
+
+
+def local_name(tags: dict) -> str:
+    return (tags.get(f"name:{LANGUAGE}") or tags.get("name") or "").strip()
+
+
 def _overpass(url: str, query: str) -> list[dict]:
     try:
         res = httpx.post(url, data={"data": query}, headers={"User-Agent": USER_AGENT}, timeout=TIMEOUT_S + 2)
@@ -99,7 +107,8 @@ def reverse_lookup(lat: float, lon: float) -> list[Suggestion]:
     try:
         res = httpx.get(
             settings.nominatim_url,
-            params={"format": "jsonv2", "lat": f"{lat:.6f}", "lon": f"{lon:.6f}", "zoom": 17, "layer": "natural,poi"},
+            params={"format": "jsonv2", "lat": f"{lat:.6f}", "lon": f"{lon:.6f}", "zoom": 17, "layer": "natural,poi",
+                    "accept-language": LANGUAGE},
             headers={"User-Agent": USER_AGENT},
             timeout=TIMEOUT_S,
         )
@@ -154,7 +163,7 @@ def suggest_names(lat: float, lon: float, elements: list[dict] | None = None) ->
                 return found
     ranked: dict[str, tuple[int, int, Suggestion]] = {}
     for el in elements:
-        name = el.get("tags", {}).get("name", "").strip()
+        name = local_name(el.get("tags", {}))
         if not name:
             continue
         # Areas from is_in contain the site; everything else has a position
