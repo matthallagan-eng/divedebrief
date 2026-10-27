@@ -41,6 +41,11 @@ export interface DiveSummary {
   site_name: string | null;
   overall_score: number | null;
   scores: SkillScore[];
+  // Repeat dives on the same day
+  dive_of_day: number;
+  dives_that_day: number;
+  surface_interval_s: number | null; // null for the day's first dive
+  previous_dive_id: number | null;
 }
 
 export type Skill = "ascent" | "stop" | "buoyancy" | "air";

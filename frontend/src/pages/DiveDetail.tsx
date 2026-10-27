@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowDownToLine, ChevronLeft, Gauge, MapPin, Thermometer, Timer, Trash2 } from "lucide-react";
+import { ArrowDownToLine, ChevronLeft, Gauge, MapPin, Sun, Thermometer, Timer, Trash2 } from "lucide-react";
 import { api } from "../api/client";
 import type { DiveDetail as Dive, Region, ScoringSettings, SettingsResponse, Skill } from "../api/types";
 import { Debrief } from "../components/Debrief";
@@ -11,7 +11,7 @@ import { Scorecard } from "../components/Scorecard";
 import { StatCard } from "../components/StatCard";
 import { Tabs } from "../components/Tabs";
 import { TankForm } from "../components/TankForm";
-import { formatDate, formatDuration, formatTime } from "../lib/format";
+import { SHORT_INTERVAL_S, formatDate, formatDuration, formatHours, formatTime } from "../lib/format";
 import { useFormat } from "../lib/units";
 import { SKILL_NAMES } from "../lib/skills";
 
@@ -89,6 +89,7 @@ export default function DiveDetail() {
                 "Unknown site: no GPS position"
               )}
             </p>
+            {dive.dives_that_day > 1 && <DayLine dive={dive} />}
           </div>
           <button
             onClick={handleDelete}
@@ -246,6 +247,29 @@ function DiveData({ dive }: { dive: Dive }) {
 function coords(lat: number | null, lon: number | null): string {
   if (lat === null || lon === null) return "No GPS fix";
   return `${Math.abs(lat).toFixed(5)}° ${lat >= 0 ? "N" : "S"}, ${Math.abs(lon).toFixed(5)}° ${lon >= 0 ? "E" : "W"}`;
+}
+
+const ORDINALS = ["first", "second", "third", "fourth", "fifth"];
+
+function DayLine({ dive }: { dive: Dive }) {
+  const nth = ORDINALS[dive.dive_of_day - 1] ?? `${dive.dive_of_day}th`;
+  const interval = dive.surface_interval_s;
+  return (
+    <p className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-mist">
+      <Sun size={14} className="text-murk" />
+      {`The ${nth} of ${dive.dives_that_day} dives that day`}
+      {interval !== null && dive.previous_dive_id !== null && (
+        <>
+          <span className={interval < SHORT_INTERVAL_S ? "text-coral" : undefined}>
+            · {formatHours(interval)} at the surface after
+          </span>
+          <Link to={`/dives/${dive.previous_dive_id}`} className="text-aqua hover:text-foam">
+            the dive before
+          </Link>
+        </>
+      )}
+    </p>
+  );
 }
 
 function BackLink() {

@@ -90,7 +90,7 @@ function GoalCheck({ goal }: { goal: Goal }) {
 }
 
 function Item({ item, onShow }: { item: DebriefItem; onShow: Props["onShow"] }) {
-  const showable = item.skill && item.skill !== "air" && item.at_s !== null;
+  const showable = item.skill !== "air" && item.at_s !== null;
   return (
     <div className="mt-1 space-y-1">
       <p className="text-sm font-medium text-foam">

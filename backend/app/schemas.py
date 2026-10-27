@@ -79,6 +79,11 @@ class DiveSummary(BaseModel):
     site_name: str | None
     overall_score: int | None
     scores: list[SkillScoreOut]
+    # Repeat dives on the same day (app.dive_day)
+    dive_of_day: int
+    dives_that_day: int
+    surface_interval_s: float | None  # None for the day's first dive
+    previous_dive_id: int | None  # the day's dive before this one
 
 
 class SampleOut(BaseModel):

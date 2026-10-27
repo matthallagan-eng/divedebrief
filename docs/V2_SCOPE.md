@@ -135,6 +135,18 @@ recomputed when a diver changes a setting or the algorithm changes.
 - Tags offer what the diver noted on earlier dives. Each site on the map
   lists the sea life and landmarks noted there, most often noted first.
 
+## 2c. Same-day dives (added 2026-10-26)
+
+- Dives on the same calendar date (the dive computer's wall-clock start) are
+  one dive day. Each dive knows which dive of the day it is and its surface
+  interval, from the end of the day's previous dive. Computed on read, no
+  migration (`app/dive_day.py`).
+- The logbook shows the surface interval between the day's dives; the dive
+  page shows "the second of 2 dives that day" with a link to the dive before.
+- The debrief asks for a longer rest when the interval is under 1 hour, and
+  suggests "deepest dive first" when a repeat dive is at least 2 m deeper
+  than the one before it.
+
 ## 3. Direct FIT import
 
 - Upload `.fit` files from Garmin Descent watches alongside UDDF. The same

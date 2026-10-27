@@ -11,6 +11,7 @@ including what they wore, so weighting changes show up next to buoyancy.
 from dataclasses import dataclass
 
 from .analysis.thermocline import Thermocline
+from .dive_day import DayPlace
 from .milestones import Milestone
 from .scoring import Profile, ScoringSettings
 from .scoring import units as u
@@ -29,6 +30,11 @@ KG_PER_LB = 0.453592
 CHANGE_WORTH_NOTING = 10  # score points between dives
 GOAL_CLOSER = 5
 KELVIN = 273.15
+# Rest at least this long between dives, so more of the first dive's nitrogen is gone
+SHORT_INTERVAL_S = 60 * 60
+# A repeat dive this much deeper than the one before it is a reverse profile
+DEEPER_THAN_BEFORE_M = 2.0
+ORDINALS = {2: "second", 3: "third", 4: "fourth", 5: "fifth"}
 
 
 @dataclass(frozen=True)
@@ -67,6 +73,7 @@ def build_debrief(
     previous: PreviousDive | None,
     thermocline: Thermocline | None = None,
     new_milestones: list[Milestone] = (),
+    day: DayPlace | None = None,
 ) -> Debrief:
     units = cfg.units
     items: list[DebriefItem] = []
@@ -82,6 +89,8 @@ def build_debrief(
             add(item)
     items += _weighting(scores, gear, previous, units)
     items += _limits(p, ndl_s, units)
+    if day and day.surface_interval_s is not None:
+        items += _repeat_dive(p, day, units)
     if not has_tank:
         items.append(DebriefItem(
             kind="info", skill="air", title="Track your air",
@@ -349,6 +358,46 @@ def _limits(p: Profile, ndl_s: list[int], units: str) -> list[DebriefItem]:
                 kind="good", skill=None, title="Plenty of no-stop time",
                 detail=f"Your no-decompression limit never dropped below {round(low / 60)} min.",
             ))
+    return out
+
+
+def fmt_interval(seconds: float) -> str:
+    h, m = divmod(round(seconds / 60), 60)
+    return f"{h} h {m} min" if h else f"{m} min"
+
+
+def _repeat_dive(p: Profile, day: DayPlace, units: str) -> list[DebriefItem]:
+    nth = ORDINALS.get(day.dive_of_day, f"{day.dive_of_day}th")
+    interval = fmt_interval(day.surface_interval_s)
+    if day.surface_interval_s < SHORT_INTERVAL_S:
+        out = [DebriefItem(
+            kind="work_on", skill=None, title="Take a longer surface interval",
+            detail=(
+                f"Your {nth} dive of the day began only {interval} after the last one ended. Aim for at least "
+                f"{fmt_interval(SHORT_INTERVAL_S)} between dives: more of the nitrogen from the earlier dive leaves "
+                "your body, and you get time to rest, drink water and plan."
+            ),
+        )]
+    else:
+        out = [DebriefItem(
+            kind="info", skill=None, title=f"Your {nth} dive of the day",
+            detail=(
+                f"You had {interval} at the surface first. Your computer counts the nitrogen left from the earlier "
+                "dive, so expect less no-stop time than on a first dive."
+            ),
+        )]
+    deepest = max(p.depth, default=0.0)
+    before = day.previous_max_depth_m
+    if before is not None and deepest - before >= DEEPER_THAN_BEFORE_M:
+        out.append(DebriefItem(
+            kind="info", skill=None, title="Deepest dive first",
+            detail=(
+                f"This dive reached {u.length(deepest, units)}, deeper than the {u.length(before, units)} of your "
+                "dive before it. Plan the day's deepest dive first and go shallower on each one after, since later "
+                "dives start with nitrogen already in your body."
+            ),
+            at_s=p.t[p.depth.index(deepest)],
+        ))
     return out
 
 

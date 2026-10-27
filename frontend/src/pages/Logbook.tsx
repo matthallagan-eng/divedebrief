@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowDownToLine, Award, Fish, Thermometer, Timer, Waves } from "lucide-react";
+import { ArrowDownToLine, Award, Fish, Sun, Thermometer, Timer, Waves } from "lucide-react";
 import { api } from "../api/client";
 import type { DiveSummary, SettingsResponse, Skill, Trends } from "../api/types";
 import { Habits } from "../components/Habits";
@@ -10,7 +10,7 @@ import { Tabs } from "../components/Tabs";
 import { StatCard } from "../components/StatCard";
 import { formatScore } from "../lib/skills";
 import {
-  formatDate, formatDuration, formatHours, formatTime,
+  SHORT_INTERVAL_S, formatDate, formatDuration, formatHours, formatTime,
 } from "../lib/format";
 import { useFormat } from "../lib/units";
 
@@ -172,29 +172,34 @@ export default function Logbook() {
                 </tr>
               </thead>
               <tbody className="tabular-nums">
-                {dives.map((d) => (
-                  <tr
-                    key={d.id}
-                    onClick={() => navigate(`/dives/${d.id}`)}
-                    className="cursor-pointer border-b border-surface-border/60 transition-colors last:border-0 hover:bg-lagoon/5"
-                  >
-                    <td className="px-4 py-3">
-                      <Link to={`/dives/${d.id}`} className="text-foam hover:text-aqua">
-                        {formatDate(d.started_at)}
-                      </Link>
-                      <span className="ml-2 text-murk">{formatTime(d.started_at)}</span>
-                    </td>
-                    <td className="max-w-40 truncate px-4 py-3 text-mist">{siteLabel(d)}</td>
-                    <td className="px-4 py-3 text-right text-mist">{formatDuration(d.duration_s)}</td>
-                    <td className="px-4 py-3 text-right text-foam">{f.depth(d.max_depth_m)}</td>
-                    <td className="px-4 py-3 text-right text-mist">{f.depth(d.avg_depth_m)}</td>
-                    <td className="px-4 py-3 text-right text-mist">{f.temp(d.min_temp_k)}</td>
-                    <td className="px-4 py-3 text-right text-mist">{skillScore(d, "ascent")}</td>
-                    <td className="px-4 py-3 text-right text-mist">{skillScore(d, "stop")}</td>
-                    <td className="px-4 py-3 text-right text-mist">{skillScore(d, "buoyancy")}</td>
-                    <td className="px-4 py-3 text-right text-mist">{skillScore(d, "air")}</td>
-                    <td className="px-4 py-3 text-right font-medium text-foam">{formatScore(d.overall_score)}</td>
-                  </tr>
+                {dives.map((d, i) => (
+                  <Fragment key={d.id}>
+                    <tr
+                      onClick={() => navigate(`/dives/${d.id}`)}
+                      className="cursor-pointer border-b border-surface-border/60 transition-colors last:border-0 hover:bg-lagoon/5"
+                    >
+                      <td className="px-4 py-3">
+                        <Link to={`/dives/${d.id}`} className="text-foam hover:text-aqua">
+                          {formatDate(d.started_at)}
+                        </Link>
+                        <span className="ml-2 text-murk">{formatTime(d.started_at)}</span>
+                      </td>
+                      <td className="max-w-40 truncate px-4 py-3 text-mist">{siteLabel(d)}</td>
+                      <td className="px-4 py-3 text-right text-mist">{formatDuration(d.duration_s)}</td>
+                      <td className="px-4 py-3 text-right text-foam">{f.depth(d.max_depth_m)}</td>
+                      <td className="px-4 py-3 text-right text-mist">{f.depth(d.avg_depth_m)}</td>
+                      <td className="px-4 py-3 text-right text-mist">{f.temp(d.min_temp_k)}</td>
+                      <td className="px-4 py-3 text-right text-mist">{skillScore(d, "ascent")}</td>
+                      <td className="px-4 py-3 text-right text-mist">{skillScore(d, "stop")}</td>
+                      <td className="px-4 py-3 text-right text-mist">{skillScore(d, "buoyancy")}</td>
+                      <td className="px-4 py-3 text-right text-mist">{skillScore(d, "air")}</td>
+                      <td className="px-4 py-3 text-right font-medium text-foam">{formatScore(d.overall_score)}</td>
+                    </tr>
+                    {/* Newest first, so the day's earlier dive is the next row */}
+                    {d.surface_interval_s !== null && dives[i + 1]?.id === d.previous_dive_id && (
+                      <SurfaceInterval seconds={d.surface_interval_s} />
+                    )}
+                  </Fragment>
                 ))}
               </tbody>
             </table>
@@ -202,6 +207,20 @@ export default function Logbook() {
         )}
       </Tabs>
     </div>
+  );
+}
+
+function SurfaceInterval({ seconds }: { seconds: number }) {
+  const short = seconds < SHORT_INTERVAL_S;
+  return (
+    <tr className="border-b border-surface-border/60 bg-lagoon/5 text-xs">
+      <td colSpan={11} className={`px-4 py-1.5 ${short ? "text-coral" : "text-murk"}`}>
+        <span className="inline-flex items-center gap-1.5">
+          <Sun size={12} />
+          {formatHours(seconds)} surface interval{short && ": short, aim for an hour"}
+        </span>
+      </td>
+    </tr>
   );
 }
 
