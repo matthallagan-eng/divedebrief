@@ -2,6 +2,7 @@
 from dataclasses import asdict
 
 from app.debrief import GearView, PreviousDive, ScoreView, build_debrief
+from app.dive_day import DayPlace
 from app.schemas import DebriefItem
 from app.scoring import Profile, ScoringSettings, score_dive
 
@@ -127,3 +128,49 @@ def test_goal_closer_when_the_score_rose():
 
 def test_no_goal_without_a_previous_focus():
     assert _debrief(*CLEAN)[0].goal is None
+
+
+def _day(interval_min, previous_max_m=20.0, n=2):
+    return DayPlace(n, n, interval_min * 60, 1, previous_max_m)
+
+
+def _repeat(debrief):
+    return [i for i in debrief.items if i.skill is None and ("dive of the day" in i.title or "surface" in i.title)]
+
+
+def test_short_surface_interval_is_flagged():
+    results = score_dive(*CLEAN, DEFAULTS)
+    scores = {r.skill: ScoreView(r.score, [asdict(g) for g in r.regions], r.metrics) for r in results}
+    p = Profile.from_samples(*CLEAN, DEFAULTS.ascent_window_s)
+    debrief = build_debrief(p, scores, DEFAULTS, [], True, None, None, day=_day(35))
+    [item] = _repeat(debrief)
+    assert (item.kind, item.title) == ("work_on", "Take a longer surface interval")
+    assert "second dive of the day began only 35 min after" in item.detail
+    # Not a skill, so it never becomes the focus
+    assert debrief.focus is None or debrief.focus.skill is not None
+
+
+def test_a_rested_repeat_dive_is_noted():
+    p = Profile.from_samples(*CLEAN, DEFAULTS.ascent_window_s)
+    debrief = build_debrief(p, {}, DEFAULTS, [], True, None, None, day=_day(72, n=3))
+    [item] = _repeat(debrief)
+    assert (item.kind, item.title) == ("info", "Your third dive of the day")
+    assert item.detail.startswith("You had 1 h 12 min at the surface first.")
+
+
+def test_deeper_repeat_dive_suggests_deepest_first():
+    p = Profile.from_samples(*CLEAN, DEFAULTS.ascent_window_s)
+    titles = lambda day: [i.title for i in build_debrief(p, {}, IMPERIAL, [], True, None, None, day=day).items]
+    assert "Deepest dive first" in titles(_day(90, previous_max_m=12.0))
+    # Within 2 m of the dive before is not worth a note
+    assert "Deepest dive first" not in titles(_day(90, previous_max_m=18.5))
+    [deeper] = [i for i in build_debrief(p, {}, IMPERIAL, [], True, None, None, day=_day(90, 12.0)).items
+                if i.title == "Deepest dive first"]
+    assert "reached 66 ft, deeper than the 39 ft" in deeper.detail
+    assert deeper.at_s is not None
+
+
+def test_first_dive_of_the_day_has_no_repeat_items():
+    p = Profile.from_samples(*CLEAN, DEFAULTS.ascent_window_s)
+    debrief = build_debrief(p, {}, DEFAULTS, [], True, None, None, day=DayPlace(1, 2))
+    assert not _repeat(debrief)

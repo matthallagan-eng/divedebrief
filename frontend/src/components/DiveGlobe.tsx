@@ -8,6 +8,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import type { MapDive, SiteOut } from "../api/types";
 import { diveFixes } from "../lib/map";
+import { STYLE_URL, labelLanguage, localizeLabels } from "../lib/mapStyle";
 
 // Matches the theme in index.css; the map paints on a canvas, so no CSS variables
 const COLORS = { abyss: "#030d15", aqua: "#6fd6ea", lagoon: "#1e9fbd", foam: "#e6f6f8", seagrass: "#3fb68b", coral: "#de6650" };
@@ -65,8 +66,12 @@ export function DiveGlobe({ sites, site, dive, padding, onSelectSite, onSelectDi
       zoom: WORLD_ZOOM,
       maxZoom: 19,
       attributionControl: false,
-      style: {
-        version: 8,
+    });
+    const lang = labelLanguage();
+    // Set here rather than in the options, so the fetched style can be changed before it's shown
+    m.setStyle(STYLE_URL, {
+      transformStyle: (_previous, next) => ({
+        ...next,
         projection: { type: "globe" },
         // A glow around the globe that fades out as you zoom in to a site
         sky: {
@@ -74,21 +79,8 @@ export function DiveGlobe({ sites, site, dive, padding, onSelectSite, onSelectDi
           "horizon-color": COLORS.lagoon,
           "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 0, 1, 5, 1, 7, 0],
         },
-        sources: {
-          osm: {
-            type: "raster",
-            tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-            tileSize: 256,
-            maxzoom: 19,
-            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-          },
-        },
-        layers: [
-          { id: "background", type: "background", paint: { "background-color": COLORS.abyss } },
-          // Dimmed a little to sit with the dark theme
-          { id: "osm", type: "raster", source: "osm", paint: { "raster-brightness-max": 0.85, "raster-saturation": -0.25 } },
-        ],
-      },
+        layers: localizeLabels(next.layers, lang),
+      }),
     });
     m.addControl(new NavigationControl({ visualizePitch: true }), "top-left");
     // Bottom left, clear of the panel on the right

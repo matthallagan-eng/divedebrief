@@ -135,6 +135,22 @@ recomputed when a diver changes a setting or the algorithm changes.
 - Tags offer what the diver noted on earlier dives. Each site on the map
   lists the sea life and landmarks noted there, most often noted first.
 
+## 2c. Same-day dives (added 2026-10-26)
+
+- Dives on the same calendar date (the dive computer's wall-clock start) are
+  one dive day. Each dive knows which dive of the day it is and its surface
+  interval, from the end of the day's previous dive. Computed on read, no
+  migration (`app/dive_day.py`).
+- The logbook shows the surface interval between the day's dives; the dive
+  page shows "the second of 2 dives that day" with a link to the dive before.
+- The debrief asks for a longer rest when the interval is under 1 hour, and
+  suggests "deepest dive first" when a repeat dive is at least 2 m deeper
+  than the one before it.
+- The logbook's dive list can be grouped by day, month, site, sea life or
+  buddy (collapsible groups with a count and average score; a dive shows
+  under each animal seen on it) and sorted by any column, from the header or
+  the Sort menu. The view lives in the URL, next to the site filter.
+
 ## 3. Direct FIT import
 
 - Upload `.fit` files from Garmin Descent watches alongside UDDF. The same
@@ -166,6 +182,12 @@ recomputed when a diver changes a setting or the algorithm changes.
   from OpenStreetMap's Overpass API, with Nominatim as a fallback when Overpass
   is busy. Only the site's position is sent. The answer is kept on the site,
   so each site is looked up once.
+- Labels in the viewer's language (added 2026-10-26): the globe uses
+  OpenFreeMap's vector tiles (OpenStreetMap data, no key) instead of the
+  standard raster tiles, whose labels are drawn in each country's own script.
+  Every name label shows the browser's language, then English, then the Latin
+  spelling; a name only in another script is left off. Name suggestions
+  prefer `name:en` and ask Nominatim for English.
 
 ## 5. Accounts, per-diver data, hosting
 

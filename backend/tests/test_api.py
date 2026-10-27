@@ -64,6 +64,23 @@ def test_multi_dive_upload_lists_newest_first(client):
     assert starts == sorted(starts, reverse=True)
 
 
+def test_same_day_dives_get_a_surface_interval(client):
+    _upload(client, "multi_dive.uddf")
+    third, second, first = client.get("/dives").json()
+    assert (first["dive_of_day"], first["dives_that_day"], first["surface_interval_s"]) == (1, 2, None)
+    assert (second["dive_of_day"], second["previous_dive_id"]) == (2, first["id"])
+    # 08:00 and 11:00 the same day, less the first dive's length
+    assert second["surface_interval_s"] == 3 * 3600 - first["duration_s"]
+    assert (third["dive_of_day"], third["dives_that_day"]) == (1, 1)
+    assert (first["sea_life"], first["buddy"]) == ([], None)
+
+    detail = client.get(f"/dives/{second['id']}").json()
+    assert detail["surface_interval_s"] == second["surface_interval_s"]
+    titles = [i["title"] for i in detail["debrief"]["items"]]
+    # 12 m after the first dive's 8 m
+    assert "Your second dive of the day" in titles and "Deepest dive first" in titles
+
+
 def test_scores_are_stored_and_returned(client):
     # Hand-derived (10 s window): ascending seconds 58-112, of which 58-62 and
     # 108-112 are within 9 m/min -> 10/55 = 18. No time in the stop band -> 0.

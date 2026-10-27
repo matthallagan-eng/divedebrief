@@ -8,6 +8,7 @@ from ..analysis.thermocline import find_thermocline
 from ..database import get_db
 from ..deps import get_current_user
 from ..debrief import GearView, PreviousDive, ScoreView, build_debrief
+from ..dive_day import DayPlace, day_bounds, place_in_day
 from ..models import Dive, DiveGear, DiveNotes, DiveTank, User
 from .milestones import load_milestones
 from ..schemas import (
@@ -20,7 +21,7 @@ from ..scoring.store import SKILLS, ensure_scores
 router = APIRouter(prefix="/dives", tags=["dives"])
 
 
-def _summary_fields(dive: Dive, cfg: ScoringSettings) -> dict:
+def _summary_fields(dive: Dive, cfg: ScoringSettings, day: DayPlace) -> dict:
     scores = sorted(dive.scores, key=lambda s: SKILLS.index(s.skill))
     return dict(
         id=dive.id,
@@ -35,6 +36,12 @@ def _summary_fields(dive: Dive, cfg: ScoringSettings) -> dict:
         site_name=dive.site and dive.site.name,
         overall_score=overall_score({s.skill: s.score for s in scores}, cfg),
         scores=scores,
+        dive_of_day=day.dive_of_day,
+        dives_that_day=day.dives_that_day,
+        surface_interval_s=day.surface_interval_s,
+        previous_dive_id=day.previous_dive_id,
+        sea_life=dive.notes.sea_life if dive.notes else [],
+        buddy=dive.notes and dive.notes.buddy,
     )
 
 
@@ -43,11 +50,12 @@ def list_dives(db: Session = Depends(get_db), user: User = Depends(get_current_u
     dives = db.scalars(
         select(Dive)
         .where(Dive.user_id == user.id)
-        .options(selectinload(Dive.scores), selectinload(Dive.site))
+        .options(selectinload(Dive.scores), selectinload(Dive.site), selectinload(Dive.notes))
         .order_by(Dive.started_at.desc())
     ).all()
     cfg = ensure_scores(db, user.id, list(dives))
-    return [DiveSummary(**_summary_fields(d, cfg)) for d in dives]
+    days = place_in_day(dives)
+    return [DiveSummary(**_summary_fields(d, cfg, days[d.id])) for d in dives]
 
 
 def tally(lists) -> list[str]:
@@ -139,7 +147,13 @@ def get_dive(dive_id: int, db: Session = Depends(get_db), user: User = Depends(g
     p = Profile.from_samples(
         [s.t_s for s in dive.samples], [s.depth_m for s in dive.samples], cfg.ascent_window_s
     )
-    fields = _summary_fields(dive, cfg)
+    start, end = day_bounds(dive.started_at)
+    same_day = db.execute(
+        select(Dive.id, Dive.started_at, Dive.duration_s, Dive.max_depth_m)
+        .where(Dive.user_id == user.id, Dive.started_at >= start, Dive.started_at < end)
+    ).all()
+    day = place_in_day(same_day)[dive.id]
+    fields = _summary_fields(dive, cfg, day)
     fields["scores"] = [SkillScoreDetail.model_validate(s) for s in fields["scores"]]
     thermocline = find_thermocline(
         [s.t_s for s in dive.samples], [s.depth_m for s in dive.samples], [s.temp_k for s in dive.samples]
@@ -154,6 +168,7 @@ def get_dive(dive_id: int, db: Session = Depends(get_db), user: User = Depends(g
         previous=_previous(db, dive, user),
         thermocline=thermocline,
         new_milestones=[m for m in load_milestones(db, user) if m.earned_dive_id == dive.id],
+        day=day,
     )
     return DiveDetail(
         **fields,

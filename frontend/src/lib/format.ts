@@ -10,6 +10,9 @@ export function formatHours(seconds: number): string {
   return h ? `${h} h ${m} min` : `${m} min`;
 }
 
+// Under this, the debrief asks for a longer rest between dives
+export const SHORT_INTERVAL_S = 60 * 60;
+
 // Dive start times are wall-clock times tagged as UTC by the parser, so they
 // are formatted in UTC to show the time the dive computer recorded.
 export function formatDate(iso: string): string {
