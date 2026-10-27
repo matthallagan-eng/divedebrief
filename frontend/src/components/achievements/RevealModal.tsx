@@ -38,7 +38,7 @@ export function RevealModal({ reveal, onClose }: { reveal: Reveal; onClose: () =
           onClick={onClose}
           className="reveal-late mt-6 rounded-lg bg-lagoon px-5 py-2 text-sm font-medium text-abyss transition-colors hover:bg-aqua"
         >
-          {reveal.kind === "one" ? "Add to my ocean" : "Dive in"}
+          {reveal.kind === "one" ? "Add to My Ocean" : "Dive in"}
         </button>
       </div>
     </div>

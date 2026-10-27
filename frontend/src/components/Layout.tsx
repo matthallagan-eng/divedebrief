@@ -13,7 +13,7 @@ const nav = [
   { to: "/", label: "Map" },
   { to: "/logbook", label: "Logbook" },
   { to: "/upload", label: "Log dives" },
-  { to: "/ocean", label: "My ocean" },
+  { to: "/ocean", label: "My Ocean" },
   { to: "/settings", label: "Settings" },
 ];
 
