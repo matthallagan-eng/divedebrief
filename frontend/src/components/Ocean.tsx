@@ -1,5 +1,9 @@
-import type { ComponentType } from "react";
+import { useState } from "react";
+import type { CSSProperties, ComponentType } from "react";
+import type { Achievement } from "../api/types";
+import { useUnlockedCreatures } from "../context/AchievementsContext";
 import { useSeaLife } from "../lib/display";
+import { CREATURE_ART, TIER_WEIGHT, type Zone } from "./creatures/registry";
 import { Fish, Lobster, Reef, Shark, Shipwreck, Whale } from "./SeaCreatures";
 
 // Fixed, decorative backdrop: drifting light rays, rising bubbles, and sea
@@ -76,8 +80,83 @@ const LOBSTERS = [
   { left: true, duration: 300, delay: -20, width: 32 },
 ];
 
+// Unlocked creatures (achievements) take turns in a few slots, so the scene
+// never gets crowded: each time one leaves, the slot picks another, rarer
+// tiers less often. At most four at once, fewer at a lower sea-life setting.
+const SLOTS: { zone: Zone; minLevel: number }[] = [
+  { zone: "swim", minLevel: 1 },
+  { zone: "floor", minLevel: 10 },
+  { zone: "drift", minLevel: 30 },
+  { zone: "swim", minLevel: 45 },
+];
+
+function pick(pool: Achievement[], r: () => number): Achievement {
+  const total = pool.reduce((sum, a) => sum + TIER_WEIGHT[a.tier], 0);
+  let x = r() * total;
+  for (const a of pool) {
+    x -= TIER_WEIGHT[a.tier];
+    if (x <= 0) return a;
+  }
+  return pool[pool.length - 1];
+}
+
+function UnlockedSlot({ slot, zone, unlocked }: { slot: number; zone: Zone; unlocked: Achievement[] }) {
+  // Bumped each time the creature leaves the screen, which picks the next one
+  const [turn, setTurn] = useState(0);
+  const pool = unlocked.filter((a) => CREATURE_ART[a.key]?.zone === zone);
+  if (pool.length === 0) return null;
+  const r = random(slot * 997 + turn * 31 + 3);
+  const a = pick(pool, r);
+  const art = CREATURE_ART[a.key];
+  const width = art.width * (0.85 + r() * 0.3);
+  const leftward = r() < 0.5;
+  const rare = a.tier === "epic" || a.tier === "legendary";
+  const figure = {
+    width,
+    height: width / art.aspect,
+    color: art.color,
+    "--accent": art.accent,
+    opacity: rare ? 0.32 : 0.24,
+    transform: leftward && zone !== "drift" ? "scaleX(-1)" : undefined,
+  } as CSSProperties;
+  // Big creatures cruise slowly; the first turn starts part-way across
+  const duration = zone === "floor" ? 220 + r() * 80 : zone === "drift" ? 70 + r() * 40 : 45 + width / 5 + r() * 20;
+  const delay = turn === 0 ? -r() * duration : 0;
+  const next = () => setTurn((t) => t + 1);
+
+  if (zone === "drift") {
+    return (
+      <div
+        className="drift absolute top-0"
+        style={{ left: `${8 + r() * 80}%`, animationDuration: `${duration}s`, animationDelay: `${delay}s` }}
+        onAnimationIteration={next}
+      >
+        <div className={`bob ${rare ? "glow" : ""}`} style={{ ...figure, animationDuration: "6s" }}>
+          <art.Art />
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div
+      className={`swim absolute left-0 ${leftward ? "swim-left" : "swim-right"} ${zone === "floor" ? "bottom-3" : ""}`}
+      style={{
+        top: zone === "floor" ? undefined : `${15 + r() * 55}%`,
+        animationDuration: `${duration}s`,
+        animationDelay: `${delay}s`,
+      }}
+      onAnimationIteration={next}
+    >
+      <div className={`${zone === "floor" ? "" : "bob"} ${rare ? "glow" : ""}`} style={{ ...figure, animationDuration: "7s" }}>
+        <art.Art />
+      </div>
+    </div>
+  );
+}
+
 export default function Ocean() {
   const level = useSeaLife();
+  const unlocked = useUnlockedCreatures();
   const show = (kind: Kind, index: number) =>
     level >= kind.minLevel && index < Math.round((kind.max * level) / 100);
   const lobsters = level >= 10 ? Math.max(1, Math.round((LOBSTERS.length * level) / 100)) : 0;
@@ -119,6 +198,10 @@ export default function Ocean() {
           </div>
         </div>
       ))}
+
+      {SLOTS.map((s, i) =>
+        level >= s.minLevel ? <UnlockedSlot key={i} slot={i} zone={s.zone} unlocked={unlocked} /> : null,
+      )}
 
       {level > 0 && (
         <div className="absolute inset-x-0 bottom-0 h-[120px] opacity-70 sm:h-[170px]">

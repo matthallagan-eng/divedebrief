@@ -81,6 +81,15 @@ export const api = {
     return handle<T>(res);
   },
 
+  async post<T>(path: string, body?: unknown): Promise<T> {
+    const res = await fetch(`${BASE}${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    return handle<T>(res);
+  },
+
   async del<T>(path: string): Promise<T> {
     const res = await fetch(`${BASE}${path}`, { method: "DELETE", headers: authHeaders() });
     return handle<T>(res);

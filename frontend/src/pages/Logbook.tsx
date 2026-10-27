@@ -7,6 +7,7 @@ import { DiveTable } from "../components/DiveTable";
 import {
   GROUP_KEYS, SORT_KEYS, defaultDir, type GroupKey, type SortDir, type SortKey,
 } from "../lib/logbookView";
+import { MyOcean } from "../components/achievements/MyOcean";
 import { Habits } from "../components/Habits";
 import { LogStats } from "../components/LogStats";
 import { Milestones } from "../components/Milestones";
@@ -158,6 +159,7 @@ export default function Logbook() {
           ))}
         {tab === "stats" && <LogStats dives={dives} />}
         {tab === "milestones" && <Milestones />}
+        {tab === "ocean" && <MyOcean />}
         {tab === "dives" && (
           <DiveTable
             dives={dives}
@@ -173,7 +175,7 @@ export default function Logbook() {
   );
 }
 
-type TabKey = "dives" | "habits" | "milestones" | "stats";
+type TabKey = "dives" | "habits" | "milestones" | "ocean" | "stats";
 
 // Summary on top, details in tabs: the dive list, trends, and records and
 // averages, the way Subsurface and MacDive split a logbook
@@ -181,6 +183,7 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "dives", label: "Dives" },
   { key: "habits", label: "Habits" },
   { key: "milestones", label: "Milestones" },
+  { key: "ocean", label: "My ocean" },
   { key: "stats", label: "Stats" },
 ];
 

@@ -23,6 +23,8 @@ services:
       CORS_ORIGINS: http://localhost:3000
       # Local only; Railway sets its own strong SECRET_KEY
       SECRET_KEY: ${SECRET_KEY:-local-compose-only-secret-not-for-production}
+      # TEMPORARY: preview achievements without earning them; remove when tuned
+      ACHIEVEMENT_TEST_MODE: "true"
     ports:
       - "8000:8000"
     depends_on:

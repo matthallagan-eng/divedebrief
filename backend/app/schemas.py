@@ -265,6 +265,31 @@ class MilestoneOut(BaseModel):
     target: int
 
 
+class AchievementOut(BaseModel):
+    key: str
+    name: str  # "???" for a secret one until it's earned
+    tier: str  # common | uncommon | rare | epic | legendary
+    goal: str
+    coming_soon: str | None  # the feature it needs before it can be earned
+    secret: bool
+    earned_dive_id: int | None
+    earned_at: datetime | None
+    progress: int
+    target: int
+    seen: bool  # the diver has seen its reveal
+
+
+class Achievements(BaseModel):
+    achievements: list[AchievementOut]
+    # Nothing seen yet: everything already earned is revealed together
+    first_reveal: bool
+    test_mode: bool  # TEMPORARY, see Settings.achievement_test_mode
+
+
+class SeenIn(BaseModel):
+    keys: list[str] = Field(max_length=100)
+
+
 class NoteTags(BaseModel):
     """What the diver has noted before, most often first, for autocomplete."""
 
