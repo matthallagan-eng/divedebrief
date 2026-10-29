@@ -24,3 +24,5 @@ desktop.ini
 # IDE
 .vscode/
 .idea/
+# Uploaded card photos (backend settings.upload_dir)
+backend/data/

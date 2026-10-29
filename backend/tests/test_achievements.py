@@ -17,6 +17,7 @@ def _dive(n, *, over=False, stop=80, held=200, buoyancy=70, overall=75, site=1, 
         "id": n,
         "started_at": START + timedelta(days=n),
         "duration_s": minutes * 60,
+        "max_depth_m": 12,
         "site_id": site,
         "site_named": False,
         "overall": overall,
@@ -92,10 +93,11 @@ def test_seasons_flip_south_of_the_equator():
     assert compute_achievements(dives, 180)["leatherback"].progress == 2
 
 
-def test_coming_soon_creatures_cant_be_earned_and_hold_back_the_tier_prizes():
+def test_card_creatures_wait_for_cards_and_hold_back_the_tier_prizes():
     dives = [_dive(i, buddy="Sam", landmarks=["Old wreck"]) for i in range(1, 30)]
     p = compute_achievements(dives, 180)
     assert not p["scuba_diver"].earned and not p["blacktip_shark"].earned
+    assert [c.key for c in CREATURES if c.coming_soon] == ["lionfish"]
     assert p["batfish"].earned_dive_id == 1
     assert p["dolphins"].earned_dive_id == 10
     # The blacktip needs a card, so the golden manta waits

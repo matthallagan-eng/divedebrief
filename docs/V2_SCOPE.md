@@ -164,8 +164,8 @@ recomputed when a diver changes a setting or the algorithm changes.
 - A reveal pops up when one is earned (the silhouette swims in and lights
   up); the first time, everything already earned is revealed together. The
   "My Ocean" page shows the collection, locked ones as silhouettes.
-- Seven need certification cards or dive photos and show "Coming with ...".
-  Nothing rewards diving deeper than the diver's training.
+- Six come from certification cards (2f); one needs dive photos and shows
+  "Coming with dive photos". Nothing rewards diving deeper than the diver's training.
 - Replaces milestones (2026-10-27), which overlapped: the Milestones tab and
   `/milestones` are gone, and a dive's debrief names the creatures it
   unlocked. "My Ocean" is its own page, in the menu after "Log dives".
@@ -173,6 +173,22 @@ recomputed when a diver changes a setting or the algorithm changes.
   their names.
 - TEMPORARY test mode (`ACHIEVEMENT_TEST_MODE`, on in docker-compose):
   preview any reveal, show every creature, replay real unlocks.
+
+## 2f. Certification cards (added 2026-10-28)
+
+- A "Cards" page, in the menu after "My Ocean": each card has a level, the
+  agency, the course name as printed, the card number, the date, and a photo
+  or PDF of each side (JPEG, PNG, WebP or PDF, up to 10 MB, checked by the
+  file's bytes).
+- Levels: Open Water, Advanced Open Water, Rescue Diver, Divemaster and
+  Instructor rank in that order, and a higher card counts for the ones below
+  it. Deep Diver, Nitrox and other specialties don't rank.
+- Photos are files in a Docker volume (`settings.upload_dir`), served only to
+  their owner and never cached.
+- Cards unlock the scuba diver (Open Water), blacktip (Advanced), great white
+  (Rescue), submersible (Divemaster) and research sub (3 cards) when added.
+  The hammerheads need a dive past 25 m made on or after the date of an
+  Advanced or Deep card; an undated card is taken on trust.
 
 ## 3. Direct FIT import
 
