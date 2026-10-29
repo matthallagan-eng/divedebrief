@@ -1,0 +1,16 @@
+<!-- frogfish: faces right -->
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="70" viewBox="0 0 80 70" fill="#e0a33a">
+  <path d="M10 40 C6 22 20 8 40 8 C60 8 74 20 74 38 C74 56 60 66 40 66 C22 66 12 56 10 40 Z" />
+  <path d="M54 12 C58 4 64 2 68 2" fill="none" stroke="#e0a33a" stroke-width="1.6" />
+  <circle cx="68" cy="3" r="3" fill="#a8641e" />
+  <path d="M30 64 C28 70 20 70 18 66 M50 64 C52 70 60 70 62 66" fill="none" stroke="#e0a33a" stroke-width="5" stroke-linecap="round" />
+  <circle cx="24" cy="24" r="3.4" fill="#a8641e" opacity="0.7" />
+  <circle cx="34" cy="40" r="3.4" fill="#a8641e" opacity="0.7" />
+  <circle cx="22" cy="46" r="3.4" fill="#a8641e" opacity="0.7" />
+  <circle cx="46" cy="54" r="3.4" fill="#a8641e" opacity="0.7" />
+  <circle cx="30" cy="56" r="3.4" fill="#a8641e" opacity="0.7" />
+  <circle cx="44" cy="28" r="3.4" fill="#a8641e" opacity="0.7" />
+  <circle cx="56" cy="46" r="3.4" fill="#a8641e" opacity="0.7" />
+  <path d="M58 46 C64 48 70 46 72 42" fill="none" stroke="#030d15" stroke-width="2" />
+  <circle cx="62" cy="26" r="3" fill="#030d15" />
+</svg>

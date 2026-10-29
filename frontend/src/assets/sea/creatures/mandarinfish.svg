@@ -1,0 +1,13 @@
+<!-- mandarinfish: faces right -->
+<svg xmlns="http://www.w3.org/2000/svg" width="90" height="50" viewBox="0 0 90 50" fill="#2a8fd8">
+  <path d="M16 26 L2 14 L6 26 L2 38 Z" />
+  <path d="M12 26 C20 10 46 6 66 10 C78 12 86 18 88 26 C86 34 78 40 66 42 C46 46 20 42 12 26 Z" />
+  <path d="M36 10 C40 2 48 0 54 4 L50 10 Z" />
+  <path d="M30 20 c4 -6 10 -2 8 3 c-2 4 -8 3 -6 -1" fill="none" stroke="#f28c38" stroke-width="2.4" stroke-linecap="round" />
+  <path d="M48 18 c4 -6 10 -2 8 3 c-2 4 -8 3 -6 -1" fill="none" stroke="#f28c38" stroke-width="2.4" stroke-linecap="round" />
+  <path d="M40 32 c4 -6 10 -2 8 3 c-2 4 -8 3 -6 -1" fill="none" stroke="#f28c38" stroke-width="2.4" stroke-linecap="round" />
+  <path d="M60 30 c4 -6 10 -2 8 3 c-2 4 -8 3 -6 -1" fill="none" stroke="#f28c38" stroke-width="2.4" stroke-linecap="round" />
+  <path d="M22 28 c4 -6 10 -2 8 3 c-2 4 -8 3 -6 -1" fill="none" stroke="#f28c38" stroke-width="2.4" stroke-linecap="round" />
+  <path d="M70 20 c4 -6 10 -2 8 3 c-2 4 -8 3 -6 -1" fill="none" stroke="#f28c38" stroke-width="2.4" stroke-linecap="round" />
+  <circle cx="78" cy="22" r="2.4" fill="#030d15" />
+</svg>

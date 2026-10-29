@@ -1,0 +1,11 @@
+<!-- oarfish: faces right -->
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="60" viewBox="0 0 300 60" fill="#c7d2db">
+  <path d="M2 34 C40 26 70 40 110 34 C150 28 190 22 240 24 C262 25 282 26 296 30 C286 36 266 38 240 38 C190 40 150 44 110 44 C70 44 40 42 2 34 Z" />
+  <path d="M10 30 C50 22 80 34 120 28 C160 22 200 18 252 20 L262 22" fill="none" stroke="#e5473a" stroke-width="4" />
+  <path d="M260 24 C262 10 266 2 272 0" fill="none" stroke="#e5473a" stroke-width="2.4" stroke-linecap="round" />
+  <path d="M265 24 C267 9 272 3 278 0" fill="none" stroke="#e5473a" stroke-width="2.4" stroke-linecap="round" />
+  <path d="M270 24 C272 8 278 4 284 0" fill="none" stroke="#e5473a" stroke-width="2.4" stroke-linecap="round" />
+  <path d="M275 24 C277 7 284 5 290 0" fill="none" stroke="#e5473a" stroke-width="2.4" stroke-linecap="round" />
+  <path d="M280 24 C282 6 290 6 296 0" fill="none" stroke="#e5473a" stroke-width="2.4" stroke-linecap="round" />
+  <circle cx="284" cy="29" r="2" fill="#030d15" />
+</svg>

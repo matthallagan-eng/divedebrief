@@ -1,0 +1,14 @@
+<!-- nudibranch: faces right -->
+<svg xmlns="http://www.w3.org/2000/svg" width="90" height="40" viewBox="0 0 90 40" fill="#9b59d0">
+  <path d="M4 34 C10 22 30 18 50 18 C66 18 78 22 84 30 C86 34 82 36 76 36 L8 36 Z" />
+  <path d="M6 34 C20 30 40 30 60 32 C70 33 78 34 84 32" fill="none" stroke="#f5a623" stroke-width="2.4" />
+  <path d="M70 20 L74 6 M76 22 L82 8" stroke="#f5a623" stroke-width="3" stroke-linecap="round" />
+  <path d="M22 22 L18 18" stroke="#f5a623" stroke-width="2.4" stroke-linecap="round" />
+  <path d="M22 22 L22 12" stroke="#f5a623" stroke-width="2.4" stroke-linecap="round" />
+  <path d="M22 22 L26 16" stroke="#f5a623" stroke-width="2.4" stroke-linecap="round" />
+  <path d="M22 22 L14 14" stroke="#f5a623" stroke-width="2.4" stroke-linecap="round" />
+  <path d="M22 22 L30 20" stroke="#f5a623" stroke-width="2.4" stroke-linecap="round" />
+  <circle cx="40" cy="26" r="2" fill="#f5a623" />
+  <circle cx="50" cy="26" r="2" fill="#f5a623" />
+  <circle cx="60" cy="26" r="2" fill="#f5a623" />
+</svg>

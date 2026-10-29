@@ -1,4 +1,6 @@
+import { useId } from "react";
 import type { CSSProperties } from "react";
+import { DrawingView } from "./DrawingView";
 import { CREATURE_ART } from "./registry";
 
 interface Props {
@@ -10,21 +12,25 @@ interface Props {
 }
 
 export function CreatureFigure({ creature, height, maxWidth, locked, className = "" }: Props) {
+  const flat = useId();
   const art = CREATURE_ART[creature];
   if (!art) return null;
-  let width = height * art.aspect;
+  const { aspect } = art.drawing;
+  let width = height * aspect;
   if (maxWidth && width > maxWidth) width = maxWidth;
-  const style = {
-    width,
-    height: width / art.aspect,
-    // One flat colour, details and eyes included, so nothing gives it away
-    color: locked ? "#1d4560" : art.color,
-    "--accent": locked ? "#1d4560" : art.accent,
-    "--eye": locked ? "#1d4560" : undefined,
-  } as CSSProperties;
+  const style = { width, height: width / aspect, filter: locked ? `url(#${CSS.escape(flat)})` : undefined } as CSSProperties;
   return (
     <div className={className} style={style}>
-      <art.Art />
+      {locked && (
+        // Repaints the drawing in one flat colour, details and eyes included, so nothing gives it away
+        <svg width="0" height="0" className="absolute">
+          <filter id={flat} x="-50%" y="-50%" width="200%" height="200%">
+            <feFlood floodColor="#1d4560" />
+            <feComposite in2="SourceAlpha" operator="in" />
+          </filter>
+        </svg>
+      )}
+      <DrawingView drawing={art.drawing} />
     </div>
   );
 }

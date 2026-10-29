@@ -1,0 +1,7 @@
+<!-- spanish_dancer: faces right -->
+<svg xmlns="http://www.w3.org/2000/svg" width="110" height="60" viewBox="0 0 110 60" fill="#e0453a">
+  <path d="M10 30 C20 6 50 2 74 10 C90 16 104 22 106 30 C104 38 90 46 74 50 C50 58 20 54 10 30 Z" />
+  <path d="M10 30 C14 12 30 2 50 4 C40 8 30 14 24 22 M10 30 C14 48 30 58 50 56 C40 52 30 46 24 38" fill="none" stroke="#f6d6d0" stroke-width="4" stroke-linecap="round" />
+  <path d="M30 6 C50 2 80 8 100 22 M30 54 C50 58 80 52 100 38" fill="none" stroke="#f6d6d0" stroke-width="2.4" stroke-dasharray="6 4" />
+  <path d="M100 24 L108 14 M102 34 L110 30" stroke="#f6d6d0" stroke-width="2.4" stroke-linecap="round" />
+</svg>

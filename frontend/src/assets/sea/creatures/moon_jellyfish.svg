@@ -1,0 +1,15 @@
+<!-- moon_jellyfish: faces right -->
+<svg xmlns="http://www.w3.org/2000/svg" width="70" height="90" viewBox="0 0 70 90" fill="#b8c7f0">
+  <path d="M4 32 C4 10 22 2 35 2 C48 2 66 10 66 32 C58 36 46 34 35 36 C24 34 12 36 4 32 Z" opacity="0.85" />
+  <circle cx="24" cy="20" r="5" fill="none" stroke="#e6c9f5" stroke-width="2.2" />
+  <circle cx="46" cy="20" r="5" fill="none" stroke="#e6c9f5" stroke-width="2.2" />
+  <circle cx="30" cy="28" r="5" fill="none" stroke="#e6c9f5" stroke-width="2.2" />
+  <circle cx="40" cy="28" r="5" fill="none" stroke="#e6c9f5" stroke-width="2.2" />
+  <path d="M10 34 C6 50 14 66 10 88" fill="none" stroke="#b8c7f0" stroke-width="1.4" opacity="0.7" />
+  <path d="M20 34 C24 50 16 66 20 88" fill="none" stroke="#b8c7f0" stroke-width="1.4" opacity="0.7" />
+  <path d="M30 34 C26 50 34 66 30 88" fill="none" stroke="#b8c7f0" stroke-width="1.4" opacity="0.7" />
+  <path d="M40 34 C44 50 36 66 40 88" fill="none" stroke="#b8c7f0" stroke-width="1.4" opacity="0.7" />
+  <path d="M50 34 C46 50 54 66 50 88" fill="none" stroke="#b8c7f0" stroke-width="1.4" opacity="0.7" />
+  <path d="M60 34 C64 50 56 66 60 88" fill="none" stroke="#b8c7f0" stroke-width="1.4" opacity="0.7" />
+  <path d="M28 36 C26 52 32 60 30 74 M42 36 C44 52 38 60 40 74" fill="none" stroke="#e6c9f5" stroke-width="3" stroke-linecap="round" opacity="0.8" />
+</svg>

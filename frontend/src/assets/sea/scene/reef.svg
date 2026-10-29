@@ -1,0 +1,32 @@
+<!-- reef: stretched across the bottom of the screen; the .sea-grass group sways -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="170" viewBox="0 0 1440 170" preserveAspectRatio="xMidYMax slice">
+  <style>
+    .sea-grass { transform-origin: bottom; transform-box: fill-box; animation: grass 7s ease-in-out infinite alternate; }
+    @keyframes grass { from { transform: skewX(-4deg); } to { transform: skewX(4deg); } }
+    @media (prefers-reduced-motion: reduce) { .sea-grass { animation: none; } }
+  </style>
+  <g fill="#0a2738">
+    <path d="M0 170 L0 120 C40 104 90 100 140 112 C180 96 230 94 280 110 C330 100 380 104 420 120 L460 170 Z" />
+    <path d="M980 170 L1000 128 C1040 108 1100 104 1150 118 C1190 100 1250 98 1300 112 C1350 104 1400 110 1440 122 L1440 170 Z" />
+  </g>
+  <g fill="#0d3045">
+    <ellipse cx="560" cy="160" rx="90" ry="26" />
+    <ellipse cx="700" cy="164" rx="60" ry="18" />
+    <ellipse cx="860" cy="158" rx="110" ry="30" />
+    <ellipse cx="1220" cy="160" rx="70" ry="20" />
+  </g>
+  <g fill="none" stroke="#124158" stroke-width="6" stroke-linecap="round">
+    <path d="M180 112 L180 70 M180 92 L156 66 M180 84 L204 58 M156 66 L148 50 M204 58 L214 44" />
+    <path d="M1120 118 L1120 76 M1120 98 L1098 74 M1120 90 L1142 66 M1142 66 L1150 50" />
+  </g>
+  <g fill="#103a50">
+    <path d="M330 110 C300 80 300 50 330 36 C360 50 360 80 330 110 Z" />
+    <path d="M1320 112 C1294 86 1296 60 1320 48 C1344 60 1346 86 1320 112 Z" />
+  </g>
+  <g class="sea-grass" fill="none" stroke="#0f3a4f" stroke-width="4" stroke-linecap="round">
+    <path d="M470 168 C460 140 478 120 466 96" />
+    <path d="M484 168 C478 146 494 128 488 108" />
+    <path d="M960 168 C950 142 968 122 956 100" />
+    <path d="M974 168 C970 150 984 134 980 116" />
+  </g>
+</svg>

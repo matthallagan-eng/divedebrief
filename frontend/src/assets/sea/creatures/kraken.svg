@@ -1,0 +1,16 @@
+<!-- kraken: faces right -->
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="120" viewBox="0 0 180 120" fill="#7a3a7a">
+  <path d="M90 2 C116 2 132 18 132 42 C132 60 120 70 104 72 L76 72 C60 70 48 60 48 42 C48 18 64 2 90 2 Z" />
+  <path d="M56 68 C33.599999999999994 88 0 84 -5.6000000000000085 104 C-11.200000000000003 116 -14 118 -20 108" fill="none" stroke="#7a3a7a" stroke-width="4.5" stroke-linecap="round" />
+  <path d="M65.5 68 C48.7 88 23.5 84 19.299999999999997 104 C15.100000000000001 116 9.5 118 3.5 108" fill="none" stroke="#7a3a7a" stroke-width="5.5" stroke-linecap="round" />
+  <path d="M75 68 C63.8 88 47 84 44.199999999999996 104 C41.4 116 33 118 27 108" fill="none" stroke="#7a3a7a" stroke-width="6.5" stroke-linecap="round" />
+  <path d="M84.5 68 C78.9 88 70.5 84 69.1 104 C67.7 116 56.5 118 50.5 108" fill="none" stroke="#7a3a7a" stroke-width="7.5" stroke-linecap="round" />
+  <path d="M94 68 C99.6 88 108 84 109.4 104 C110.8 116 122 118 128 108" fill="none" stroke="#7a3a7a" stroke-width="7.5" stroke-linecap="round" />
+  <path d="M103.5 68 C114.7 88 131.5 84 134.3 104 C137.1 116 145.5 118 151.5 108" fill="none" stroke="#7a3a7a" stroke-width="6.5" stroke-linecap="round" />
+  <path d="M113 68 C129.8 88 155 84 159.2 104 C163.4 116 169 118 175 108" fill="none" stroke="#7a3a7a" stroke-width="5.5" stroke-linecap="round" />
+  <path d="M122.5 68 C144.9 88 178.5 84 184.10000000000002 104 C189.7 116 192.5 118 198.5 108" fill="none" stroke="#7a3a7a" stroke-width="4.5" stroke-linecap="round" />
+  <path d="M72 32 C76 26 84 28 84 34 M96 34 C96 28 104 26 108 32" fill="none" stroke="#e07ae0" stroke-width="3" stroke-linecap="round" />
+  <circle cx="78" cy="36" r="4" fill="#e07ae0" />
+  <circle cx="102" cy="36" r="4" fill="#e07ae0" />
+  <path d="M60 14 C70 6 80 4 90 4 M120 14 C112 8 104 6 96 6" fill="none" stroke="#e07ae0" stroke-width="2" opacity="0.5" />
+</svg>

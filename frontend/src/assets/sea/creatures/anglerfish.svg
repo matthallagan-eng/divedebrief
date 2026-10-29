@@ -1,0 +1,15 @@
+<!-- anglerfish: faces right -->
+<svg xmlns="http://www.w3.org/2000/svg" width="110" height="80" viewBox="0 0 110 80" fill="#3a4452">
+  <path d="M18 44 L2 32 L6 44 L2 56 Z" />
+  <path d="M14 44 C16 22 40 14 62 16 C86 18 100 30 104 44 C100 60 86 72 62 72 C40 72 16 64 14 44 Z" />
+  <path d="M70 18 C76 4 92 0 100 6" fill="none" stroke="#3a4452" stroke-width="2" />
+  <circle cx="100" cy="9" r="7" fill="#ffe27a" opacity="0.35" />
+  <circle cx="100" cy="9" r="3.4" fill="#ffe27a" />
+  <path d="M72 54 C84 58 96 56 104 48 C96 64 82 66 72 60 Z" fill="#030d15" opacity="0.8" />
+  <path d="M78 55 l2 6 l2 -6.5" fill="#f6efe6" />
+  <path d="M84 54 l2 6 l2 -6.5" fill="#f6efe6" />
+  <path d="M90 53 l2 6 l2 -6.5" fill="#f6efe6" />
+  <path d="M96 52 l2 6 l2 -6.5" fill="#f6efe6" />
+  <circle cx="84" cy="34" r="5" fill="#f6efe6" opacity="0.15" />
+  <circle cx="84" cy="34" r="2.8" fill="#030d15" />
+</svg>

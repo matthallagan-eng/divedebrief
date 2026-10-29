@@ -1,0 +1,9 @@
+<!-- stingray: faces right -->
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="70" viewBox="0 0 120 70" fill="#8a8f99">
+  <path d="M60 4 C80 6 100 24 114 34 C100 44 80 62 60 64 C40 62 24 50 22 34 C24 18 40 6 60 4 Z" />
+  <path d="M24 34 C14 34 8 34 2 34" stroke="#8a8f99" stroke-width="2.4" stroke-linecap="round" />
+  <path d="M8 34 L14 30 L14 38 Z" fill="#c8ccd2" />
+  <path d="M36 34 C50 26 74 26 96 34" fill="none" stroke="#c8ccd2" stroke-width="1.6" opacity="0.6" />
+  <circle cx="88" cy="28" r="2" fill="#030d15" />
+  <circle cx="88" cy="40" r="2" fill="#030d15" />
+</svg>

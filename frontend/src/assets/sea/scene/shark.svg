@@ -1,0 +1,8 @@
+<!-- shark: background silhouette, faces right -->
+<svg xmlns="http://www.w3.org/2000/svg" width="140" height="48" viewBox="0 0 140 48" fill="#9cc3cc">
+  <path d="M22 24 L2 4 L10 24 L4 42 Z" />
+  <path d="M14 24 C34 14 74 10 106 14 C122 16 134 20 140 25 C132 29 120 31 104 31 C80 33 40 33 14 26 Z" />
+  <path d="M64 13 L78 0 L84 13 Z" />
+  <path d="M86 30 L74 46 L98 31 Z" />
+  <path d="M40 30 L36 38 L48 31 Z" />
+</svg>

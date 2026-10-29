@@ -1,0 +1,9 @@
+<!-- largemouth_bass: faces right -->
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="50" viewBox="0 0 120 50" fill="#7f9a3e">
+  <path d="M22 25 L4 10 Q10 25 4 40 Z" />
+  <path d="M18 25 C28 8 62 4 94 8 C108 10 116 16 118 22 C116 32 104 42 84 44 C56 48 28 42 18 25 Z" />
+  <path d="M40 8 L48 0 L56 7 Z M60 7 L70 2 L78 7 Z" />
+  <path d="M20 26 C40 30 70 30 104 24" fill="none" stroke="#2e3d1f" stroke-width="4" stroke-dasharray="7 3" />
+  <path d="M104 28 L120 26 L112 34 Z" fill="#030d15" opacity="0.5" />
+  <circle cx="104" cy="18" r="2.4" fill="#030d15" />
+</svg>

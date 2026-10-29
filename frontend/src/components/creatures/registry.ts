@@ -1,83 +1,85 @@
-import type { ComponentType } from "react";
 import type { Tier } from "../../api/types";
-import * as Art from "./art";
+import { CREATURE_DRAWINGS, type Drawing } from "./drawings";
 
 // swim: crosses the screen; floor: walks or sits on the reef; drift: rises slowly
 export type Zone = "swim" | "floor" | "drift";
 
 export interface CreatureArt {
-  Art: ComponentType;
-  aspect: number; // width / height of the drawing
+  drawing: Drawing; // assets/sea/creatures/<key>.svg
   zone: Zone;
   width: number; // px in the background scene
-  color: string;
-  accent: string;
+  glow: string; // halo colour for epic and legendary creatures
 }
 
-const c = (Art: ComponentType, aspect: number, zone: Zone, width: number, color: string, accent: string): CreatureArt => ({
-  Art, aspect, zone, width, color, accent,
-});
+const c = (zone: Zone, width: number, glow: string) => ({ zone, width, glow });
 
 // Keyed like app/achievements.py
-export const CREATURE_ART: Record<string, CreatureArt> = {
-  clownfish: c(Art.Clownfish, 100 / 56, "swim", 40, "#f28c38", "#f6efe6"),
-  sergeant_major: c(Art.SergeantMajor, 120 / 60, "swim", 70, "#f2d14b", "#1d2b33"),
-  hermit_crab: c(Art.HermitCrab, 90 / 60, "floor", 46, "#d9643a", "#e8c9a0"),
-  starfish: c(Art.Starfish, 1, "floor", 34, "#f07b5a", "#f8c2a8"),
-  blue_tang: c(Art.BlueTang, 100 / 60, "swim", 46, "#2f6fd6", "#f2c230"),
-  butterflyfish: c(Art.Butterflyfish, 80 / 70, "swim", 38, "#f5d547", "#1d2b33"),
-  cleaner_shrimp: c(Art.CleanerShrimp, 2, "floor", 44, "#e85b4a", "#f6efe6"),
-  pufferfish: c(Art.Pufferfish, 84 / 70, "swim", 44, "#d8b56a", "#6b5b3a"),
-  moon_jellyfish: c(Art.MoonJellyfish, 70 / 90, "drift", 44, "#b8c7f0", "#e6c9f5"),
-  bluegill: c(Art.Bluegill, 100 / 64, "swim", 44, "#7f9f5a", "#1d3550"),
-  sea_urchin: c(Art.SeaUrchin, 70 / 56, "floor", 34, "#7a55b8", "#c4a8f0"),
-  scuba_diver: c(Art.ScubaDiver, 130 / 60, "swim", 120, "#9fb4c7", "#f2c230"),
-  seahorse: c(Art.Seahorse, 50 / 90, "drift", 26, "#f2a33a", "#f7d08a"),
-  octopus: c(Art.Octopus, 90 / 70, "swim", 60, "#d4574a", "#f0a090"),
-  green_turtle: c(Art.GreenTurtle, 110 / 64, "swim", 90, "#6fae7e", "#a8784a"),
-  parrotfish: c(Art.Parrotfish, 110 / 56, "swim", 56, "#3fb6a8", "#e86fa8"),
-  moray_eel: c(Art.MorayEel, 140 / 50, "floor", 90, "#7a9a42", "#d6e07a"),
-  cuttlefish: c(Art.Cuttlefish, 110 / 50, "swim", 60, "#c9a27a", "#f2dcc0"),
-  nudibranch: c(Art.Nudibranch, 90 / 40, "floor", 36, "#9b59d0", "#f5a623"),
-  stingray: c(Art.Stingray, 120 / 70, "floor", 80, "#8a8f99", "#c8ccd2"),
-  barracuda: c(Art.Barracuda, 150 / 36, "swim", 100, "#a8b8c4", "#4d5d6a"),
-  goliath_grouper: c(Art.GoliathGrouper, 130 / 70, "swim", 110, "#8a7a5a", "#5a4a32"),
-  cleaner_wrasse: c(Art.CleanerWrasse, 100 / 30, "swim", 36, "#4aa3f0", "#14202e"),
-  largemouth_bass: c(Art.LargemouthBass, 120 / 50, "swim", 62, "#7f9a3e", "#2e3d1f"),
-  crayfish: c(Art.Crayfish, 110 / 50, "floor", 46, "#c0533a", "#e89a7a"),
-  lionfish: c(Art.Lionfish, 110 / 80, "swim", 64, "#d0603f", "#f6efe6"),
-  manta_ray: c(Art.MantaRay, 2, "swim", 180, "#3a4c60", "#e6eef5"),
-  eagle_ray: c(Art.EagleRay, 140 / 80, "swim", 130, "#3d5570", "#f2f5f8"),
-  blacktip_shark: c(Art.BlacktipShark, 140 / 50, "swim", 150, "#8a99a6", "#141c22"),
-  dolphins: c(Art.Dolphins, 170 / 70, "swim", 200, "#8fa6b8", "#d6e2ea"),
-  sea_lion: c(Art.SeaLion, 130 / 56, "swim", 120, "#9a7a56", "#d8c0a0"),
-  frogfish: c(Art.Frogfish, 80 / 70, "floor", 44, "#e0a33a", "#a8641e"),
-  mandarinfish: c(Art.Mandarinfish, 90 / 50, "swim", 40, "#2a8fd8", "#f28c38"),
-  leafy_seadragon: c(Art.LeafySeadragon, 130 / 70, "drift", 90, "#c9a94a", "#8fb35a"),
-  spanish_dancer: c(Art.SpanishDancer, 110 / 60, "swim", 70, "#e0453a", "#f6d6d0"),
-  napoleon_wrasse: c(Art.NapoleonWrasse, 140 / 76, "swim", 130, "#3b9f96", "#1f5f9a"),
-  batfish: c(Art.Batfish, 140 / 80, "swim", 110, "#c9c9b8", "#3a3a33"),
-  garden_eels: c(Art.GardenEels, 120 / 70, "floor", 90, "#d9d3b8", "#4a4a40"),
-  ocean_sunfish: c(Art.OceanSunfish, 100 / 110, "swim", 110, "#b9c3cc", "#8b97a3"),
-  whale_shark: c(Art.WhaleShark, 220 / 70, "swim", 340, "#3e566e", "#e6eef5"),
-  hammerheads: c(Art.Hammerheads, 190 / 80, "swim", 260, "#7f8f9c", "#b8c4cd"),
-  orcas: c(Art.Orcas, 200 / 80, "swim", 300, "#2a333c", "#f2f5f8"),
-  great_white: c(Art.GreatWhite, 200 / 70, "swim", 300, "#7b8a96", "#e8ecef"),
-  sea_otter: c(Art.SeaOtter, 140 / 64, "swim", 120, "#7a5638", "#c9a882"),
-  narwhal: c(Art.Narwhal, 220 / 60, "swim", 280, "#9aa7b0", "#f2efe6"),
-  thresher_shark: c(Art.ThresherShark, 220 / 70, "swim", 300, "#6f7f9a", "#a9b6c9"),
-  leatherback: c(Art.Leatherback, 150 / 80, "swim", 160, "#3e464f", "#9aa6b2"),
-  plankton: c(Art.Plankton, 120 / 80, "drift", 160, "#6fe0ff", "#d6fbff"),
-  research_sub: c(Art.ResearchSub, 170 / 70, "swim", 180, "#f2c230", "#2b3a47"),
-  blue_whale: c(Art.BlueWhale, 300 / 90, "swim", 520, "#5d7fa0", "#c2d4e4"),
-  giant_octopus: c(Art.GiantOctopus, 160 / 110, "swim", 200, "#b4442f", "#f0a080"),
-  oarfish: c(Art.Oarfish, 300 / 60, "swim", 420, "#c7d2db", "#e5473a"),
-  anglerfish: c(Art.Anglerfish, 110 / 80, "swim", 110, "#3a4452", "#ffe27a"),
-  coelacanth: c(Art.Coelacanth, 170 / 70, "swim", 170, "#3d5a80", "#f2f5f8"),
-  submersible: c(Art.Submersible, 140 / 90, "swim", 150, "#e8ecef", "#f28c38"),
-  golden_manta: c(Art.GoldenManta, 2, "swim", 200, "#f2c230", "#fff4c2"),
-  kraken: c(Art.Kraken, 180 / 120, "swim", 260, "#7a3a7a", "#e07ae0"),
+const CREATURES: Record<string, Omit<CreatureArt, "drawing">> = {
+  clownfish: c("swim", 40, "#f6efe6"),
+  sergeant_major: c("swim", 70, "#1d2b33"),
+  hermit_crab: c("floor", 46, "#e8c9a0"),
+  starfish: c("floor", 34, "#f8c2a8"),
+  blue_tang: c("swim", 46, "#f2c230"),
+  butterflyfish: c("swim", 38, "#1d2b33"),
+  cleaner_shrimp: c("floor", 44, "#f6efe6"),
+  pufferfish: c("swim", 44, "#6b5b3a"),
+  moon_jellyfish: c("drift", 44, "#e6c9f5"),
+  bluegill: c("swim", 44, "#1d3550"),
+  sea_urchin: c("floor", 34, "#c4a8f0"),
+  scuba_diver: c("swim", 120, "#f2c230"),
+  seahorse: c("drift", 26, "#f7d08a"),
+  octopus: c("swim", 60, "#f0a090"),
+  green_turtle: c("swim", 90, "#a8784a"),
+  parrotfish: c("swim", 56, "#e86fa8"),
+  moray_eel: c("floor", 90, "#d6e07a"),
+  cuttlefish: c("swim", 60, "#f2dcc0"),
+  nudibranch: c("floor", 36, "#f5a623"),
+  stingray: c("floor", 80, "#c8ccd2"),
+  barracuda: c("swim", 100, "#4d5d6a"),
+  goliath_grouper: c("swim", 110, "#5a4a32"),
+  cleaner_wrasse: c("swim", 36, "#14202e"),
+  largemouth_bass: c("swim", 62, "#2e3d1f"),
+  crayfish: c("floor", 46, "#e89a7a"),
+  lionfish: c("swim", 64, "#f6efe6"),
+  manta_ray: c("swim", 180, "#e6eef5"),
+  eagle_ray: c("swim", 130, "#f2f5f8"),
+  blacktip_shark: c("swim", 150, "#141c22"),
+  dolphins: c("swim", 200, "#d6e2ea"),
+  sea_lion: c("swim", 120, "#d8c0a0"),
+  frogfish: c("floor", 44, "#a8641e"),
+  mandarinfish: c("swim", 40, "#f28c38"),
+  leafy_seadragon: c("drift", 90, "#8fb35a"),
+  spanish_dancer: c("swim", 70, "#f6d6d0"),
+  napoleon_wrasse: c("swim", 130, "#1f5f9a"),
+  batfish: c("swim", 110, "#3a3a33"),
+  garden_eels: c("floor", 90, "#4a4a40"),
+  ocean_sunfish: c("swim", 110, "#8b97a3"),
+  whale_shark: c("swim", 340, "#e6eef5"),
+  hammerheads: c("swim", 260, "#b8c4cd"),
+  orcas: c("swim", 300, "#f2f5f8"),
+  great_white: c("swim", 300, "#e8ecef"),
+  sea_otter: c("swim", 120, "#c9a882"),
+  narwhal: c("swim", 280, "#f2efe6"),
+  thresher_shark: c("swim", 300, "#a9b6c9"),
+  leatherback: c("swim", 160, "#9aa6b2"),
+  plankton: c("drift", 160, "#d6fbff"),
+  research_sub: c("swim", 180, "#2b3a47"),
+  blue_whale: c("swim", 520, "#c2d4e4"),
+  giant_octopus: c("swim", 200, "#f0a080"),
+  oarfish: c("swim", 420, "#e5473a"),
+  anglerfish: c("swim", 110, "#ffe27a"),
+  coelacanth: c("swim", 170, "#f2f5f8"),
+  submersible: c("swim", 150, "#f28c38"),
+  golden_manta: c("swim", 200, "#fff4c2"),
+  kraken: c("swim", 260, "#e07ae0"),
 };
+
+// A creature whose .svg file is missing is left out rather than breaking the page
+export const CREATURE_ART: Record<string, CreatureArt> = Object.fromEntries(
+  Object.entries(CREATURES).flatMap(([key, art]) =>
+    CREATURE_DRAWINGS[key] ? [[key, { ...art, drawing: CREATURE_DRAWINGS[key] }]] : [],
+  ),
+);
 
 // How often each tier gets a turn in the background: the rarer, the rarer
 export const TIER_WEIGHT: Record<Tier, number> = { common: 10, uncommon: 6, rare: 3, epic: 1.5, legendary: 0.7 };

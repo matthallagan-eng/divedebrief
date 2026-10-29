@@ -1,0 +1,20 @@
+<!-- parrotfish: faces right -->
+<svg xmlns="http://www.w3.org/2000/svg" width="110" height="56" viewBox="0 0 110 56" fill="#3fb6a8">
+  <path d="M22 28 L4 10 Q12 28 4 46 Z" />
+  <path d="M18 28 C28 8 64 4 88 14 C98 18 104 24 106 30 C102 38 92 46 70 50 C46 54 26 46 18 28 Z" />
+  <path d="M34 18 q5 -5 10 0" fill="none" stroke="#e86fa8" stroke-width="1.8" />
+  <path d="M34 30 q5 -5 10 0" fill="none" stroke="#e86fa8" stroke-width="1.8" />
+  <path d="M34 42 q5 -5 10 0" fill="none" stroke="#e86fa8" stroke-width="1.8" />
+  <path d="M46 18 q5 -5 10 0" fill="none" stroke="#e86fa8" stroke-width="1.8" />
+  <path d="M46 30 q5 -5 10 0" fill="none" stroke="#e86fa8" stroke-width="1.8" />
+  <path d="M46 42 q5 -5 10 0" fill="none" stroke="#e86fa8" stroke-width="1.8" />
+  <path d="M58 18 q5 -5 10 0" fill="none" stroke="#e86fa8" stroke-width="1.8" />
+  <path d="M58 30 q5 -5 10 0" fill="none" stroke="#e86fa8" stroke-width="1.8" />
+  <path d="M58 42 q5 -5 10 0" fill="none" stroke="#e86fa8" stroke-width="1.8" />
+  <path d="M70 18 q5 -5 10 0" fill="none" stroke="#e86fa8" stroke-width="1.8" />
+  <path d="M70 30 q5 -5 10 0" fill="none" stroke="#e86fa8" stroke-width="1.8" />
+  <path d="M70 42 q5 -5 10 0" fill="none" stroke="#e86fa8" stroke-width="1.8" />
+  <path d="M98 24 L108 28 L100 34 Z" fill="#e86fa8" />
+  <path d="M40 46 Q56 58 64 48 Z" />
+  <circle cx="92" cy="22" r="2.4" fill="#030d15" />
+</svg>
