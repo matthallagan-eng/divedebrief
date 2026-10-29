@@ -97,6 +97,9 @@ class Dive(Base):
     gear: Mapped["DiveGear | None"] = relationship(
         back_populates="dive", cascade="all, delete-orphan", passive_deletes=True
     )
+    photos: Mapped[list["DivePhoto"]] = relationship(
+        back_populates="dive", cascade="all, delete-orphan", passive_deletes=True, order_by="DivePhoto.id"
+    )
 
 
 class Site(Base):
@@ -260,3 +263,17 @@ class CertCard(Base):
     front_file: Mapped[str | None] = mapped_column(String(80), nullable=True)
     back_file: Mapped[str | None] = mapped_column(String(80), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+
+class DivePhoto(Base):
+    """A photo from a dive. The image is a private file (app.files), named here."""
+
+    __tablename__ = "dive_photos"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    dive_id: Mapped[int] = mapped_column(ForeignKey("dives.id", ondelete="CASCADE"), index=True)
+    file: Mapped[str] = mapped_column(String(80))
+    caption: Mapped[str] = mapped_column(String(200), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+    dive: Mapped["Dive"] = relationship(back_populates="photos")

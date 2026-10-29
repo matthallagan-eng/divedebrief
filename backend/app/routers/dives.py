@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
+from .. import files
 from ..analysis.thermocline import find_thermocline
 from ..database import get_db
 from ..deps import get_current_user
@@ -12,6 +13,7 @@ from ..dive_day import DayPlace, day_bounds, place_in_day
 from ..models import Dive, DiveGear, DiveNotes, DiveTank, User
 from ..achievements import BY_KEY, compute_achievements
 from .achievements import load_facts
+from .photos import KIND as PHOTOS_KIND, photo_files
 from ..schemas import (
     DiveDetail, DiveSummary, GearHistoryRow, GearIn, GearOut, NotesIn, NotesOut, NoteTags, ProfilePoint,
     SampleOut, SiteRef, SkillScoreDetail, TankIn, TankOut, ThermoclineOut,
@@ -204,8 +206,11 @@ def get_dive(dive_id: int, db: Session = Depends(get_db), user: User = Depends(g
 
 @router.delete("/{dive_id}", status_code=204)
 def delete_dive(dive_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    db.delete(_own_dive(db, dive_id, user))
+    dive = _own_dive(db, dive_id, user)
+    names = photo_files(db, [dive.id])
+    db.delete(dive)
     db.commit()
+    files.remove(PHOTOS_KIND, user.id, *names)
 
 
 @router.put("/{dive_id}/tank", response_model=TankOut)

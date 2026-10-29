@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy import delete, insert, select
 from sqlalchemy.orm import Session
 
+from .. import files
 from ..analysis.stats import fingerprint, summarize
 from ..config import settings
 from ..database import get_db
@@ -15,6 +16,7 @@ from ..parsing.uddf import parse_uddf
 from ..schemas import UploadOut, UploadResult
 from ..scoring.store import ensure_scores
 from ..sites import assign_sites
+from .photos import KIND as PHOTOS_KIND, photo_files
 
 router = APIRouter(prefix="/uploads", tags=["uploads"])
 
@@ -184,5 +186,7 @@ def delete_upload(
     upload = db.scalar(select(Upload).where(Upload.id == upload_id, Upload.user_id == user.id))
     if upload is None:
         raise HTTPException(404, "Upload not found")
+    names = photo_files(db, list(db.scalars(select(Dive.id).where(Dive.upload_id == upload.id))))
     db.delete(upload)
     db.commit()
+    files.remove(PHOTOS_KIND, user.id, *names)

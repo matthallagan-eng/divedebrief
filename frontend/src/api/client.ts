@@ -79,6 +79,14 @@ export const api = {
     return handle<T>(res);
   },
 
+  async postFile<T>(path: string, file: File, fields: Record<string, string> = {}): Promise<T> {
+    const form = new FormData();
+    form.append("file", file);
+    for (const [k, v] of Object.entries(fields)) form.append(k, v);
+    const res = await fetch(`${BASE}${path}`, { method: "POST", headers: authHeaders(), body: form });
+    return handle<T>(res);
+  },
+
   /** A private file, such as a card photo, which an <img> can't fetch with the sign-in token. */
   async blob(path: string): Promise<Blob> {
     const res = await fetch(`${BASE}${path}`, { headers: authHeaders() });

@@ -436,3 +436,21 @@ class CardOut(BaseModel):
     front: str | None  # media type of the front photo, if there is one
     back: str | None
     created_at: datetime
+
+
+class PhotoIn(BaseModel):
+    caption: str = Field("", max_length=200)
+
+    @field_validator("caption")
+    @classmethod
+    def _strip(cls, v: str) -> str:
+        return v.strip()
+
+
+class PhotoOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    dive_id: int
+    caption: str
+    created_at: datetime

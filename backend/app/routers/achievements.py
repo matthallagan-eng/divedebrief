@@ -10,7 +10,7 @@ from ..database import get_db
 from ..debrief import ScoreView, build_debrief
 from ..deps import get_current_user
 from ..dive_day import place_in_day
-from ..models import AchievementSeen, CertCard, Dive, Sample, User
+from ..models import AchievementSeen, CertCard, Dive, DivePhoto, Sample, User
 from ..schemas import AchievementOut, Achievements, SeenIn
 from ..scoring import Profile, ScoringSettings, overall_score
 from ..scoring.difficulty import GRADING
@@ -52,6 +52,7 @@ def load_facts(db: Session, user: User) -> tuple[list[DiveFacts], ScoringSetting
     ):
         samples[row.dive_id].append(row)
     days = place_in_day(dives)
+    with_photos = set(db.scalars(select(DivePhoto.dive_id).join(Dive).where(Dive.user_id == user.id)))
 
     facts, previous_focus = [], None
     for d in dives:
@@ -89,6 +90,7 @@ def load_facts(db: Session, user: User) -> tuple[list[DiveFacts], ScoringSetting
             repeat=days[d.id].dive_of_day > 1,
             night=is_night(d.started_at, d.latitude, d.longitude),
             solid_stop=_solid_stop(d, cfg),
+            has_photo=d.id in with_photos,
         ))
     return facts, cfg
 

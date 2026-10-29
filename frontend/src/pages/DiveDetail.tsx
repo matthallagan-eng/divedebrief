@@ -10,6 +10,7 @@ import { GearForm } from "../components/GearForm";
 import { Scorecard } from "../components/Scorecard";
 import { StatCard } from "../components/StatCard";
 import { Tabs } from "../components/Tabs";
+import { DivePhotos } from "../components/DivePhotos";
 import { TankForm } from "../components/TankForm";
 import { SHORT_INTERVAL_S, formatDate, formatDuration, formatHours, formatTime } from "../lib/format";
 import { useFormat } from "../lib/units";
@@ -171,6 +172,7 @@ export default function DiveDetail() {
             onSaved={load}
           />
         )}
+        {tab === "photos" && <DivePhotos key={dive.id} diveId={dive.id} />}
         {tab === "gear" && (
           <div className="space-y-6">
             <GearForm key={`${dive.id}-${dive.gear?.updated_at}`} diveId={dive.id} gear={dive.gear} onSaved={load} />
@@ -183,13 +185,14 @@ export default function DiveDetail() {
   );
 }
 
-type TabKey = "debrief" | "profile" | "notes" | "gear" | "data";
+type TabKey = "debrief" | "profile" | "notes" | "photos" | "gear" | "data";
 
 // Summary on top and details in tabs, as Subsurface, Garmin and MacDive lay out a dive
 const TABS: { key: TabKey; label: string }[] = [
   { key: "debrief", label: "Debrief" },
   { key: "profile", label: "Profile" },
   { key: "notes", label: "Notes" },
+  { key: "photos", label: "Photos" },
   { key: "gear", label: "Gear" },
   { key: "data", label: "Data" },
 ];

@@ -6,6 +6,7 @@ import { api } from "../api/client";
 import type { CardInput, CardLevel, CardSide, CertCard } from "../api/types";
 import { useAchievements } from "../context/AchievementsContext";
 import { formatDate } from "../lib/format";
+import { usePrivateFile } from "../lib/privateFile";
 
 // Mirrors backend/app/certs.py. Agencies name courses differently, so each
 // level says what it covers.
@@ -156,27 +157,9 @@ function CardTile({ card, version, onEdit, onDelete }: { card: CertCard; version
   );
 }
 
-/** A card photo. It's private, so it's fetched with the sign-in token and shown from memory. */
+/** A card photo, or a link to the PDF. */
 function Photo({ cardId, side, media }: { cardId: number; side: CardSide; media: string }) {
-  const [url, setUrl] = useState<string | null>(null);
-  const [failed, setFailed] = useState(false);
-  useEffect(() => {
-    let live = true;
-    let made: string | null = null;
-    api
-      .blob(`/cards/${cardId}/${side}`)
-      .then((b) => {
-        made = URL.createObjectURL(b);
-        if (live) setUrl(made);
-        else URL.revokeObjectURL(made);
-      })
-      .catch(() => live && setFailed(true));
-    return () => {
-      live = false;
-      if (made) URL.revokeObjectURL(made);
-    };
-  }, [cardId, side]);
-
+  const { url, failed } = usePrivateFile(`/cards/${cardId}/${side}`);
   if (failed) return <p className="flex h-full items-center justify-center text-xs text-murk">Couldn't load the photo</p>;
   if (!url) return null;
   if (media === "application/pdf") {

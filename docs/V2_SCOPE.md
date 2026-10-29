@@ -164,8 +164,8 @@ recomputed when a diver changes a setting or the algorithm changes.
 - A reveal pops up when one is earned (the silhouette swims in and lights
   up); the first time, everything already earned is revealed together. The
   "My Ocean" page shows the collection, locked ones as silhouettes.
-- Six come from certification cards (2f); one needs dive photos and shows
-  "Coming with dive photos". Nothing rewards diving deeper than the diver's training.
+- Six come from certification cards (2f) and the lionfish from dive photos
+  (2g). Nothing rewards diving deeper than the diver's training.
 - Replaces milestones (2026-10-27), which overlapped: the Milestones tab and
   `/milestones` are gone, and a dive's debrief names the creatures it
   unlocked. "My Ocean" is its own page, in the menu after "Log dives".
@@ -189,6 +189,15 @@ recomputed when a diver changes a setting or the algorithm changes.
   (Rescue), submersible (Divemaster) and research sub (3 cards) when added.
   The hammerheads need a dive past 25 m made on or after the date of an
   Advanced or Deep card; an undated card is taken on trust.
+
+## 2g. Dive photos (added 2026-10-28)
+
+- A "Photos" tab on the dive page: add several at once (JPEG, PNG or WebP,
+  up to 10 MB each, 30 per dive), see them in a grid, and open one full size
+  to step through them and add a caption.
+- Stored as private files like card photos (`app.files`); deleting a photo,
+  a dive or an upload removes the files too.
+- The first photo unlocks the lionfish.
 
 ## 3. Direct FIT import
 
