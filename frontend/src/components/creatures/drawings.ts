@@ -19,10 +19,13 @@ function load(files: Record<string, string>): Record<string, Drawing> {
   );
 }
 
-const raw = { query: "?raw", import: "default", eager: true } as const;
-
 // The unlockable creatures, named like app/achievements.py (clownfish.svg). They face right.
-export const CREATURE_DRAWINGS = load(import.meta.glob<string>("../../assets/sea/creatures/*.svg", raw));
+// Vite reads these options only when they're written out in the call itself
+export const CREATURE_DRAWINGS = load(
+  import.meta.glob<string>("../../assets/sea/creatures/*.svg", { query: "?raw", import: "default", eager: true }),
+);
 
 // The background scene: fish, shark, whale, lobster, shipwreck, reef
-export const SCENE_DRAWINGS = load(import.meta.glob<string>("../../assets/sea/scene/*.svg", raw));
+export const SCENE_DRAWINGS = load(
+  import.meta.glob<string>("../../assets/sea/scene/*.svg", { query: "?raw", import: "default", eager: true }),
+);
