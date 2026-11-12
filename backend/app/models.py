@@ -1,6 +1,6 @@
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
-from sqlalchemy import String, DateTime, Float, ForeignKey, Integer, Text, UniqueConstraint
+from sqlalchemy import Date, String, DateTime, Float, ForeignKey, Integer, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -241,3 +241,22 @@ class DiveGear(Base):
     )
 
     dive: Mapped["Dive"] = relationship(back_populates="gear")
+
+
+class CertCard(Base):
+    """A certification card the diver has on file. The photos of it are
+    files under settings.upload_dir, named here."""
+
+    __tablename__ = "cert_cards"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    agency: Mapped[str] = mapped_column(String(40), default="")
+    level: Mapped[str] = mapped_column(String(16))  # a key of app.certs.LEVELS
+    # The course's own name, e.g. "Advanced Adventurer" or "Wreck Diver"
+    title: Mapped[str] = mapped_column(String(80), default="")
+    number: Mapped[str] = mapped_column(String(40), default="")
+    certified_on: Mapped[date | None] = mapped_column(Date, nullable=True)
+    front_file: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    back_file: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)

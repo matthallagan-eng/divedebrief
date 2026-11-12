@@ -4,12 +4,13 @@ from sqlalchemy.orm import Session, selectinload
 
 from ..achievements import BY_KEY, CREATURES, DiveFacts, compute_achievements
 from ..analysis.thermocline import find_thermocline
+from ..certs import CardFacts
 from ..config import settings
 from ..database import get_db
 from ..debrief import ScoreView, build_debrief
 from ..deps import get_current_user
 from ..dive_day import place_in_day
-from ..models import AchievementSeen, Dive, Sample, User
+from ..models import AchievementSeen, CertCard, Dive, Sample, User
 from ..schemas import AchievementOut, Achievements, SeenIn
 from ..scoring import Profile, ScoringSettings, overall_score
 from ..scoring.difficulty import GRADING
@@ -68,6 +69,7 @@ def load_facts(db: Session, user: User) -> tuple[list[DiveFacts], ScoringSetting
             id=d.id,
             started_at=d.started_at,
             duration_s=d.duration_s,
+            max_depth_m=d.max_depth_m,
             site_id=d.site_id,
             site_named=bool(d.site and d.site.name),
             overall=overall_score({s.skill: s.score for s in d.scores}, cfg),
@@ -94,7 +96,11 @@ def load_facts(db: Session, user: User) -> tuple[list[DiveFacts], ScoringSetting
 @router.get("", response_model=Achievements)
 def list_achievements(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     facts, cfg = load_facts(db, user)
-    progress = compute_achievements(facts, cfg.stop_target_s)
+    cards = [
+        CardFacts(c.level, c.certified_on, c.created_at)
+        for c in db.scalars(select(CertCard).where(CertCard.user_id == user.id))
+    ]
+    progress = compute_achievements(facts, cfg.stop_target_s, cards)
     seen = set(db.scalars(select(AchievementSeen.key).where(AchievementSeen.user_id == user.id)))
     out = []
     for c in CREATURES:

@@ -27,6 +27,9 @@ services:
       ACHIEVEMENT_TEST_MODE: "true"
     ports:
       - "8000:8000"
+    volumes:
+      # Certification card photos
+      - uploads:/app/data/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -46,3 +49,4 @@ services:
 
 volumes:
   pgdata:
+  uploads:

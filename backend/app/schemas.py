@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from typing import Literal
 
@@ -393,3 +393,46 @@ class SettingsOut(BaseModel):
     version: int
     # What each difficulty costs, for the settings and how-scores-work pages
     grading: dict[str, Grading]
+
+
+CardLevel = Literal["open_water", "advanced", "rescue", "divemaster", "instructor", "deep", "nitrox", "other"]
+
+
+class CardIn(BaseModel):
+    agency: str = Field("", max_length=40)
+    level: CardLevel
+    title: str = Field("", max_length=80)  # the course's own name; needed for "other"
+    number: str = Field("", max_length=40)
+    certified_on: date | None = None
+
+    @field_validator("agency", "title", "number")
+    @classmethod
+    def _strip(cls, v: str) -> str:
+        return v.strip()
+
+    @field_validator("certified_on")
+    @classmethod
+    def _past(cls, v: date | None) -> date | None:
+        # A day of slack for time zones
+        if v is not None and v > date.fromordinal(date.today().toordinal() + 1):
+            raise ValueError("The certification date can't be in the future")
+        return v
+
+    @model_validator(mode="after")
+    def _named(self):
+        if self.level == "other" and not self.title:
+            raise ValueError("Give the course a name")
+        return self
+
+
+class CardOut(BaseModel):
+    id: int
+    agency: str
+    level: CardLevel
+    level_label: str
+    title: str
+    number: str
+    certified_on: date | None
+    front: str | None  # media type of the front photo, if there is one
+    back: str | None
+    created_at: datetime

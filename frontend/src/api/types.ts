@@ -328,3 +328,22 @@ export interface Achievements {
   first_reveal: boolean; // nothing seen yet: reveal everything earned together
   test_mode: boolean; // TEMPORARY
 }
+
+export type CardLevel = "open_water" | "advanced" | "rescue" | "divemaster" | "instructor" | "deep" | "nitrox" | "other";
+export type CardSide = "front" | "back";
+
+export interface CardInput {
+  agency: string;
+  level: CardLevel;
+  title: string; // the course's own name; needed for "other"
+  number: string;
+  certified_on: string | null; // YYYY-MM-DD
+}
+
+export interface CertCard extends CardInput {
+  id: number;
+  level_label: string;
+  front: string | null; // media type of the photo, if there is one
+  back: string | null;
+  created_at: string;
+}

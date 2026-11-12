@@ -17,6 +17,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl \
 COPY --from=builder /root/.local /home/appuser/.local
 COPY --chown=appuser:appuser . .
 
+# Card photos (settings.upload_dir); docker-compose mounts a volume here
+RUN mkdir -p /app/data/uploads && chown -R appuser:appuser /app/data
+
 USER appuser
 
 ENV PATH=/home/appuser/.local/bin:$PATH \

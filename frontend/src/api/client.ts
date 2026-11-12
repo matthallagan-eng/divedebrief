@@ -72,6 +72,20 @@ export const api = {
     return handle<UploadResult>(res);
   },
 
+  async putFile<T>(path: string, file: File): Promise<T> {
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch(`${BASE}${path}`, { method: "PUT", headers: authHeaders(), body: form });
+    return handle<T>(res);
+  },
+
+  /** A private file, such as a card photo, which an <img> can't fetch with the sign-in token. */
+  async blob(path: string): Promise<Blob> {
+    const res = await fetch(`${BASE}${path}`, { headers: authHeaders() });
+    if (!res.ok) return handle<never>(res);
+    return res.blob();
+  },
+
   async put<T>(path: string, body: unknown): Promise<T> {
     const res = await fetch(`${BASE}${path}`, {
       method: "PUT",

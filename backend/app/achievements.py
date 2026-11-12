@@ -4,16 +4,18 @@ They're worked out from the diver's whole logbook on every
 read, oldest dive first, so they follow the current settings. Each is earned
 on the first dive that reaches it. The rarer the tier, the more it takes.
 
-Certification cards and dive photos don't exist yet; the creatures that need
-them are listed with coming_soon set and can't be earned until they do.
-Nothing here rewards going deeper than the diver is trained for.
+Some come from certification cards instead, earned when the card is added.
+Dive photos don't exist yet; the creature that needs them is listed with
+coming_soon set and can't be earned until they do. Nothing here rewards
+going deeper than the diver is trained for.
 """
 from dataclasses import dataclass, field
 from datetime import datetime
 
+from .certs import CardFacts
+
 TIERS = ("common", "uncommon", "rare", "epic", "legendary")
 KELVIN = 273.15
-CARDS = "certification cards"
 PHOTOS = "dive photos"
 
 
@@ -40,7 +42,7 @@ CREATURES: list[Creature] = [
     Creature("moon_jellyfish", "Moon jellyfish", "common", "Find a thermocline."),
     Creature("bluegill", "Bluegill", "common", "Dive in fresh water."),
     Creature("sea_urchin", "Sea urchin", "common", "Hold a safety stop for the full time."),
-    Creature("scuba_diver", "Scuba diver", "common", "Upload your Open Water card.", coming_soon=CARDS),
+    Creature("scuba_diver", "Scuba diver", "common", "Upload your Open Water card."),
     # Uncommon: building skills
     Creature("seahorse", "Seahorse", "uncommon", "5 clean ascents in a row."),
     Creature("octopus", "Octopus", "uncommon", "3 solid safety stops in a row."),
@@ -59,7 +61,7 @@ CREATURES: list[Creature] = [
     # Rare: a committed diver
     Creature("manta_ray", "Manta ray", "rare", "Log 25 dives."),
     Creature("eagle_ray", "Spotted eagle ray", "rare", "Spend 10 hours underwater."),
-    Creature("blacktip_shark", "Blacktip reef shark", "rare", "Upload your Advanced Open Water card.", coming_soon=CARDS),
+    Creature("blacktip_shark", "Blacktip reef shark", "rare", "Upload your Advanced Open Water card."),
     Creature("dolphins", "Bottlenose dolphins", "rare", "Make 10 dives with a buddy noted."),
     Creature("sea_lion", "California sea lion", "rare", "Dive 5 different sites."),
     Creature("frogfish", "Frogfish", "rare", "Note 25 different kinds of sea life."),
@@ -72,22 +74,22 @@ CREATURES: list[Creature] = [
     Creature("ocean_sunfish", "Ocean sunfish", "rare", "Dive in both salt and fresh water."),
     # Epic: a seasoned diver
     Creature("whale_shark", "Whale shark", "epic", "Log 50 dives."),
-    Creature("hammerheads", "Hammerhead school", "epic", "Dive past 25 m with an Advanced or Deep card on file.", coming_soon=CARDS),
+    Creature("hammerheads", "Hammerhead school", "epic", "Dive past 25 m with an Advanced or Deep card on file."),
     Creature("orcas", "Orca pod", "epic", "Spend 50 hours underwater."),
-    Creature("great_white", "Great white shark", "epic", "Upload your Rescue Diver card.", coming_soon=CARDS),
+    Creature("great_white", "Great white shark", "epic", "Upload your Rescue Diver card."),
     Creature("sea_otter", "Sea otter", "epic", "Dive 10 different sites."),
     Creature("narwhal", "Narwhal", "epic", "Dive in water of 4 °C (39 °F) or colder."),
     Creature("thresher_shark", "Thresher shark", "epic", "25 dives in a row with a safety stop."),
     Creature("leatherback", "Leatherback turtle", "epic", "Dive in all four seasons."),
     Creature("plankton", "Glowing plankton", "epic", "Make 5 night dives."),
-    Creature("research_sub", "Research submarine", "epic", "Upload 3 certification cards.", coming_soon=CARDS),
+    Creature("research_sub", "Research submarine", "epic", "Upload 3 certification cards."),
     # Legendary: years of diving
     Creature("blue_whale", "Blue whale", "legendary", "Log 100 dives."),
     Creature("giant_octopus", "Giant Pacific octopus", "legendary", "Spend 100 hours underwater."),
     Creature("oarfish", "Oarfish", "legendary", "Score a perfect 100 overall."),
     Creature("anglerfish", "Anglerfish", "legendary", "Make 25 night dives."),
     Creature("coelacanth", "Coelacanth", "legendary", "Log 250 dives."),
-    Creature("submersible", "Deep-sea submersible", "legendary", "Upload a Divemaster card, or higher.", coming_soon=CARDS),
+    Creature("submersible", "Deep-sea submersible", "legendary", "Upload a Divemaster card, or higher."),
     Creature("golden_manta", "Golden manta", "legendary", "Earn every Rare creature."),
     Creature("kraken", "The Kraken", "legendary", "Earn every other creature.", secret=True),
 ]
@@ -101,6 +103,7 @@ class DiveFacts:
     id: int
     started_at: datetime
     duration_s: float
+    max_depth_m: float
     site_id: int | None
     site_named: bool
     overall: int | None
@@ -140,8 +143,11 @@ def _season(d: DiveFacts) -> int:
     return (season + 2) % 4 if (d.latitude or 0) < 0 else season
 
 
-def compute_achievements(dives: list[DiveFacts], stop_target_s: int) -> dict[str, Progress]:
+def compute_achievements(
+    dives: list[DiveFacts], stop_target_s: int, cards: list[CardFacts] | None = None
+) -> dict[str, Progress]:
     dives = sorted(dives, key=lambda d: d.started_at)
+    cards = sorted(cards or [], key=lambda c: c.added_at)
     out: dict[str, Progress] = {}
 
     def running(key, target, value):
@@ -255,7 +261,31 @@ def compute_achievements(dives: list[DiveFacts], stop_target_s: int) -> dict[str
     running("anglerfish", 25, lambda d: 1 if d.night else 0)
     running("coelacanth", 250, lambda d: 1)
 
-    # Not earnable yet: they need cards or photos
+    # Cards: earned when the card is added, so they link to no dive.
+    # A higher card counts for the ones below it.
+    def card(key, test, target=1):
+        matching = [c for c in cards if test(c)]
+        if len(matching) >= target:
+            out[key] = Progress(None, matching[target - 1].added_at, target, target)
+        else:
+            out[key] = Progress(None, None, len(matching), target)
+
+    card("scuba_diver", lambda c: c.rank >= 1)
+    card("blacktip_shark", lambda c: c.rank >= 2)
+    card("great_white", lambda c: c.rank >= 3)
+    card("submersible", lambda c: c.rank >= 4)
+    card("research_sub", lambda c: True, 3)
+
+    # Past 25 m, only on a dive made once trained for it. An undated card is taken on trust.
+    def trained_deep(d):
+        return any(
+            (c.rank >= 2 or c.level == "deep") and (c.certified_on is None or c.certified_on <= d.started_at.date())
+            for c in cards
+        )
+
+    first("hammerheads", lambda d: d.max_depth_m > 25 and trained_deep(d))
+
+    # Not earnable yet: they need photos
     for c in CREATURES:
         if c.coming_soon:
             out[c.key] = Progress(None, None, 0, 1)

@@ -14,6 +14,7 @@ const nav = [
   { to: "/logbook", label: "Logbook" },
   { to: "/upload", label: "Log dives" },
   { to: "/ocean", label: "My Ocean" },
+  { to: "/cards", label: "Cards" },
   { to: "/settings", label: "Settings" },
 ];
 
@@ -43,8 +44,8 @@ export default function Layout({ children }: { children: ReactNode }) {
               </span>
               <span className="text-sm font-semibold tracking-tight">DiveDebrief</span>
             </NavLink>
-            {/* On phones the links take their own row under the logo and Sign out */}
-            <nav className="order-last flex w-full items-center justify-between gap-3 whitespace-nowrap sm:order-none sm:ml-auto sm:w-auto sm:justify-end sm:gap-5">
+            {/* On phones the links take their own row under the logo and Sign out, tightly spaced, wrapping on the narrowest */}
+            <nav className="order-last flex w-full flex-wrap items-center justify-between gap-x-1.5 gap-y-1 whitespace-nowrap sm:order-none sm:ml-auto sm:w-auto sm:justify-end sm:gap-5">
               {nav.map((item) => (
                 <NavLink
                   key={item.to}

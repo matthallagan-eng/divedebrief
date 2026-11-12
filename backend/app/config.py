@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     secret_key: str
     access_token_expire_minutes: int = 60 * 24 * 7
     max_upload_bytes: int = 10 * 1024 * 1024
+    # Certification card photos. In Docker this is a volume (docker-compose.yml).
+    upload_dir: str = "data/uploads"
     # Public OpenStreetMap services for site name suggestions (app.places).
     # Overpass servers are tried in order; they're often busy.
     overpass_urls: str = (
