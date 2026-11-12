@@ -3,7 +3,8 @@ from datetime import date, datetime, timedelta
 import pytest
 
 from app.achievements import compute_achievements
-from app.certs import CardFacts, sniff
+from app.certs import CardFacts
+from app.files import sniff
 from app.config import settings
 
 from conftest import sign_up

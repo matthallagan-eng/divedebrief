@@ -20,24 +20,6 @@ LEVELS: dict[str, tuple[str, int]] = {
     "other": ("Other", 0),
 }
 
-# Card images: what the file starts with -> (media type, file suffix)
-IMAGE_TYPES: list[tuple[bytes, str, str]] = [
-    (b"\xff\xd8\xff", "image/jpeg", ".jpg"),
-    (b"\x89PNG\r\n\x1a\n", "image/png", ".png"),
-    (b"%PDF", "application/pdf", ".pdf"),
-]
-
-
-def sniff(contents: bytes) -> tuple[str, str] | None:
-    """(media type, suffix) from the file's own bytes, not its name."""
-    if contents[:4] == b"RIFF" and contents[8:12] == b"WEBP":
-        return "image/webp", ".webp"
-    for magic, media, suffix in IMAGE_TYPES:
-        if contents.startswith(magic):
-            return media, suffix
-    return None
-
-
 @dataclass(frozen=True)
 class CardFacts:
     """What the achievements need to know about one card."""

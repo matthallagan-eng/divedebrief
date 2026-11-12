@@ -347,3 +347,10 @@ export interface CertCard extends CardInput {
   back: string | null;
   created_at: string;
 }
+
+export interface DivePhoto {
+  id: number;
+  dive_id: number;
+  caption: string;
+  created_at: string;
+}

@@ -5,9 +5,9 @@ read, oldest dive first, so they follow the current settings. Each is earned
 on the first dive that reaches it. The rarer the tier, the more it takes.
 
 Some come from certification cards instead, earned when the card is added.
-Dive photos don't exist yet; the creature that needs them is listed with
-coming_soon set and can't be earned until they do. Nothing here rewards
-going deeper than the diver is trained for.
+A creature whose feature doesn't exist yet can be listed with coming_soon
+set, and can't be earned until it does. Nothing here rewards going deeper
+than the diver is trained for.
 """
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -16,7 +16,6 @@ from .certs import CardFacts
 
 TIERS = ("common", "uncommon", "rare", "epic", "legendary")
 KELVIN = 273.15
-PHOTOS = "dive photos"
 
 
 @dataclass(frozen=True)
@@ -57,7 +56,7 @@ CREATURES: list[Creature] = [
     Creature("cleaner_wrasse", "Cleaner wrasse", "uncommon", "Meet a goal from your debrief."),
     Creature("largemouth_bass", "Largemouth bass", "uncommon", "Make 5 fresh-water dives."),
     Creature("crayfish", "Crayfish", "uncommon", "Dive in water of 10 °C (50 °F) or colder."),
-    Creature("lionfish", "Lionfish", "uncommon", "Add your first dive photo.", coming_soon=PHOTOS),
+    Creature("lionfish", "Lionfish", "uncommon", "Add your first dive photo."),
     # Rare: a committed diver
     Creature("manta_ray", "Manta ray", "rare", "Log 25 dives."),
     Creature("eagle_ray", "Spotted eagle ray", "rare", "Spend 10 hours underwater."),
@@ -123,6 +122,7 @@ class DiveFacts:
     repeat: bool = False  # not the day's first dive
     night: bool = False
     solid_stop: bool = False  # held the full time without drifting off (app.debrief)
+    has_photo: bool = False
 
 
 @dataclass(frozen=True)
@@ -233,6 +233,7 @@ def compute_achievements(
     first("cleaner_wrasse", lambda d: d.goal_met)
     running("largemouth_bass", 5, lambda d: 1 if fresh(d) else 0)
     first("crayfish", cold(10))
+    first("lionfish", lambda d: d.has_photo)
     # Rare
     running("manta_ray", 25, lambda d: 1)
     running("eagle_ray", 10, hours)
@@ -285,7 +286,7 @@ def compute_achievements(
 
     first("hammerheads", lambda d: d.max_depth_m > 25 and trained_deep(d))
 
-    # Not earnable yet: they need photos
+    # Not earnable yet: their feature doesn't exist
     for c in CREATURES:
         if c.coming_soon:
             out[c.key] = Progress(None, None, 0, 1)

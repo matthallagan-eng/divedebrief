@@ -97,7 +97,7 @@ def test_card_creatures_wait_for_cards_and_hold_back_the_tier_prizes():
     dives = [_dive(i, buddy="Sam", landmarks=["Old wreck"]) for i in range(1, 30)]
     p = compute_achievements(dives, 180)
     assert not p["scuba_diver"].earned and not p["blacktip_shark"].earned
-    assert [c.key for c in CREATURES if c.coming_soon] == ["lionfish"]
+    assert not [c.key for c in CREATURES if c.coming_soon]
     assert p["batfish"].earned_dive_id == 1
     assert p["dolphins"].earned_dive_id == 10
     # The blacktip needs a card, so the golden manta waits
