@@ -269,6 +269,11 @@ export interface Gear extends GearInput {
   updated_at: string;
 }
 
+export interface GearPreset extends GearInput {
+  id: number;
+  name: string;
+}
+
 export interface GearHistoryRow extends GearInput {
   dive_id: number;
   started_at: string;

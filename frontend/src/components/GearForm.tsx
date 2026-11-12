@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
-import type { Gear, GearHistoryRow, GearInput, Suit } from "../api/types";
+import type { Gear, GearHistoryRow, GearInput, GearPreset, Suit } from "../api/types";
 import { formatDate } from "../lib/format";
 import { formatScore } from "../lib/skills";
 import { useFormat } from "../lib/units";
@@ -36,12 +36,19 @@ export function GearForm({ diveId, gear, onSaved }: Props) {
   const [suit, setSuit] = useState<Suit | "">(gear?.suit ?? "");
   const [tank, setTank] = useState<GearInput["tank_material"] | "">(gear?.tank_material ?? "");
   const [history, setHistory] = useState<GearHistoryRow[] | null>(null);
+  const [presets, setPresets] = useState<GearPreset[]>([]);
+  const [kitName, setKitName] = useState("");
+  const [kitStatus, setKitStatus] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     api.get<GearHistoryRow[]>("/dives/gear-history").then(setHistory).catch(() => setHistory([]));
   }, [gear?.updated_at]);
+
+  useEffect(() => {
+    api.get<GearPreset[]>("/gear-presets").then(setPresets).catch(() => setPresets([]));
+  }, []);
 
   // Most divers wear the same kit dive after dive, so offer the last one
   const last = history?.find((h) => h.dive_id !== diveId) ?? null;
@@ -53,17 +60,60 @@ export function GearForm({ diveId, gear, onSaved }: Props) {
     setTank(last.tank_material ?? "");
   }
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    setStatus(null);
-    const body: GearInput = {
+  function formValues(): GearInput {
+    return {
       weight_kg: weight === "" ? null : Math.round(f.fromWeight(Number(weight)) * 100) / 100,
       suit: suit || null,
       tank_material: tank || null,
     };
+  }
+
+  function applyKit(kit: GearPreset) {
+    setWeight(shown(kit.weight_kg));
+    setSuit(kit.suit ?? "");
+    setTank(kit.tank_material ?? "");
+    setKitName(kit.name);
+    setStatus(`${kit.name} filled in. Save to keep it on this dive.`);
+  }
+
+  // Saving under an existing kit's name updates that kit
+  const sameName = presets.find((p) => p.name.toLowerCase() === kitName.trim().toLowerCase()) ?? null;
+
+  async function handleSaveKit() {
+    setKitStatus(null);
+    const body = { ...formValues(), name: sameName?.name ?? kitName.trim() };
     try {
-      await api.put(`/dives/${diveId}/gear`, body);
+      if (sameName) {
+        const kit = await api.put<GearPreset>(`/gear-presets/${sameName.id}`, body);
+        setPresets((ps) => ps.map((p) => (p.id === kit.id ? kit : p)));
+        setKitStatus(`Updated ${kit.name}.`);
+      } else {
+        const kit = await api.post<GearPreset>("/gear-presets", body);
+        setPresets((ps) => [...ps, kit]);
+        setKitStatus(`Saved ${kit.name}.`);
+      }
+    } catch (err) {
+      setKitStatus(err instanceof Error ? err.message : "Couldn't save the kit");
+    }
+  }
+
+  async function handleDeleteKit(kit: GearPreset) {
+    if (!window.confirm(`Delete the ${kit.name} kit? Dives that used it keep their gear.`)) return;
+    try {
+      await api.del(`/gear-presets/${kit.id}`);
+      setPresets((ps) => ps.filter((p) => p.id !== kit.id));
+      setKitStatus(null);
+    } catch (err) {
+      setKitStatus(err instanceof Error ? err.message : "Couldn't delete the kit");
+    }
+  }
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setStatus(null);
+    try {
+      await api.put(`/dives/${diveId}/gear`, formValues());
       setStatus("Saved.");
       onSaved();
     } catch (err) {
@@ -98,6 +148,31 @@ export function GearForm({ diveId, gear, onSaved }: Props) {
             </button>
           )}
         </div>
+        {presets.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 border-b border-surface-border px-5 py-3">
+            <span className="mr-1 text-xs text-murk">Your kits</span>
+            {presets.map((kit) => (
+              <span key={kit.id} className="inline-flex items-center rounded-full border border-surface-border bg-surface text-xs">
+                <button
+                  type="button"
+                  onClick={() => applyKit(kit)}
+                  title={kitSummary(kit, f)}
+                  className="rounded-l-full py-1 pl-3 pr-2 text-foam transition-colors hover:text-aqua"
+                >
+                  {kit.name}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteKit(kit)}
+                  aria-label={`Delete the ${kit.name} kit`}
+                  className="rounded-r-full py-1 pl-1 pr-2.5 text-murk transition-colors hover:text-coral"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
         <div className="flex flex-wrap items-end gap-x-6 gap-y-4 px-5 py-4">
           <label className="space-y-1 text-xs text-murk">
             <span className="block">Weight ({f.weightUnit})</span>
@@ -148,6 +223,33 @@ export function GearForm({ diveId, gear, onSaved }: Props) {
           The debrief compares your weight with your buoyancy from dive to dive.
           {status && <span className="ml-2 text-mist" role="status">{status}</span>}
         </p>
+        <div className="flex flex-wrap items-center gap-3 border-t border-surface-border px-5 py-3">
+          <label className="flex items-center gap-2 text-xs text-murk">
+            <span>Save these as a kit</span>
+            <input
+              value={kitName}
+              maxLength={40}
+              placeholder="e.g. Quarry, 7 mm"
+              onChange={(e) => setKitName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  if (kitName.trim()) handleSaveKit();
+                }
+              }}
+              className={`w-44 ${fieldClass}`}
+            />
+          </label>
+          <button
+            type="button"
+            onClick={handleSaveKit}
+            disabled={!kitName.trim()}
+            className="text-sm text-aqua hover:text-foam disabled:opacity-40"
+          >
+            {sameName ? `Update ${sameName.name}` : "Save kit"}
+          </button>
+          {kitStatus && <span className="text-xs text-mist" role="status">{kitStatus}</span>}
+        </div>
       </form>
 
       {history && history.length > 0 && (
@@ -187,4 +289,14 @@ export function GearForm({ diveId, gear, onSaved }: Props) {
       )}
     </div>
   );
+}
+
+/** What a kit holds, for its tooltip. */
+function kitSummary(kit: GearInput, f: ReturnType<typeof useFormat>): string {
+  const parts = [
+    kit.weight_kg === null ? null : `${+f.toWeight(kit.weight_kg).toFixed(1)} ${f.weightUnit}`,
+    kit.suit ? SUIT_LABELS[kit.suit] : null,
+    kit.tank_material ? TANKS[kit.tank_material] : null,
+  ].filter(Boolean);
+  return parts.length ? parts.join(", ") : "Nothing noted";
 }
