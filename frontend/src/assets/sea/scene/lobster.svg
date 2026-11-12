@@ -1,0 +1,11 @@
+<!-- lobster: background silhouette, faces right -->
+<svg xmlns="http://www.w3.org/2000/svg" width="70" height="30" viewBox="0 0 70 30" fill="#de6650">
+  <path d="M2 16 L8 10 L8 22 Z" />
+  <path d="M8 12 C16 9 24 9 30 11 L30 21 C24 23 16 23 8 20 Z" />
+  <path d="M28 10 C36 8 46 9 50 13 C52 16 50 19 46 20 C40 22 34 22 28 21 Z" />
+  <path d="M48 12 C54 8 60 4 66 5 C62 8 58 10 54 13 Z" />
+  <path d="M48 19 C54 22 60 26 66 25 C62 22 58 20 54 17 Z" />
+  <path d="M50 14 C58 10 66 6 70 0" fill="none" stroke="#de6650" stroke-width="1" />
+  <path d="M50 16 C58 14 64 14 70 12" fill="none" stroke="#de6650" stroke-width="1" />
+  <path d="M32 21 L30 28 M38 21 L37 29 M44 20 L45 28" stroke="#de6650" stroke-width="1.5" />
+</svg>

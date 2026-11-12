@@ -1,0 +1,7 @@
+<!-- whale: background silhouette, faces right -->
+<svg xmlns="http://www.w3.org/2000/svg" width="260" height="100" viewBox="0 0 260 100" fill="#9cc3cc">
+  <path d="M40 52 L6 30 L16 52 L4 76 Z" />
+  <path d="M30 52 C56 34 110 22 170 22 C220 22 254 36 258 52 C260 66 228 78 176 78 C120 78 66 70 30 54 Z" />
+  <path d="M160 74 L138 98 L182 77 Z" />
+  <path d="M190 66 C215 68 238 64 250 58" fill="none" stroke="#030d15" stroke-opacity="0.5" stroke-width="2" />
+</svg>

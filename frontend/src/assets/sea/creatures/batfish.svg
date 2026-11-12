@@ -1,0 +1,21 @@
+<!-- batfish: faces right -->
+<svg xmlns="http://www.w3.org/2000/svg" width="140" height="80" viewBox="0 0 140 80" fill="#c9c9b8">
+  <g transform="translate(0 10) scale(1)">
+    <path d="M10 34 L2 26 L4 34 L2 42 Z" />
+    <path d="M8 34 C10 26 18 18 30 16 C38 6 44 0 48 0 C46 10 46 14 48 18 C54 22 58 28 58 34 C58 40 54 46 48 50 C46 54 46 58 48 68 C44 68 38 62 30 52 C18 50 10 42 8 34 Z" />
+    <path d="M40 20 C38 30 38 40 40 50 M50 22 C48 30 48 38 50 46" fill="none" stroke="#3a3a33" stroke-width="3.2" />
+    <circle cx="52" cy="30" r="1.8" fill="#030d15" />
+  </g>
+  <g transform="translate(56 0) scale(0.8)">
+    <path d="M10 34 L2 26 L4 34 L2 42 Z" />
+    <path d="M8 34 C10 26 18 18 30 16 C38 6 44 0 48 0 C46 10 46 14 48 18 C54 22 58 28 58 34 C58 40 54 46 48 50 C46 54 46 58 48 68 C44 68 38 62 30 52 C18 50 10 42 8 34 Z" />
+    <path d="M40 20 C38 30 38 40 40 50 M50 22 C48 30 48 38 50 46" fill="none" stroke="#3a3a33" stroke-width="3.2" />
+    <circle cx="52" cy="30" r="1.8" fill="#030d15" />
+  </g>
+  <g transform="translate(72 38) scale(0.85)">
+    <path d="M10 34 L2 26 L4 34 L2 42 Z" />
+    <path d="M8 34 C10 26 18 18 30 16 C38 6 44 0 48 0 C46 10 46 14 48 18 C54 22 58 28 58 34 C58 40 54 46 48 50 C46 54 46 58 48 68 C44 68 38 62 30 52 C18 50 10 42 8 34 Z" />
+    <path d="M40 20 C38 30 38 40 40 50 M50 22 C48 30 48 38 50 46" fill="none" stroke="#3a3a33" stroke-width="3.2" />
+    <circle cx="52" cy="30" r="1.8" fill="#030d15" />
+  </g>
+</svg>

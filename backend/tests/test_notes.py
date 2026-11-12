@@ -95,11 +95,9 @@ def test_conditions_are_saved(client):
     assert client.put(f"/dives/{dive}/notes", json={"visibility_m": -1}).status_code == 422
 
 
-def test_milestones_endpoint(client):
-    assert all(m["earned_dive_id"] is None for m in client.get("/milestones").json())
+def test_the_debrief_names_creatures_the_dive_unlocked(client):
     dive = _dive(client)
-    milestones = {m["key"]: m for m in client.get("/milestones").json()}
-    assert milestones["dives_1"]["earned_dive_id"] == dive
-    # The debrief of the dive that earned it says so
+    first = {a["key"]: a for a in client.get("/achievements").json()["achievements"]}["clownfish"]
+    assert first["earned_dive_id"] == dive
     titles = [i["title"] for i in client.get(f"/dives/{dive}").json()["debrief"]["items"]]
-    assert "Milestone: First dive logged" in titles
+    assert "New creature: Clownfish" in titles

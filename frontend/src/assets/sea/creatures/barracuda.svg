@@ -1,0 +1,17 @@
+<!-- barracuda: faces right -->
+<svg xmlns="http://www.w3.org/2000/svg" width="150" height="36" viewBox="0 0 150 36" fill="#a8b8c4">
+  <path d="M18 18 L2 6 L8 18 L2 30 Z" />
+  <path d="M14 18 C30 8 80 6 120 10 C134 12 144 16 148 18 C144 22 134 25 120 26 C80 30 30 28 14 18 Z" />
+  <path d="M50 10 L58 2 L64 9 Z M86 9 L92 3 L96 9 Z M60 27 L66 34 L70 27 Z" />
+  <path d="M34 11 l-3 12" stroke="#4d5d6a" stroke-width="2" opacity="0.7" />
+  <path d="M44 11 l-3 12" stroke="#4d5d6a" stroke-width="2" opacity="0.7" />
+  <path d="M54 11 l-3 12" stroke="#4d5d6a" stroke-width="2" opacity="0.7" />
+  <path d="M64 11 l-3 12" stroke="#4d5d6a" stroke-width="2" opacity="0.7" />
+  <path d="M74 11 l-3 12" stroke="#4d5d6a" stroke-width="2" opacity="0.7" />
+  <path d="M84 11 l-3 12" stroke="#4d5d6a" stroke-width="2" opacity="0.7" />
+  <path d="M94 11 l-3 12" stroke="#4d5d6a" stroke-width="2" opacity="0.7" />
+  <path d="M104 11 l-3 12" stroke="#4d5d6a" stroke-width="2" opacity="0.7" />
+  <path d="M114 11 l-3 12" stroke="#4d5d6a" stroke-width="2" opacity="0.7" />
+  <path d="M134 19 L148 18" stroke="#030d15" stroke-width="1" />
+  <circle cx="130" cy="15" r="2" fill="#030d15" />
+</svg>

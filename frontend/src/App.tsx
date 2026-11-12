@@ -8,6 +8,7 @@ import DiveDetail from "./pages/DiveDetail";
 import Upload from "./pages/Upload";
 import Settings from "./pages/Settings";
 import HowScoresWork from "./pages/HowScoresWork";
+import MyOceanPage from "./pages/MyOceanPage";
 
 function Protected() {
   const { token } = useAuth();
@@ -38,6 +39,7 @@ export default function App() {
             <Route path="/logbook" element={<Logbook />} />
             <Route path="/dives/:id" element={<DiveDetail />} />
             <Route path="/upload" element={<Upload />} />
+            <Route path="/ocean" element={<MyOceanPage />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/scores" element={<HowScoresWork />} />
           </Route>

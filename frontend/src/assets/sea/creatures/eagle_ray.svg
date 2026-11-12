@@ -1,0 +1,17 @@
+<!-- eagle_ray: faces right -->
+<svg xmlns="http://www.w3.org/2000/svg" width="140" height="80" viewBox="0 0 140 80" fill="#3d5570">
+  <path d="M80 24 C98 22 118 14 138 8 C128 28 110 44 92 50 C86 54 80 56 72 56 C64 56 58 52 54 48 C36 44 18 30 6 10 C28 18 46 24 62 26 C68 22 74 22 80 24 Z" />
+  <path d="M56 50 C42 58 28 66 14 72" fill="none" stroke="#3d5570" stroke-width="1.8" />
+  <path d="M80 30 C88 30 94 34 96 38 C92 38 86 36 80 34 Z" />
+  <circle cx="70" cy="36" r="2" fill="#f2f5f8" />
+  <circle cx="80" cy="40" r="2" fill="#f2f5f8" />
+  <circle cx="62" cy="38" r="2" fill="#f2f5f8" />
+  <circle cx="96" cy="30" r="2" fill="#f2f5f8" />
+  <circle cx="106" cy="26" r="2" fill="#f2f5f8" />
+  <circle cx="48" cy="34" r="2" fill="#f2f5f8" />
+  <circle cx="38" cy="30" r="2" fill="#f2f5f8" />
+  <circle cx="88" cy="42" r="2" fill="#f2f5f8" />
+  <circle cx="56" cy="42" r="2" fill="#f2f5f8" />
+  <circle cx="114" cy="22" r="2" fill="#f2f5f8" />
+  <circle cx="28" cy="26" r="2" fill="#f2f5f8" />
+</svg>

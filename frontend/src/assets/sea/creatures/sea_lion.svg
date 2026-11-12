@@ -1,0 +1,10 @@
+<!-- sea_lion: faces right -->
+<svg xmlns="http://www.w3.org/2000/svg" width="130" height="56" viewBox="0 0 130 56" fill="#9a7a56">
+  <path d="M16 30 L2 18 L6 32 L2 44 Z" />
+  <path d="M10 32 C20 20 46 14 76 14 C96 14 110 16 118 20 C126 22 128 28 124 32 C118 36 108 34 100 36 C80 42 44 44 10 32 Z" />
+  <path d="M64 36 C60 46 52 54 44 56 C50 50 54 44 54 38 Z" />
+  <path d="M118 20 C120 18 124 18 126 20" fill="none" stroke="#d8c0a0" stroke-width="1.4" />
+  <path d="M122 26 l8 -1" stroke="#d8c0a0" stroke-width="0.8" />
+  <path d="M122 29 l8 2" stroke="#d8c0a0" stroke-width="0.8" />
+  <circle cx="114" cy="22" r="2" fill="#030d15" />
+</svg>

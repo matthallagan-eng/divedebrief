@@ -213,6 +213,17 @@ class DiveNotes(Base):
     dive: Mapped["Dive"] = relationship(back_populates="notes")
 
 
+class AchievementSeen(Base):
+    """An achievement whose reveal the diver has seen, so it isn't shown again.
+    Whether it's earned is worked out from the logbook (app.achievements)."""
+
+    __tablename__ = "achievements_seen"
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    key: Mapped[str] = mapped_column(String(32), primary_key=True)
+    seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+
 class DiveGear(Base):
     """What the diver wore, so weighting can be compared with buoyancy."""
 

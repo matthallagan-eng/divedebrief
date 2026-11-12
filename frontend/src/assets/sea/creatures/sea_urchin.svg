@@ -1,0 +1,27 @@
+<!-- sea_urchin: faces right -->
+<svg xmlns="http://www.w3.org/2000/svg" width="70" height="56" viewBox="0 0 70 56" fill="#7a55b8">
+  <path d="M35 40 L1 40.00000000000001" stroke="#7a55b8" stroke-width="1.8" stroke-linecap="round" />
+  <path d="M35 40 L1.5165363975849218 33.74866560399052" stroke="#7a55b8" stroke-width="1.8" stroke-linecap="round" />
+  <path d="M35 40 L3.0504508932791126 27.68727484027593" stroke="#7a55b8" stroke-width="1.8" stroke-linecap="round" />
+  <path d="M35 40 L5.555136271329079 22.00000000000001" stroke="#7a55b8" stroke-width="1.8" stroke-linecap="round" />
+  <path d="M35 40 L8.954488933954742 16.859646051284585" stroke="#7a55b8" stroke-width="1.8" stroke-linecap="round" />
+  <path d="M35 40 L13.145221270657657 12.422400047716796" stroke="#7a55b8" stroke-width="1.8" stroke-linecap="round" />
+  <path d="M35 40 L17.999999999999986 8.823085463760215" stroke="#7a55b8" stroke-width="1.8" stroke-linecap="round" />
+  <path d="M35 40 L23.37131512692727 6.171065651707295" stroke="#7a55b8" stroke-width="1.8" stroke-linecap="round" />
+  <path d="M35 40 L29.09596195932437 4.546920891560511" stroke="#7a55b8" stroke-width="1.8" stroke-linecap="round" />
+  <path d="M35 40 L34.99999999999999 4" stroke="#7a55b8" stroke-width="1.8" stroke-linecap="round" />
+  <path d="M35 40 L40.904038040675616 4.546920891560504" stroke="#7a55b8" stroke-width="1.8" stroke-linecap="round" />
+  <path d="M35 40 L46.628684873072714 6.171065651707295" stroke="#7a55b8" stroke-width="1.8" stroke-linecap="round" />
+  <path d="M35 40 L51.99999999999998 8.823085463760194" stroke="#7a55b8" stroke-width="1.8" stroke-linecap="round" />
+  <path d="M35 40 L56.854778729342335 12.422400047716788" stroke="#7a55b8" stroke-width="1.8" stroke-linecap="round" />
+  <path d="M35 40 L61.04551106604524 16.859646051284574" stroke="#7a55b8" stroke-width="1.8" stroke-linecap="round" />
+  <path d="M35 40 L64.44486372867092 22.00000000000001" stroke="#7a55b8" stroke-width="1.8" stroke-linecap="round" />
+  <path d="M35 40 L66.9495491067209 27.687274840275933" stroke="#7a55b8" stroke-width="1.8" stroke-linecap="round" />
+  <path d="M35 40 L68.48346360241507 33.7486656039905" stroke="#7a55b8" stroke-width="1.8" stroke-linecap="round" />
+  <path d="M35 40 L69 39.99999999999999" stroke="#7a55b8" stroke-width="1.8" stroke-linecap="round" />
+  <ellipse cx="35" cy="44" rx="20" ry="12" />
+  <circle cx="24" cy="42" r="1.6" fill="#c4a8f0" />
+  <circle cx="31" cy="42" r="1.6" fill="#c4a8f0" />
+  <circle cx="38" cy="42" r="1.6" fill="#c4a8f0" />
+  <circle cx="45" cy="42" r="1.6" fill="#c4a8f0" />
+</svg>

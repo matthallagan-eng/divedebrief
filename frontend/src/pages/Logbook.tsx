@@ -9,7 +9,6 @@ import {
 } from "../lib/logbookView";
 import { Habits } from "../components/Habits";
 import { LogStats } from "../components/LogStats";
-import { Milestones } from "../components/Milestones";
 import { Tabs } from "../components/Tabs";
 import { StatCard } from "../components/StatCard";
 import { formatScore } from "../lib/skills";
@@ -157,7 +156,6 @@ export default function Logbook() {
             <p className="text-sm text-murk">Loading trends…</p>
           ))}
         {tab === "stats" && <LogStats dives={dives} />}
-        {tab === "milestones" && <Milestones />}
         {tab === "dives" && (
           <DiveTable
             dives={dives}
@@ -173,14 +171,13 @@ export default function Logbook() {
   );
 }
 
-type TabKey = "dives" | "habits" | "milestones" | "stats";
+type TabKey = "dives" | "habits" | "stats";
 
 // Summary on top, details in tabs: the dive list, trends, and records and
 // averages, the way Subsurface and MacDive split a logbook
 const TABS: { key: TabKey; label: string }[] = [
   { key: "dives", label: "Dives" },
   { key: "habits", label: "Habits" },
-  { key: "milestones", label: "Milestones" },
   { key: "stats", label: "Stats" },
 ];
 

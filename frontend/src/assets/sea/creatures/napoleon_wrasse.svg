@@ -1,0 +1,16 @@
+<!-- napoleon_wrasse: faces right -->
+<svg xmlns="http://www.w3.org/2000/svg" width="140" height="76" viewBox="0 0 140 76" fill="#3b9f96">
+  <path d="M26 40 L4 24 Q12 40 4 56 Z" />
+  <path d="M20 40 C26 18 56 8 88 8 C104 8 116 4 124 10 C134 18 138 30 136 42 C132 58 112 68 84 68 C52 70 28 60 20 40 Z" />
+  <path d="M104 8 C116 0 128 4 130 14 Z" />
+  <path d="M104 32 c6 -3 10 2 16 -1 c4 -2 8 0 10 2" fill="none" stroke="#1f5f9a" stroke-width="1.8" />
+  <path d="M110 40 c6 -3 10 2 16 -1 c4 -2 8 0 10 2" fill="none" stroke="#1f5f9a" stroke-width="1.8" />
+  <path d="M100 46 c6 -3 10 2 16 -1 c4 -2 8 0 10 2" fill="none" stroke="#1f5f9a" stroke-width="1.8" />
+  <path d="M40 16 C36 34 36 50 40 64" fill="none" stroke="#1f5f9a" stroke-width="1.4" opacity="0.6" />
+  <path d="M52 16 C48 34 48 50 52 64" fill="none" stroke="#1f5f9a" stroke-width="1.4" opacity="0.6" />
+  <path d="M64 16 C60 34 60 50 64 64" fill="none" stroke="#1f5f9a" stroke-width="1.4" opacity="0.6" />
+  <path d="M76 16 C72 34 72 50 76 64" fill="none" stroke="#1f5f9a" stroke-width="1.4" opacity="0.6" />
+  <path d="M88 16 C84 34 84 50 88 64" fill="none" stroke="#1f5f9a" stroke-width="1.4" opacity="0.6" />
+  <path d="M126 44 C132 46 136 44 136 40" fill="none" stroke="#030d15" stroke-width="2.4" />
+  <circle cx="122" cy="26" r="2.6" fill="#030d15" />
+</svg>

@@ -71,47 +71,60 @@ body {
   100% { transform: translate(-6px, -105vh); opacity: 0; }
 }
 
-/* Sea life crosses the screen; the inner element bobs up and down */
-.swim {
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-  will-change: transform;
-}
-.swim-right { animation-name: swim-right; }
-.swim-left { animation-name: swim-left; }
+/* Sea life is moved by Ocean.tsx; the inner element bobs up and down */
 .bob { animation: bob ease-in-out infinite; }
 
-@keyframes swim-right {
-  from { transform: translateX(-30vw); }
-  to { transform: translateX(110vw); }
-}
-
-@keyframes swim-left {
-  from { transform: translateX(110vw); }
-  to { transform: translateX(-30vw); }
-}
+/* The drawings in assets/sea fill their box, and may poke past it */
+.drawing, .drawing > svg { display: block; width: 100%; height: 100%; }
+.drawing > svg { overflow: visible; }
 
 @keyframes bob {
   0%, 100% { translate: 0 0; }
   50% { translate: 0 -8px; }
 }
 
-.sea-grass {
-  transform-origin: bottom;
-  transform-box: fill-box;
-  animation: grass 7s ease-in-out infinite alternate;
+/* Achievement reveals: the silhouette swims in, then lights up into colour */
+.reveal-fade { animation: reveal-fade 0.4s ease-out both; }
+.reveal-swim { animation: reveal-swim 1.6s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.reveal-light { animation: reveal-light 1s ease-out 1.4s both; }
+.reveal-legend { filter: drop-shadow(0 0 14px rgb(242 194 48 / 0.55)); }
+.reveal-glow {
+  background: radial-gradient(circle, rgb(242 194 48 / 0.35), transparent 70%);
+  animation: reveal-glow 2.4s ease-in-out 1.6s infinite both;
+}
+.reveal-late { animation: reveal-fade 0.6s ease-out 2s both; }
+.reveal-pop { animation: reveal-pop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.3) both; }
+
+@keyframes reveal-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes reveal-swim {
+  from { transform: translateX(-70vw) rotate(-4deg); }
+  70% { transform: translateX(8px) rotate(1deg); }
+  to { transform: translateX(0) rotate(0); }
+}
+@keyframes reveal-light {
+  from { filter: brightness(0.15) saturate(0); }
+  to { filter: none; }
+}
+@keyframes reveal-glow {
+  0%, 100% { opacity: 0.5; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+@keyframes reveal-pop {
+  from { opacity: 0; transform: scale(0.4) translateY(12px); }
+  to { opacity: 1; transform: none; }
 }
 
-@keyframes grass {
-  from { transform: skewX(-4deg); }
-  to { transform: skewX(4deg); }
-}
+.glow { filter: drop-shadow(0 0 10px var(--accent)); }
 
 @media (prefers-reduced-motion: reduce) {
+  .reveal-fade, .reveal-swim, .reveal-light, .reveal-glow, .reveal-late, .reveal-pop { animation: none; }
   .caustics { animation: none; }
   .bubble { display: none; }
-  /* Paused part-way, each creature stays where its start offset put it */
-  .swim, .bob, .sea-grass { animation-play-state: paused; }
+  /* Ocean.tsx leaves each creature where its start offset put it */
+  .bob { animation-play-state: paused; }
 }
 
 input[type="range"] {

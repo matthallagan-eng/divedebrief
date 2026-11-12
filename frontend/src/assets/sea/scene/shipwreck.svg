@@ -1,0 +1,14 @@
+<!-- shipwreck: background silhouette, faces right -->
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="130" viewBox="0 0 320 130" fill="#0b2a3c">
+  <path d="M8 96 L36 70 L290 58 L314 74 L296 112 C220 124 120 126 40 120 Z" />
+  <path d="M60 72 L66 56 L130 52 L134 66 Z" />
+  <path d="M150 64 L158 10 L164 11 L158 62 Z" />
+  <path d="M156 24 L196 30 L195 34 L155 28 Z" />
+  <path d="M232 60 L246 30 L251 32 L238 60 Z" />
+  <g fill="#030d15" fill-opacity="0.6">
+    <circle cx="90" cy="96" r="4" />
+    <circle cx="130" cy="94" r="4" />
+    <circle cx="170" cy="92" r="4" />
+    <circle cx="210" cy="90" r="4" />
+  </g>
+</svg>

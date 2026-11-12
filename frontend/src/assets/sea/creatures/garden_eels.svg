@@ -1,0 +1,38 @@
+<!-- garden_eels: faces right -->
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="70" viewBox="0 0 120 70" fill="#d9d3b8">
+  <g>
+    <path d="M10 70 C10 60 16 62 12 46 C10 40 16 36 20 42" fill="none" stroke="#d9d3b8" stroke-width="5" stroke-linecap="round" />
+    <circle cx="10.9" cy="61" r="1.4" fill="#4a4a40" />
+    <circle cx="11.65" cy="53.5" r="1.4" fill="#4a4a40" />
+    <circle cx="12.4" cy="46" r="1.4" fill="#4a4a40" />
+    <ellipse cx="10" cy="69" rx="7" ry="2" fill="#4a4a40" opacity="0.4" />
+  </g>
+  <g>
+    <path d="M30 70 C30 60 24 44 28 28 C30 22 24 18 20 24" fill="none" stroke="#d9d3b8" stroke-width="5" stroke-linecap="round" />
+    <circle cx="29.1" cy="55.6" r="1.4" fill="#4a4a40" />
+    <circle cx="28.35" cy="43.599999999999994" r="1.4" fill="#4a4a40" />
+    <circle cx="27.6" cy="31.599999999999994" r="1.4" fill="#4a4a40" />
+    <ellipse cx="30" cy="69" rx="7" ry="2" fill="#4a4a40" opacity="0.4" />
+  </g>
+  <g>
+    <path d="M52 70 C52 60 58 56 54 40 C52 34 58 30 62 36" fill="none" stroke="#d9d3b8" stroke-width="5" stroke-linecap="round" />
+    <circle cx="52.9" cy="59.2" r="1.4" fill="#4a4a40" />
+    <circle cx="53.65" cy="50.2" r="1.4" fill="#4a4a40" />
+    <circle cx="54.4" cy="41.2" r="1.4" fill="#4a4a40" />
+    <ellipse cx="52" cy="69" rx="7" ry="2" fill="#4a4a40" opacity="0.4" />
+  </g>
+  <g>
+    <path d="M74 70 C74 60 68 40 72 24 C74 18 68 14 64 20" fill="none" stroke="#d9d3b8" stroke-width="5" stroke-linecap="round" />
+    <circle cx="73.1" cy="54.4" r="1.4" fill="#4a4a40" />
+    <circle cx="72.35" cy="41.4" r="1.4" fill="#4a4a40" />
+    <circle cx="71.6" cy="28.4" r="1.4" fill="#4a4a40" />
+    <ellipse cx="74" cy="69" rx="7" ry="2" fill="#4a4a40" opacity="0.4" />
+  </g>
+  <g>
+    <path d="M96 70 C96 60 102 52 98 36 C96 30 102 26 106 32" fill="none" stroke="#d9d3b8" stroke-width="5" stroke-linecap="round" />
+    <circle cx="96.9" cy="58" r="1.4" fill="#4a4a40" />
+    <circle cx="97.65" cy="48" r="1.4" fill="#4a4a40" />
+    <circle cx="98.4" cy="38" r="1.4" fill="#4a4a40" />
+    <ellipse cx="96" cy="69" rx="7" ry="2" fill="#4a4a40" opacity="0.4" />
+  </g>
+</svg>

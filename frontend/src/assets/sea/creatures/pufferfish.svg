@@ -1,0 +1,33 @@
+<!-- pufferfish: faces right -->
+<svg xmlns="http://www.w3.org/2000/svg" width="84" height="70" viewBox="0 0 84 70" fill="#d8b56a">
+  <path d="M14 35 L2 25 L5 35 L2 45 Z" />
+  <circle cx="44" cy="35" r="30" />
+  <path d="M74 35 L80 35" stroke="#d8b56a" stroke-width="2.2" stroke-linecap="round" />
+  <path d="M71.7163859753386 46.48050297095269 L77.25966317040633 48.77660356514323" stroke="#d8b56a" stroke-width="2.2" stroke-linecap="round" />
+  <path d="M65.21320343559643 56.21320343559643 L69.45584412271572 60.45584412271571" stroke="#d8b56a" stroke-width="2.2" stroke-linecap="round" />
+  <path d="M55.4805029709527 62.7163859753386 L57.77660356514323 68.25966317040633" stroke="#d8b56a" stroke-width="2.2" stroke-linecap="round" />
+  <path d="M44 65 L44 71" stroke="#d8b56a" stroke-width="2.2" stroke-linecap="round" />
+  <path d="M32.51949702904731 62.7163859753386 L30.22339643485677 68.25966317040633" stroke="#d8b56a" stroke-width="2.2" stroke-linecap="round" />
+  <path d="M22.786796564403577 56.21320343559643 L18.54415587728429 60.45584412271572" stroke="#d8b56a" stroke-width="2.2" stroke-linecap="round" />
+  <path d="M16.283614024661397 46.4805029709527 L10.74033682959368 48.77660356514323" stroke="#d8b56a" stroke-width="2.2" stroke-linecap="round" />
+  <path d="M14 35.00000000000001 L8 35.00000000000001" stroke="#d8b56a" stroke-width="2.2" stroke-linecap="round" />
+  <path d="M16.283614024661393 23.519497029047308 L10.740336829593673 21.223396434856774" stroke="#d8b56a" stroke-width="2.2" stroke-linecap="round" />
+  <path d="M22.78679656440357 13.786796564403577 L18.544155877284282 9.54415587728429" stroke="#d8b56a" stroke-width="2.2" stroke-linecap="round" />
+  <path d="M32.51949702904729 7.283614024661404 L30.223396434856745 1.7403368295936872" stroke="#d8b56a" stroke-width="2.2" stroke-linecap="round" />
+  <path d="M43.99999999999999 5 L43.99999999999999 -1" stroke="#d8b56a" stroke-width="2.2" stroke-linecap="round" />
+  <path d="M55.4805029709527 7.2836140246614 L57.77660356514324 1.74033682959368" stroke="#d8b56a" stroke-width="2.2" stroke-linecap="round" />
+  <path d="M65.21320343559643 13.78679656440357 L69.4558441227157 9.544155877284282" stroke="#d8b56a" stroke-width="2.2" stroke-linecap="round" />
+  <path d="M71.7163859753386 23.519497029047287 L77.25966317040631 21.223396434856745" stroke="#d8b56a" stroke-width="2.2" stroke-linecap="round" />
+  <circle cx="30" cy="22" r="2.4" fill="#6b5b3a" />
+  <circle cx="40" cy="18" r="2.4" fill="#6b5b3a" />
+  <circle cx="52" cy="22" r="2.4" fill="#6b5b3a" />
+  <circle cx="26" cy="34" r="2.4" fill="#6b5b3a" />
+  <circle cx="36" cy="30" r="2.4" fill="#6b5b3a" />
+  <circle cx="48" cy="32" r="2.4" fill="#6b5b3a" />
+  <circle cx="34" cy="44" r="2.4" fill="#6b5b3a" />
+  <circle cx="46" cy="46" r="2.4" fill="#6b5b3a" />
+  <circle cx="24" cy="46" r="2.4" fill="#6b5b3a" />
+  <circle cx="64" cy="28" r="5" fill="#f6efe6" opacity="0.9" />
+  <circle cx="65" cy="28" r="2.6" fill="#030d15" />
+  <ellipse cx="74" cy="40" rx="3" ry="2" fill="#030d15" opacity="0.6" />
+</svg>

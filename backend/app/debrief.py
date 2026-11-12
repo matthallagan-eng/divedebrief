@@ -12,7 +12,7 @@ from dataclasses import dataclass
 
 from .analysis.thermocline import Thermocline
 from .dive_day import DayPlace
-from .milestones import Milestone
+from .achievements import Creature
 from .scoring import Profile, ScoringSettings
 from .scoring import units as u
 from .scoring.common import fmt_mmss
@@ -72,7 +72,7 @@ def build_debrief(
     gear: GearView | None,
     previous: PreviousDive | None,
     thermocline: Thermocline | None = None,
-    new_milestones: list[Milestone] = (),
+    new_creatures: list[Creature] = (),
     day: DayPlace | None = None,
 ) -> Debrief:
     units = cfg.units
@@ -100,8 +100,11 @@ def build_debrief(
         items.append(_thermocline(thermocline, units))
     if previous:
         items += _compared(scores, previous)
-    for m in new_milestones:
-        items.append(DebriefItem(kind="good", skill=None, title=f"Milestone: {m.title}", detail=m.description))
+    for c in new_creatures:
+        items.append(DebriefItem(
+            kind="good", skill=None, title=f"New creature: {c.name}",
+            detail=f"{c.goal} It's swimming in your ocean now.",
+        ))
 
     scored = [(v.score, k) for k, v in scores.items() if v.score is not None and k in work_on]
     focus = work_on[min(scored)[1]] if scored else None

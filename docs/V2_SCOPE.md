@@ -151,6 +151,29 @@ recomputed when a diver changes a setting or the algorithm changes.
   under each animal seen on it) and sorted by any column, from the header or
   the Sort menu. The view lives in the URL, next to the site filter.
 
+## 2d. Achievements and your ocean (added 2026-10-27)
+
+- 57 achievements in five tiers (common, uncommon, rare, epic, legendary),
+  each unlocking a hand-drawn sea creature for the background
+  (`app/achievements.py`, `frontend/src/components/creatures/`). Worked out
+  from the logbook on every read, like milestones; which reveals were seen is
+  stored (migration 0012).
+- At most four unlocked creatures are on screen at once, taking turns; rarer
+  tiers get fewer turns, and epic and legendary ones glow. The sea-life slider
+  still scales it.
+- A reveal pops up when one is earned (the silhouette swims in and lights
+  up); the first time, everything already earned is revealed together. The
+  "My Ocean" page shows the collection, locked ones as silhouettes.
+- Seven need certification cards or dive photos and show "Coming with ...".
+  Nothing rewards diving deeper than the diver's training.
+- Replaces milestones (2026-10-27), which overlapped: the Milestones tab and
+  `/milestones` are gone, and a dive's debrief names the creatures it
+  unlocked. "My Ocean" is its own page, in the menu after "Log dives".
+- Locked creatures are flat silhouettes named "???"; the API doesn't send
+  their names.
+- TEMPORARY test mode (`ACHIEVEMENT_TEST_MODE`, on in docker-compose):
+  preview any reveal, show every creature, replay real unlocks.
+
 ## 3. Direct FIT import
 
 - Upload `.fit` files from Garmin Descent watches alongside UDDF. The same

@@ -16,6 +16,10 @@ class Settings(BaseSettings):
         "https://maps.mail.ru/osm/tools/overpass/api/interpreter"
     )
     nominatim_url: str = "https://nominatim.openstreetmap.org/reverse"
+    # TEMPORARY: lets the diver preview achievement reveals and creatures
+    # without earning them (app.routers.achievements, AchievementTestPanel).
+    # Remove with them once achievements are tuned.
+    achievement_test_mode: bool = False
 
     class Config:
         env_file = ".env"

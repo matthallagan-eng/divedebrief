@@ -1,0 +1,14 @@
+<!-- scuba_diver: faces right -->
+<svg xmlns="http://www.w3.org/2000/svg" width="130" height="60" viewBox="0 0 130 60" fill="#9fb4c7">
+  <path d="M2 18 L22 26 L22 34 L2 44 L8 31 Z" />
+  <path d="M20 26 C34 22 46 24 58 26 L58 36 C46 38 34 38 20 34 Z" />
+  <path d="M56 22 C70 16 90 16 100 22 C104 26 104 34 100 38 C90 42 70 42 56 38 Z" />
+  <rect x="62" y="10" width="30" height="11" rx="5.5" fill="#f2c230" />
+  <circle cx="110" cy="28" r="10" />
+  <path d="M110 22 L120 22 Q123 28 120 32 L110 32 Z" fill="#f2c230" opacity="0.9" />
+  <path d="M96 34 C108 40 118 44 126 42" fill="none" stroke="#9fb4c7" stroke-width="5" stroke-linecap="round" />
+  <path d="M92 14 C100 8 106 10 110 18" fill="none" stroke="#9fb4c7" stroke-width="2.2" />
+  <circle cx="104" cy="10" r="3" fill="none" stroke="#f2c230" stroke-width="1.2" />
+  <circle cx="100" cy="4" r="2.2" fill="none" stroke="#f2c230" stroke-width="1.2" />
+  <circle cx="107" cy="1" r="1.6" fill="none" stroke="#f2c230" stroke-width="1.2" />
+</svg>

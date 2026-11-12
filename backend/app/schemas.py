@@ -253,16 +253,30 @@ class ThermoclineOut(BaseModel):
     below_k: float
 
 
-class MilestoneOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
+class AchievementOut(BaseModel):
     key: str
-    title: str
-    description: str
+    name: str  # "???" until it's earned
+    preview_name: str | None  # TEMPORARY: the real name, in test mode only
+    tier: str  # common | uncommon | rare | epic | legendary
+    goal: str
+    coming_soon: str | None  # the feature it needs before it can be earned
+    secret: bool
     earned_dive_id: int | None
     earned_at: datetime | None
     progress: int
     target: int
+    seen: bool  # the diver has seen its reveal
+
+
+class Achievements(BaseModel):
+    achievements: list[AchievementOut]
+    # Nothing seen yet: everything already earned is revealed together
+    first_reveal: bool
+    test_mode: bool  # TEMPORARY, see Settings.achievement_test_mode
+
+
+class SeenIn(BaseModel):
+    keys: list[str] = Field(max_length=100)
 
 
 class NoteTags(BaseModel):

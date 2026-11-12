@@ -1,0 +1,14 @@
+<!-- great_white: faces right -->
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="70" viewBox="0 0 200 70" fill="#7b8a96">
+  <path d="M30 34 L4 4 L16 34 L6 62 Z" />
+  <path d="M22 34 C50 18 110 10 156 14 C178 16 192 24 198 34 C192 42 176 48 156 48 C110 54 50 50 22 36 Z" />
+  <path d="M90 16 L108 0 L114 16 Z" />
+  <path d="M124 46 L104 68 L140 47 Z" />
+  <path d="M40 38 C80 44 140 46 194 36 C186 46 160 50 130 50 C90 50 60 46 40 38 Z" fill="#e8ecef" />
+  <path d="M168 40 L192 37" stroke="#030d15" stroke-width="2" />
+  <path d="M172 39 l2 3 l2 -3" fill="#e8ecef" />
+  <path d="M177 39 l2 3 l2 -3" fill="#e8ecef" />
+  <path d="M182 39 l2 3 l2 -3" fill="#e8ecef" />
+  <path d="M187 39 l2 3 l2 -3" fill="#e8ecef" />
+  <circle cx="176" cy="27" r="2.2" fill="#030d15" />
+</svg>

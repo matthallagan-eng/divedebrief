@@ -1,0 +1,11 @@
+<!-- submersible: faces right -->
+<svg xmlns="http://www.w3.org/2000/svg" width="140" height="90" viewBox="0 0 140 90" fill="#e8ecef">
+  <path d="M18 44 C18 22 44 10 74 10 C104 10 126 24 126 46 C126 66 104 76 74 76 C44 76 18 66 18 44 Z" />
+  <path d="M56 10 L60 0 L84 0 L88 10 Z" fill="#f28c38" />
+  <circle cx="108" cy="52" r="9" fill="#030d15" opacity="0.7" />
+  <circle cx="108" cy="52" r="5" fill="#f28c38" opacity="0.6" />
+  <path d="M18 44 L6 36 L6 54 Z" fill="#f28c38" />
+  <path d="M112 66 L126 82 L136 78 M126 82 L130 90" fill="none" stroke="#e8ecef" stroke-width="3" stroke-linecap="round" />
+  <path d="M118 30 L140 24 L140 40 Z" fill="#f28c38" opacity="0.35" />
+  <path d="M30 30 C50 22 80 20 104 26" fill="none" stroke="#f28c38" stroke-width="3" opacity="0.5" />
+</svg>
