@@ -38,3 +38,38 @@ def test_gear_on_another_divers_dive_is_not_found(client, anon_client):
     other = sign_up(anon_client, email="other@example.com")
     assert anon_client.put(f"/dives/{dive}/gear", json={"weight_kg": 4}, headers=other).status_code == 404
     assert anon_client.get("/dives/gear-history", headers=other).json() == []
+
+
+def test_gear_presets_are_saved_renamed_and_deleted(client):
+    assert client.get("/gear-presets").json() == []
+    r = client.post("/gear-presets", json={"name": "  Quarry 7mm ", "weight_kg": 8, "suit": "7mm", "tank_material": "steel"})
+    assert r.status_code == 201
+    quarry = r.json()
+    assert (quarry["name"], quarry["weight_kg"], quarry["suit"], quarry["tank_material"]) == ("Quarry 7mm", 8, "7mm", "steel")
+    warm = client.post("/gear-presets", json={"name": "Warm water", "suit": "shorty"}).json()
+    assert [p["name"] for p in client.get("/gear-presets").json()] == ["Quarry 7mm", "Warm water"]
+
+    assert client.post("/gear-presets", json={"name": "Quarry 7mm"}).status_code == 409
+    assert client.put(f"/gear-presets/{warm['id']}", json={"name": "Quarry 7mm"}).status_code == 409
+    r = client.put(f"/gear-presets/{quarry['id']}", json={"name": "Quarry 7mm", "weight_kg": 7, "suit": "7mm", "tank_material": "steel"})
+    assert r.json()["weight_kg"] == 7
+
+    assert client.delete(f"/gear-presets/{warm['id']}").status_code == 204
+    assert [p["name"] for p in client.get("/gear-presets").json()] == ["Quarry 7mm"]
+
+
+@pytest.mark.parametrize("body", [{"name": ""}, {"name": "   "}, {"name": "x" * 41}, {"name": "a", "weight_kg": 31}, {"name": "a", "suit": "wetsuit"}])
+def test_gear_presets_reject_bad_values(client, body):
+    assert client.post("/gear-presets", json=body).status_code == 422
+
+
+def test_gear_presets_are_private(client, anon_client):
+    from conftest import sign_up
+
+    preset = client.post("/gear-presets", json={"name": "Mine"}).json()
+    other = sign_up(anon_client, email="other@example.com")
+    assert anon_client.get("/gear-presets", headers=other).json() == []
+    assert anon_client.put(f"/gear-presets/{preset['id']}", json={"name": "Theirs"}, headers=other).status_code == 404
+    assert anon_client.delete(f"/gear-presets/{preset['id']}", headers=other).status_code == 404
+    # Two divers can use the same name
+    assert anon_client.post("/gear-presets", json={"name": "Mine"}, headers=other).status_code == 201

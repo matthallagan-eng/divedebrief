@@ -246,6 +246,21 @@ class DiveGear(Base):
     dive: Mapped["Dive"] = relationship(back_populates="gear")
 
 
+class GearPreset(Base):
+    """A named kit the diver wears often, to fill in a dive's gear in one go."""
+
+    __tablename__ = "gear_presets"
+    __table_args__ = (UniqueConstraint("user_id", "name"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    name: Mapped[str] = mapped_column(String(40))
+    weight_kg: Mapped[float | None] = mapped_column(Float, nullable=True)
+    suit: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    tank_material: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+
 class CertCard(Base):
     """A certification card the diver has on file. The photos of it are
     files under settings.upload_dir, named here."""

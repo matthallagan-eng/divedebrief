@@ -8,13 +8,28 @@ export interface Drawing {
   aspect: number;
 }
 
+// Drawings are inlined into one page, so a <style> block in one file applies to
+// all of them. Editors export generic class names (.s0, .s1, ...), so prefix every
+// class a file's stylesheet defines with the file's name to keep files apart.
+function scopeClasses(svg: string, name: string): string {
+  const css = [...svg.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]).join("\n");
+  const classes = new Set([...css.matchAll(/\.(-?[A-Za-z_][\w-]*)/g)].map((m) => m[1]));
+  if (classes.size === 0) return svg;
+  const scoped = (cls: string) => (classes.has(cls) ? `${name}__${cls}` : cls);
+  return svg
+    .replace(/<style([^>]*)>([\s\S]*?)<\/style>/g, (_, attrs: string, body: string) =>
+      `<style${attrs}>${body.replace(/\.(-?[A-Za-z_][\w-]*)/g, (_m, cls: string) => `.${scoped(cls)}`)}</style>`,
+    )
+    .replace(/\bclass="([^"]*)"/g, (_, list: string) => `class="${list.split(/\s+/).map(scoped).join(" ")}"`);
+}
+
 function load(files: Record<string, string>): Record<string, Drawing> {
   return Object.fromEntries(
     Object.entries(files).map(([path, svg]) => {
       const name = path.slice(path.lastIndexOf("/") + 1, -".svg".length);
       const box = svg.match(/viewBox="([^"]+)"/)?.[1].trim().split(/[\s,]+/).map(Number);
       const aspect = box && box[2] > 0 && box[3] > 0 ? box[2] / box[3] : 1;
-      return [name, { svg: svg.slice(svg.indexOf("<svg")), aspect }];
+      return [name, { svg: scopeClasses(svg.slice(svg.indexOf("<svg")), name), aspect }];
     }),
   );
 }

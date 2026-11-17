@@ -208,6 +208,24 @@ class GearOut(GearIn):
     updated_at: datetime
 
 
+class GearPresetIn(GearIn):
+    name: str = Field(min_length=1, max_length=40)
+
+    @field_validator("name")
+    @classmethod
+    def _name(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("give the kit a name")
+        return v
+
+
+class GearPresetOut(GearPresetIn):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+
+
 class GearHistoryRow(BaseModel):
     """One dive with gear logged, for comparing weighting with buoyancy."""
 
