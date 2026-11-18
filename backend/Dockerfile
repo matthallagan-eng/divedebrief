@@ -22,7 +22,10 @@ RUN mkdir -p /app/data/uploads && chown -R appuser:appuser /app/data
 
 USER appuser
 
+# PYTHONUSERBASE lets any user find the packages: Railway runs the container as
+# root (RAILWAY_RUN_UID=0) so it can write to the uploads volume
 ENV PATH=/home/appuser/.local/bin:$PATH \
+    PYTHONUSERBASE=/home/appuser/.local \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
