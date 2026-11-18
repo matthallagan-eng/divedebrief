@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl \
 COPY --from=builder /root/.local /home/appuser/.local
 COPY --chown=appuser:appuser . .
 
-# Card photos (settings.upload_dir); docker-compose mounts a volume here
+# Card and dive photos (settings.upload_dir); docker-compose and Railway mount a volume here
 RUN mkdir -p /app/data/uploads && chown -R appuser:appuser /app/data
 
 USER appuser
@@ -29,6 +29,7 @@ ENV PATH=/home/appuser/.local/bin:$PATH \
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD curl -f http://localhost:${PORT:-8000}/health || exit 1
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Railway sets PORT; docker-compose overrides this command and uses 8000
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
