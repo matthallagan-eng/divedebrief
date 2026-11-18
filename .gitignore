@@ -26,3 +26,6 @@ desktop.ini
 .idea/
 # Uploaded card photos (backend settings.upload_dir)
 backend/data/
+
+# Railway IaC SDK
+.railway/node_modules/
