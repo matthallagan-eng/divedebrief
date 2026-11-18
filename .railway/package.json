@@ -1,0 +1,9 @@
+{
+  "name": "divedebrief-railway",
+  "private": true,
+  "type": "module",
+  "description": "Railway infrastructure-as-code for DiveDebrief (railway config plan/apply)",
+  "devDependencies": {
+    "railway": "^3.17.0"
+  }
+}
