@@ -8,6 +8,22 @@ with sea creatures you unlock by diving.
 
 ![The logbook: totals on top, every dive with its skill scores below](docs/images/logbook.png)
 
+## Try it live
+
+**https://divedebrief.up.railway.app**
+
+| | |
+| --- | --- |
+| Email | `demo@divedebrief.app` |
+| Password | `divedemo2026` |
+
+The demo diver has a year of diving: Open Water checkout dives at Vortex
+Spring, shore dives at Blue Heron Bridge, an Advanced course in Cozumel and
+a nitrox trip to Bonaire. That's 12 dives at 4 sites with notes, gear, tank
+pressures, photos and certification cards. Anyone can edit the demo, so it
+gets rebuilt from time to time ([`backend/scripts/seed_demo.py`](backend/scripts/seed_demo.py)).
+
+- [Try it live](#try-it-live)
 - [Features](#features)
 - [Getting your dives in](#getting-your-dives-in)
 - [Run it](#run-everything-with-docker)
@@ -135,6 +151,28 @@ database runs migrations on start. Uploaded photos are stored in the
 > `docker-compose.yml` currently turns on `ACHIEVEMENT_TEST_MODE`, a
 > temporary panel on My Ocean for previewing reveals and creatures without
 > earning them. It will be removed once achievements are tuned.
+
+## Deployment (Railway)
+
+The live site runs on [Railway](https://railway.com) as an `api` service
+(`backend/`), a `web` service (`frontend/`), Railway Postgres, and a volume
+for uploaded photos. Every merge to `main` deploys whichever service
+changed. The services are described in
+[`.railway/railway.ts`](.railway/railway.ts):
+
+```sh
+cd .railway && npm install && cd ..
+railway config plan    # preview
+railway config apply   # apply
+```
+
+Secrets and other variables (`SECRET_KEY`, `DATABASE_URL`, `CORS_ORIGINS`,
+`VITE_API_URL`) are set on Railway, not in the repo. To rebuild the demo
+account:
+
+```sh
+python backend/scripts/seed_demo.py --api https://divedebrief-api.up.railway.app --reset
+```
 
 ## Local development
 
